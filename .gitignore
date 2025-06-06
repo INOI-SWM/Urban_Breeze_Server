@@ -1,0 +1,46 @@
+# === Gradle ===
+.gradle/
+build/
+!gradle/wrapper/gradle-wrapper.jar
+!gradle-wrapper.properties
+
+# === IntelliJ IDEA ===
+.idea/
+*.iml
+*.iws
+*.ipr
+out/
+
+# === VS Code ===
+.vscode/
+
+# === OS Files ===
+.DS_Store
+Thumbs.db
+
+# === Logs ===
+*.log
+logs/
+*.pid
+
+
+# === Test Reports ===
+test-results/
+surefire-reports/
+jacoco.exec
+build/reports/
+build/test-results/
+
+# === Spring Boot ===
+app.jar
+target/
+
+# === RestDocs ===
+build/generated-snippets/
+
+# === Misc ===
+*.swp
+*.swo
+*.orig
+
+application-*.yml
