@@ -1,12 +1,44 @@
 version: '3.8'
 
 services:
+  db:
+    image: postgres:15
+    container_name: postgres-dev
+    ports:
+      - "5432:5432"
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB}
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+    networks:
+      - dev-network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 5s
+
   app:
     image: ${DOCKER_USERNAME}/${DOCKER_REPO}:dev-${DOCKER_IMAGE_VERSION}
-    environment:
-      TZ: Asia/Seoul
+    container_name: riding-mate-dev
     ports:
       - "8080:8080"
     env_file:
       - .env
+    environment:
+      TZ: Asia/Seoul
+    networks:
+      - dev-network
+    depends_on:
+      db:
+        condition: service_healthy
     restart: unless-stopped
+
+volumes:
+  postgres-data:
+
+networks:
+  dev-network:

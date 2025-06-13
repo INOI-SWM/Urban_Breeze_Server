@@ -83,13 +83,21 @@ jobs:
       - name: Write .env file
         run: |
           cat <<EOF > .env
-          DOCKER_USERNAME=${{secrets.DOCKER_USERNAME }}
+          DOCKER_USERNAME=${{ secrets.DOCKER_USERNAME }}
           DOCKER_REPO=${{ secrets.DOCKER_REPO }}
           DOCKER_IMAGE_VERSION=${{ needs.build.outputs.BUILD_VERSION }}
+
+          POSTGRES_DB=${{ secrets.POSTGRES_DB }}
+          POSTGRES_USER=${{ secrets.POSTGRES_USER }}
+          POSTGRES_PASSWORD=${{ secrets.POSTGRES_PASSWORD }}
           EOF
 
-      - name: Stop & Remove Containers
-        run: sudo docker-compose -f docker-compose.dev.yml down
+      - name: Stop app container only
+        run: |
+          if docker ps -a --format '{{.Names}}' | grep -q '^riding-mate-dev$'; then
+            sudo docker stop riding-mate-dev
+            sudo docker rm riding-mate-dev
+          fi
 
       - name: Prune Docker Images
         run: sudo docker image prune -a -f
