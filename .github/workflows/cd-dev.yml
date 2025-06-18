@@ -58,7 +58,7 @@ jobs:
           file: ./Dockerfile.dev
           push: true
           tags: ${{ secrets.DOCKER_USERNAME }}/${{ secrets.DOCKER_REPO }}:dev-${{ steps.datetime.outputs.datetime }}
-          build-args: JAR_FILE=build/libs/ridingMate-0.0.1-SNAPSHOT.jar
+          build-args: JAR_FILE=build/libs/app.jar
 
       - name: Upload docker-compose.dev.yml
         uses: actions/upload-artifact@v4
