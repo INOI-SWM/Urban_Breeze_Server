@@ -103,4 +103,4 @@ jobs:
         run: sudo docker image prune -a -f
 
       - name: Run New Containers
-        run: sudo docker-compose -f docker-compose.dev.yml up -d
+        run: sudo docker compose -f docker-compose.dev.yml up -d
