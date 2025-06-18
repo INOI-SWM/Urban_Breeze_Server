@@ -3,4 +3,4 @@ FROM openjdk:17-jdk-slim
 ARG JAR_FILE=build/libs/app.jar
 COPY ${JAR_FILE} /app.jar
 
-ENTRYPOINT ["java", "-Xms512m", "-Xmx2g", "-Dspring.profiles.active=prod", "-Duser.timezone=Asia/Seoul", "-jar", "/app.jar"]
+ENTRYPOINT ["java", "-Xms512m", "-Xmx2g", "-Duser.timezone=Asia/Seoul", "-jar", "/app.jar"]
