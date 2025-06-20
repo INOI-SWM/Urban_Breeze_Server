@@ -41,7 +41,9 @@ dependencies {
 	//기타
 	compileOnly 'org.projectlombok:lombok'
 	runtimeOnly 'org.postgresql:postgresql'
-	annotationProcessor 'org.projectlombok:lombok'
+
+	//WebClient
+	implementation 'org.springframework.boot:spring-boot-starter-webflux'
 
 	//테스트
 	testImplementation 'org.springframework.boot:spring-boot-starter-test'
