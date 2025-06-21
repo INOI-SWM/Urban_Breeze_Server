@@ -27,16 +27,16 @@ public class Route extends BaseTimeEntity {
     private String name;
 
     @Column(name = "total_distance")
-    private Float totalDistance;
+    private Double totalDistance;
 
     @Column(name = "total_duration")
     private Duration totalDuration;
 
     @Column(name = "total_elevation_gain")
-    private Float totalElevationGain;
+    private Double totalElevationGain;
 
     @Column(name = "average_gradient")
-    private Float averageGradient;
+    private Double averageGradient;
 
     @Column(name = "thumbnail_image_path")
     private String thumbnailImagePath;
