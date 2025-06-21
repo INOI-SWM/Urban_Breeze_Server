@@ -44,6 +44,7 @@ dependencies {
 
 	//DB
 	runtimeOnly 'org.postgresql:postgresql'
+	implementation 'org.hibernate.orm:hibernate-spatial:6.6.18.Final'
 
 	//WebClient
 	implementation 'org.springframework.boot:spring-boot-starter-webflux'
