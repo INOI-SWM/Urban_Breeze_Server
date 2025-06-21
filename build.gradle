@@ -40,6 +40,9 @@ dependencies {
 
 	//기타
 	compileOnly 'org.projectlombok:lombok'
+	annotationProcessor 'org.projectlombok:lombok'
+
+	//DB
 	runtimeOnly 'org.postgresql:postgresql'
 
 	//WebClient
