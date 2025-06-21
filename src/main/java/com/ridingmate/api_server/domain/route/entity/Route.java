@@ -6,6 +6,7 @@ import jakarta.persistence.*;
 import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
+import org.locationtech.jts.geom.LineString;
 
 import java.time.Duration;
 
@@ -26,19 +27,22 @@ public class Route extends BaseTimeEntity {
     @Column(name = "name", nullable = false)
     private String name;
 
-    @Column(name = "total_distance")
+    @Column(name = "route_line", columnDefinition = "geometry(LineString, 4326)", nullable = false)
+    private LineString routeLine;
+
+    @Column(name = "total_distance", nullable = false)
     private Double totalDistance;
 
-    @Column(name = "total_duration")
+    @Column(name = "total_duration", nullable = false)
     private Duration totalDuration;
 
-    @Column(name = "total_elevation_gain")
+    @Column(name = "total_elevation_gain", nullable = false)
     private Double totalElevationGain;
 
-    @Column(name = "average_gradient")
+    @Column(name = "average_gradient", nullable = false)
     private Double averageGradient;
 
-    @Column(name = "thumbnail_image_path")
+    @Column(name = "thumbnail_image_path", nullable = false)
     private String thumbnailImagePath;
 
     @Column(name = "gpx_file_path")
