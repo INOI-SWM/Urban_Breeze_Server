@@ -10,6 +10,7 @@ public class OrsMapper {
         OrsRouteResponse.Summary summary = props.summary();
 
         return new RouteSegmentResponse(
+                feature.bbox(),
                 feature.geometry().coordinates(),
                 summary.distance(),
                 summary.duration(),
