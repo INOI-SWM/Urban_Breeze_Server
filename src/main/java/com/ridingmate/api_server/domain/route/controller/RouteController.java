@@ -1,5 +1,6 @@
 package com.ridingmate.api_server.domain.route.controller;
 
+import com.ridingmate.api_server.domain.route.dto.request.CreateRouteRequest;
 import com.ridingmate.api_server.domain.route.dto.request.RouteSegmentRequest;
 import com.ridingmate.api_server.domain.route.dto.response.RouteSegmentResponse;
 import com.ridingmate.api_server.domain.route.facade.RouteFacade;
@@ -21,5 +22,11 @@ public class RouteController {
     public ResponseEntity<RouteSegmentResponse> previewRoute(@RequestBody RouteSegmentRequest request) {
         RouteSegmentResponse response = routeFacade.generateSegment(request);
         return ResponseEntity.ok(response);
+    }
+
+    @PostMapping
+    public ResponseEntity<Void> createRoute(@RequestBody CreateRouteRequest request) {
+        routeFacade.createRoute(request);
+        return ResponseEntity.ok().build();
     }
 }

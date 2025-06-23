@@ -4,6 +4,7 @@ import com.ridingmate.api_server.domain.user.entity.User;
 import com.ridingmate.api_server.global.entity.BaseTimeEntity;
 import jakarta.persistence.*;
 import lombok.AccessLevel;
+import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import org.locationtech.jts.geom.LineString;
@@ -42,9 +43,22 @@ public class Route extends BaseTimeEntity {
     @Column(name = "average_gradient", nullable = false)
     private Double averageGradient;
 
-    @Column(name = "thumbnail_image_path", nullable = false)
+    @Column(name = "thumbnail_image_path")
     private String thumbnailImagePath;
 
     @Column(name = "gpx_file_path")
     private String gpxFilePath;
+
+    @Builder
+    private Route(User user, String name, LineString routeLine, Double totalDistance,
+                  Duration totalDuration, Double totalElevationGain, Double averageGradient,
+                  String thumbnailImagePath, String gpxFilePath) {
+        this.user = user;
+        this.name = name;
+        this.routeLine = routeLine;
+        this.totalDistance = totalDistance;
+        this.totalDuration = totalDuration;
+        this.totalElevationGain = totalElevationGain;
+        this.averageGradient = averageGradient;
+    }
 }
