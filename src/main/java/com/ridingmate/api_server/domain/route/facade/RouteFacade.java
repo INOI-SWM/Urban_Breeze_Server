@@ -2,7 +2,9 @@ package com.ridingmate.api_server.domain.route.facade;
 
 import com.ridingmate.api_server.domain.route.dto.request.CreateRouteRequest;
 import com.ridingmate.api_server.domain.route.dto.request.RouteSegmentRequest;
+import com.ridingmate.api_server.domain.route.dto.response.CreateRouteResponse;
 import com.ridingmate.api_server.domain.route.dto.response.RouteSegmentResponse;
+import com.ridingmate.api_server.domain.route.entity.Route;
 import com.ridingmate.api_server.domain.route.service.RouteService;
 import com.ridingmate.api_server.global.client.OrsClient;
 import com.ridingmate.api_server.global.client.OrsMapper;
@@ -24,9 +26,16 @@ public class RouteFacade {
         return OrsMapper.toRouteSegmentResponse(orsResponse);
     }
 
-    public void createRoute(CreateRouteRequest request) {
+    public CreateRouteResponse createRoute(CreateRouteRequest request) {
         LineString routeLine = GeometryUtil.polylineToLineString(request.polyline());
         //TODO 썸네일 이미지 생성 및 추가 기능 구현 필요
-        routeService.crateRoute(request, routeLine);
+        Route route = routeService.createRoute(request, routeLine);
+        return new CreateRouteResponse(
+                route.getId(),
+                route.getName(),
+                route.getTotalDuration().toMinutes(),
+                route.getTotalDistance(),
+                route.getAverageGradient()
+                );
     }
 }

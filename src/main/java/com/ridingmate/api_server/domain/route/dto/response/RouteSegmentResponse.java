@@ -5,8 +5,8 @@ import java.util.List;
 public record RouteSegmentResponse(
         List<Double> bbox,
         List<List<Double>> geometry,
+        int totalDuration,
         double totalDistance,
-        double totalDuration,
         double averageGradient
 ) {
 }
