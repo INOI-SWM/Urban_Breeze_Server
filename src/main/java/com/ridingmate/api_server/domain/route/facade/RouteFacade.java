@@ -14,6 +14,9 @@ import lombok.RequiredArgsConstructor;
 import org.locationtech.jts.geom.LineString;
 import org.springframework.stereotype.Component;
 
+import java.math.BigDecimal;
+import java.math.RoundingMode;
+
 @Component
 @RequiredArgsConstructor
 public class RouteFacade {
@@ -30,12 +33,17 @@ public class RouteFacade {
         LineString routeLine = GeometryUtil.polylineToLineString(request.polyline());
         //TODO 썸네일 이미지 생성 및 추가 기능 구현 필요
         Route route = routeService.createRoute(request, routeLine);
+
+        double distanceKm = new BigDecimal(route.getTotalDistance())
+                .setScale(2, RoundingMode.DOWN)
+                .doubleValue();
+
         return new CreateRouteResponse(
                 route.getId(),
                 route.getName(),
                 route.getTotalDuration().toMinutes(),
-                route.getTotalDistance(),
-                route.getAverageGradient()
+                distanceKm,
+                route.getTotalElevationGain()
                 );
     }
 }
