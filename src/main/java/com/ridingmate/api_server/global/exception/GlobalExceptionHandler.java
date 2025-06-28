@@ -11,6 +11,7 @@ import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
 
 import java.nio.file.AccessDeniedException;
+import java.util.List;
 
 /**
  * 전역 예외 처리 핸들러
@@ -27,10 +28,10 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(MethodArgumentNotValidException.class)
     protected ResponseEntity<ApiResponse<ErrorResponse>> handleMethodArgumentNotValidException(MethodArgumentNotValidException e) {
         log.error("MethodArgumentNotValidException", e);
-        ErrorResponse error = ErrorResponse.of(GlobalErrorCode.VALIDATION_ERROR, e.getBindingResult());
+        List<ErrorResponse.FieldError> fieldErrors = ErrorResponse.FieldError.of(e.getBindingResult());
         return ResponseEntity
                 .status(GlobalErrorCode.VALIDATION_ERROR.getStatus())
-                .body(ApiResponse.error(GlobalErrorCode.VALIDATION_ERROR, error));
+                .body(ApiResponse.error(GlobalErrorCode.VALIDATION_ERROR, fieldErrors));
     }
 
     /**
@@ -39,10 +40,10 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(BindException.class)
     protected ResponseEntity<ApiResponse<ErrorResponse>> handleBindException(BindException e) {
         log.error("BindException", e);
-        ErrorResponse error = ErrorResponse.of(GlobalErrorCode.VALIDATION_ERROR, e.getBindingResult());
+        List<ErrorResponse.FieldError> fieldErrors = ErrorResponse.FieldError.of(e.getBindingResult());
         return ResponseEntity
                 .status(GlobalErrorCode.VALIDATION_ERROR.getStatus())
-                .body(ApiResponse.error(GlobalErrorCode.VALIDATION_ERROR, error));
+                .body(ApiResponse.error(GlobalErrorCode.VALIDATION_ERROR, fieldErrors));
     }
 
     /**

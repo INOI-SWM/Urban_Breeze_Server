@@ -8,6 +8,7 @@ import com.ridingmate.api_server.domain.route.exception.RouteSuccessCode;
 import com.ridingmate.api_server.domain.route.facade.RouteFacade;
 import com.ridingmate.api_server.global.exception.ApiResponse;
 import com.ridingmate.api_server.global.exception.SuccessCode;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -31,7 +32,7 @@ public class RouteController {
     }
 
     @PostMapping
-    public ResponseEntity<ApiResponse<CreateRouteResponse>> createRoute(@RequestBody CreateRouteRequest request) {
+    public ResponseEntity<ApiResponse<CreateRouteResponse>> createRoute(@Valid @RequestBody CreateRouteRequest request) {
         CreateRouteResponse response = routeFacade.createRoute(request);
         return ResponseEntity.
                 status(RouteSuccessCode.ROUTE_CREATED.getStatus())

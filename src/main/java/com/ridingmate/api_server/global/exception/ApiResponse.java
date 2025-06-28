@@ -3,6 +3,8 @@ package com.ridingmate.api_server.global.exception;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import lombok.*;
 
+import java.util.List;
+
 @Getter
 @AllArgsConstructor(access = AccessLevel.PRIVATE)
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
@@ -16,7 +18,11 @@ public class ApiResponse<T> {
 
     private String message;
 
+    @JsonInclude(JsonInclude.Include.NON_NULL)
     private T data;
+
+    @JsonInclude(JsonInclude.Include.NON_NULL)
+    private List<ErrorResponse.FieldError> errors;
 
     public static <T> ApiResponse<T> success(SuccessCode successCode, T data) {
         return ApiResponse.<T>builder()
@@ -29,12 +35,12 @@ public class ApiResponse<T> {
         return success(code, null);
     }
 
-    public static <T> ApiResponse<T> error(ErrorCode code, T data) {
+    public static <T> ApiResponse<T> error(ErrorCode code, List<ErrorResponse.FieldError> errors) {
         return ApiResponse.<T>builder()
                 .status(code.getStatus().value())
                 .code(code.getCode())
                 .message(code.getMessage())
-                .data(data)
+                .errors(errors)
                 .build();
     }
 }
