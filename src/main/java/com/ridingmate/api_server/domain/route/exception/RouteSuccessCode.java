@@ -1,0 +1,16 @@
+package com.ridingmate.api_server.domain.route.exception;
+
+import com.ridingmate.api_server.global.exception.SuccessCode;
+import lombok.Getter;
+import lombok.RequiredArgsConstructor;
+import org.springframework.http.HttpStatus;
+
+@Getter
+@RequiredArgsConstructor
+public enum RouteSuccessCode implements SuccessCode {
+    SEGMENT_CREATED(HttpStatus.CREATED, "경로 세그먼트가 생성되었습니다."),
+    ROUTE_CREATED(HttpStatus.CREATED, "경로가 생성되었습니다.")
+    ;
+    private final HttpStatus status;
+    private final String message;
+}

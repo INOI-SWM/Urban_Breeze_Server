@@ -16,7 +16,7 @@ public class RouteService {
     private final RouteRepository routeRepository;
     private final UserRepository userRepository;
 
-    public void crateRoute(CreateRouteRequest request, LineString routeLine) {
+    public Route createRoute(CreateRouteRequest request, LineString routeLine) {
         double averageGradient = calculateAverageGradient(request.elevationGain(), request.distance());
 
         User mockUser = userRepository.findById(1L)
@@ -32,7 +32,7 @@ public class RouteService {
                 .averageGradient(averageGradient)
                 .build();
 
-       routeRepository.save(route);
+       return routeRepository.save(route);
     }
 
     private double calculateAverageGradient(double totalElevationGain, double totalDistance) {

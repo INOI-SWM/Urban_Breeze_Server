@@ -9,11 +9,13 @@ public class OrsMapper {
         OrsRouteResponse.Properties props = feature.properties();
         OrsRouteResponse.Summary summary = props.summary();
 
+        int durationMinutes = (int) Math.round(summary.duration() / 60.0);
+
         return new RouteSegmentResponse(
                 feature.bbox(),
                 feature.geometry().coordinates(),
+                durationMinutes,
                 summary.distance(),
-                summary.duration(),
                 props.ascent()
         );
     }
