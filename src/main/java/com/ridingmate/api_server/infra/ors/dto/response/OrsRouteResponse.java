@@ -1,4 +1,4 @@
-package com.ridingmate.api_server.global.client.dto.response;
+package com.ridingmate.api_server.infra.ors.dto.response;
 
 import java.util.List;
 

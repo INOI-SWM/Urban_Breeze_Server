@@ -1,7 +1,7 @@
-package com.ridingmate.api_server.global.client;
+package com.ridingmate.api_server.infra.ors;
 
 import com.ridingmate.api_server.domain.route.dto.response.RouteSegmentResponse;
-import com.ridingmate.api_server.global.client.dto.response.OrsRouteResponse;
+import com.ridingmate.api_server.infra.ors.dto.response.OrsRouteResponse;
 
 public class OrsMapper {
     public static RouteSegmentResponse toRouteSegmentResponse(OrsRouteResponse response) {

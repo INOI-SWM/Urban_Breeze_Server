@@ -1,7 +1,7 @@
-package com.ridingmate.api_server.global.client;
+package com.ridingmate.api_server.infra.ors;
 
-import com.ridingmate.api_server.global.client.dto.request.OrsRouteRequest;
-import com.ridingmate.api_server.global.client.dto.response.OrsRouteResponse;
+import com.ridingmate.api_server.infra.ors.dto.request.OrsRouteRequest;
+import com.ridingmate.api_server.infra.ors.dto.response.OrsRouteResponse;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
