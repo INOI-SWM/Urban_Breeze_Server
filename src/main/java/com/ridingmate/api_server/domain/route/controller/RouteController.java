@@ -7,7 +7,8 @@ import com.ridingmate.api_server.domain.route.dto.response.RouteSegmentResponse;
 import com.ridingmate.api_server.domain.route.exception.RouteSuccessCode;
 import com.ridingmate.api_server.domain.route.facade.RouteFacade;
 import com.ridingmate.api_server.global.exception.ApiResponse;
-import com.ridingmate.api_server.global.exception.SuccessCode;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
@@ -19,10 +20,11 @@ import org.springframework.web.bind.annotation.RestController;
 @RestController
 @RequestMapping("/api/routes")
 @RequiredArgsConstructor
-public class RouteController {
+public class RouteController implements RouteApi{
 
     private final RouteFacade routeFacade;
 
+    @Override
     @PostMapping("/segment")
     public ResponseEntity<ApiResponse<RouteSegmentResponse>>previewRoute(@RequestBody RouteSegmentRequest request) {
         RouteSegmentResponse response = routeFacade.generateSegment(request);
@@ -31,6 +33,7 @@ public class RouteController {
                 .body(ApiResponse.success(RouteSuccessCode.SEGMENT_CREATED, response));
     }
 
+    @Override
     @PostMapping
     public ResponseEntity<ApiResponse<CreateRouteResponse>> createRoute(@Valid @RequestBody CreateRouteRequest request) {
         CreateRouteResponse response = routeFacade.createRoute(request);
