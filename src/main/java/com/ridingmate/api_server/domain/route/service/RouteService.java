@@ -9,6 +9,8 @@ import lombok.RequiredArgsConstructor;
 import org.locationtech.jts.geom.LineString;
 import org.springframework.stereotype.Service;
 
+import java.time.Duration;
+
 @Service
 @RequiredArgsConstructor
 public class RouteService {
@@ -27,7 +29,7 @@ public class RouteService {
                 .name(request.name())
                 .routeLine(routeLine)
                 .totalDistance(request.distance())
-                .totalDuration(request.duration())
+                .totalDuration(Duration.ofMinutes(request.duration()))
                 .totalElevationGain(request.elevationGain())
                 .averageGradient(averageGradient)
                 .build();
