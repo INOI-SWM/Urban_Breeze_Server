@@ -1,6 +1,6 @@
 package com.ridingmate.api_server.domain.route.dto.request;
 
-import com.ridingmate.api_server.global.client.dto.request.OrsRouteRequest;
+import com.ridingmate.api_server.infra.ors.dto.request.OrsRouteRequest;
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.NotNull;
 
