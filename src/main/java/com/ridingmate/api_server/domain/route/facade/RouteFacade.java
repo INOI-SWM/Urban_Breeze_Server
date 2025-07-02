@@ -6,6 +6,8 @@ import com.ridingmate.api_server.domain.route.dto.response.CreateRouteResponse;
 import com.ridingmate.api_server.domain.route.dto.response.RouteSegmentResponse;
 import com.ridingmate.api_server.domain.route.entity.Route;
 import com.ridingmate.api_server.domain.route.service.RouteService;
+import com.ridingmate.api_server.infra.aws.s3.S3Manager;
+import com.ridingmate.api_server.infra.geoapify.GeoapifyClient;
 import com.ridingmate.api_server.infra.ors.OrsClient;
 import com.ridingmate.api_server.infra.ors.OrsMapper;
 import com.ridingmate.api_server.infra.ors.dto.response.OrsRouteResponse;
@@ -22,7 +24,10 @@ import java.math.RoundingMode;
 public class RouteFacade {
 
     private final OrsClient orsClient;
+    private final GeoapifyClient geoapifyClient;
+
     private final RouteService routeService;
+    private final S3Manager s3Manager;
 
     public RouteSegmentResponse generateSegment(RouteSegmentRequest request) {
         OrsRouteResponse orsResponse = orsClient.getRoutePreview(request.toOrsRequest());
@@ -31,8 +36,9 @@ public class RouteFacade {
 
     public CreateRouteResponse createRoute(CreateRouteRequest request) {
         LineString routeLine = GeometryUtil.polylineToLineString(request.polyline());
-        //TODO 썸네일 이미지 생성 및 추가 기능 구현 필요
+        byte[] thumbnailBytes = geoapifyClient.getStaticMap(routeLine);
         Route route = routeService.createRoute(request, routeLine);
+        s3Manager.uploadByteFiles(route.getThumbnailImagePath(), thumbnailBytes);
 
         double distanceKm = new BigDecimal(route.getTotalDistance())
                 .setScale(2, RoundingMode.DOWN)
