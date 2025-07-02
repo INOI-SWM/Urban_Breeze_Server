@@ -16,11 +16,10 @@ public class GeoapifyConfig {
 
     @Bean
     public WebClient geoapifyWebClient() {
-        DefaultUriBuilderFactory factory = new DefaultUriBuilderFactory();
+        DefaultUriBuilderFactory factory = new DefaultUriBuilderFactory(geoapifyProperty.baseUrl());
         factory.setEncodingMode(DefaultUriBuilderFactory.EncodingMode.NONE);
 
         return WebClient.builder()
-                .baseUrl(geoapifyProperty.baseUrl())
                 .uriBuilderFactory(factory)
                 .build();
     }
