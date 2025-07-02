@@ -46,6 +46,17 @@ public class S3Manager {
         }
     }
 
+    public void uploadByteFiles(String key, byte[] data) {
+        PutObjectRequest request = PutObjectRequest.builder()
+                .bucket(awsProperty.s3().bucket())
+                .key(key)
+                .contentType("image/png")
+                .build();
+
+        s3Client.putObject(request, RequestBody.fromBytes(data));
+        log.info("S3 업로드 완료: {}", key);
+    }
+
     public String getPresignedUrl(String key) {
         GetObjectRequest getObjectRequest = GetObjectRequest.builder()
                 .bucket(awsProperty.s3().bucket())
