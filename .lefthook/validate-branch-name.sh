@@ -3,6 +3,15 @@
 branch="$(git rev-parse --abbrev-ref HEAD)"
 IFS='/' read -ra PARTS <<< "$branch"
 
+exceptions=("main" "develop")
+
+for exception in "${exceptions[@]}"; do
+  if [[ "$branch" == "$exception" ]]; then
+    echo "✅ 예외 브랜치 '$branch'는 네이밍 규칙 검증을 건너뜁니다."
+    exit 0
+  fi
+done
+
 types="feat|fix|docs|style|refactor|perf|test|build|ci|chore|revert|design"
 valid_types=(${types//|/ })
 
