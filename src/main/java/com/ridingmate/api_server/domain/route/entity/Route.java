@@ -61,4 +61,8 @@ public class Route extends BaseTimeEntity {
         this.totalElevationGain = totalElevationGain;
         this.averageGradient = averageGradient;
     }
+
+    public void updateThumbnailImagePath(String thumbnailImagePath) {
+        this.thumbnailImagePath = thumbnailImagePath;
+    }
 }

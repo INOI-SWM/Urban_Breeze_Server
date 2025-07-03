@@ -10,6 +10,7 @@ import org.locationtech.jts.geom.LineString;
 import org.springframework.stereotype.Service;
 
 import java.time.Duration;
+import java.util.UUID;
 
 @Service
 @RequiredArgsConstructor
@@ -34,11 +35,20 @@ public class RouteService {
                 .averageGradient(averageGradient)
                 .build();
 
-       return routeRepository.save(route);
+        routeRepository.save(route);
+
+        route.updateThumbnailImagePath(createThumbnailImagePath(route.getId()));
+
+       return route;
     }
 
     private double calculateAverageGradient(double totalElevationGain, double totalDistance) {
         if (totalDistance == 0) return 0.0;
         return (totalElevationGain / totalDistance) * 100;
+    }
+
+    private String createThumbnailImagePath(Long routeId) {
+        String uuid = UUID.randomUUID().toString();
+        return String.format("ridingmate/route-thumbnails/%d/%s.png", routeId, uuid);
     }
 }
