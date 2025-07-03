@@ -13,26 +13,22 @@ import java.util.stream.Collectors;
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 public class ErrorResponse {
 
-    private int status;
     private String code;
     private String message;
     private List<FieldError> errors;
 
     private ErrorResponse(ErrorCode code) {
-        this.status = code.getStatus().value();
         this.code = code.getCode();
         this.message = code.getMessage();
         this.errors = new ArrayList<>();
     }
 
     private ErrorResponse(final ErrorCode code,  final String message) {
-        this.status = code.getStatus().value();
         this.code = code.getCode();
         this.message = message;
     }
 
     private ErrorResponse(ErrorCode code, List<FieldError> errors) {
-        this.status = code.getStatus().value();
         this.code = code.getCode();
         this.message = code.getMessage();
         this.errors = errors;

@@ -11,8 +11,6 @@ import java.util.List;
 @Builder
 public class ApiResponse<T> {
 
-    private int status;
-
     @JsonInclude(JsonInclude.Include.NON_NULL)
     private String code;
 
@@ -26,7 +24,6 @@ public class ApiResponse<T> {
 
     public static <T> ApiResponse<T> success(SuccessCode successCode, T data) {
         return ApiResponse.<T>builder()
-                .status(successCode.getStatus().value())
                 .message(successCode.getMessage())
                 .data(data)
                 .build();
@@ -37,7 +34,6 @@ public class ApiResponse<T> {
 
     public static <T> ApiResponse<T> error(ErrorCode code, List<ErrorResponse.FieldError> errors) {
         return ApiResponse.<T>builder()
-                .status(code.getStatus().value())
                 .code(code.getCode())
                 .message(code.getMessage())
                 .errors(errors)
