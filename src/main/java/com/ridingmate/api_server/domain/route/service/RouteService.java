@@ -27,7 +27,7 @@ public class RouteService {
 
         Route route = Route.builder()
                 .user(mockUser)
-                .name(request.name())
+                .title(request.title())
                 .routeLine(routeLine)
                 .totalDistance(request.distance())
                 .totalDuration(Duration.ofMinutes(request.duration()))
