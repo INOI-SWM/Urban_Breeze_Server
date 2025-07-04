@@ -39,6 +39,10 @@ public class RouteService {
                 .totalDuration(Duration.ofMinutes(request.duration()))
                 .totalElevationGain(request.elevationGain())
                 .averageGradient(averageGradient)
+                .minLon(request.bbox().get(0))
+                .minLat(request.bbox().get(1))
+                .maxLon(request.bbox().get(2))
+                .maxLat(request.bbox().get(3))
                 .build();
 
         routeRepository.save(route);
