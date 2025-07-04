@@ -28,6 +28,9 @@ public class Route extends BaseTimeEntity {
     @Column(name = "title", nullable = false)
     private String title;
 
+    @Column(name = "share_id", nullable = false)
+    private String shareId;
+
     @Column(name = "route_line", columnDefinition = "geometry(LineString, 4326)", nullable = false)
     private LineString routeLine;
 
@@ -62,12 +65,13 @@ public class Route extends BaseTimeEntity {
     private String gpxFilePath;
 
     @Builder
-    private Route(User user, String title, LineString routeLine, Double totalDistance,
-                  Duration totalDuration, Double totalElevationGain, Double averageGradient,
+    private Route(User user, String title, LineString routeLine, String shareId,
+                  Double totalDistance, Duration totalDuration, Double totalElevationGain, Double averageGradient,
                   Double minLon, Double minLat, Double maxLon, Double maxLat,
                   String thumbnailImagePath, String gpxFilePath) {
         this.user = user;
         this.title = title;
+        this.shareId = shareId;
         this.routeLine = routeLine;
         this.totalDistance = totalDistance;
         this.totalDuration = totalDuration;

@@ -9,7 +9,8 @@ import org.springframework.http.HttpStatus;
 @RequiredArgsConstructor
 public enum RouteSuccessCode implements SuccessCode {
     SEGMENT_CREATED(HttpStatus.CREATED, "경로 세그먼트가 생성되었습니다."),
-    ROUTE_CREATED(HttpStatus.CREATED, "경로가 생성되었습니다.")
+    ROUTE_CREATED(HttpStatus.CREATED, "경로가 생성되었습니다."),
+    SHARE_LINK_FETCHED(HttpStatus.OK, "경로 공유 링크가 조회되었습니다."),
     ;
     private final HttpStatus status;
     private final String message;
