@@ -46,7 +46,7 @@ public class RouteFacade {
 
         return new CreateRouteResponse(
                 route.getId(),
-                route.getName(),
+                route.getTitle(),
                 route.getTotalDuration().toMinutes(),
                 distanceKm,
                 route.getTotalElevationGain()

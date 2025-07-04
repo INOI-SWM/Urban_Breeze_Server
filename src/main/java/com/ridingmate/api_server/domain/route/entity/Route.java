@@ -25,8 +25,8 @@ public class Route extends BaseTimeEntity {
     @JoinColumn(name = "user_id", nullable = false)
     private User user;
 
-    @Column(name = "name", nullable = false)
-    private String name;
+    @Column(name = "title", nullable = false)
+    private String title;
 
     @Column(name = "route_line", columnDefinition = "geometry(LineString, 4326)", nullable = false)
     private LineString routeLine;
@@ -46,19 +46,36 @@ public class Route extends BaseTimeEntity {
     @Column(name = "thumbnail_image_path")
     private String thumbnailImagePath;
 
+    @Column(name = "minLat", nullable = false)
+    private Double minLat;
+
+    @Column(name = "minLon", nullable = false)
+    private Double minLon;
+
+    @Column(name = "maxLat", nullable = false)
+    private Double maxLat;
+
+    @Column(name = "maxLon", nullable = false)
+    private Double maxLon;
+
     @Column(name = "gpx_file_path")
     private String gpxFilePath;
 
     @Builder
-    private Route(User user, String name, LineString routeLine, Double totalDistance,
+    private Route(User user, String title, LineString routeLine, Double totalDistance,
                   Duration totalDuration, Double totalElevationGain, Double averageGradient,
+                  Double minLon, Double minLat, Double maxLon, Double maxLat,
                   String thumbnailImagePath, String gpxFilePath) {
         this.user = user;
-        this.name = name;
+        this.title = title;
         this.routeLine = routeLine;
         this.totalDistance = totalDistance;
         this.totalDuration = totalDuration;
         this.totalElevationGain = totalElevationGain;
+        this.minLon = minLon;
+        this.minLat = minLat;
+        this.maxLon = maxLon;
+        this.maxLat = maxLat;
         this.averageGradient = averageGradient;
     }
 
