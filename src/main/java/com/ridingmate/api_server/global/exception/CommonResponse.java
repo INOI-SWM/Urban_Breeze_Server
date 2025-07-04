@@ -9,7 +9,7 @@ import java.util.List;
 @AllArgsConstructor(access = AccessLevel.PRIVATE)
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 @Builder
-public class ApiResponse<T> {
+public class CommonResponse<T> {
 
     @JsonInclude(JsonInclude.Include.NON_NULL)
     private String code;
@@ -22,18 +22,18 @@ public class ApiResponse<T> {
     @JsonInclude(JsonInclude.Include.NON_NULL)
     private List<ErrorResponse.FieldError> errors;
 
-    public static <T> ApiResponse<T> success(SuccessCode successCode, T data) {
-        return ApiResponse.<T>builder()
+    public static <T> CommonResponse<T> success(SuccessCode successCode, T data) {
+        return CommonResponse.<T>builder()
                 .message(successCode.getMessage())
                 .data(data)
                 .build();
     }
-    public static <T> ApiResponse<T> success(SuccessCode code) {
+    public static <T> CommonResponse<T> success(SuccessCode code) {
         return success(code, null);
     }
 
-    public static <T> ApiResponse<T> error(ErrorCode code, List<ErrorResponse.FieldError> errors) {
-        return ApiResponse.<T>builder()
+    public static <T> CommonResponse<T> error(ErrorCode code, List<ErrorResponse.FieldError> errors) {
+        return CommonResponse.<T>builder()
                 .code(code.getCode())
                 .message(code.getMessage())
                 .errors(errors)
