@@ -23,6 +23,9 @@ public class OrsClient {
                 .bodyValue(request)
                 .retrieve()
                 .bodyToMono(OrsRouteResponse.class)
+                .onErrorMap(
+                        throwable -> new OrsException(OrsErrorCode.ORS_SERVER_CALL_FAILED)
+                )
                 .block();
     }
 }

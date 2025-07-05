@@ -5,6 +5,9 @@ import com.ridingmate.api_server.infra.ors.dto.response.OrsRouteResponse;
 
 public class OrsMapper {
     public static RouteSegmentResponse toRouteSegmentResponse(OrsRouteResponse response) {
+        if (response.features() == null || response.features().isEmpty()) {
+            throw new OrsException(OrsErrorCode.ORS_MAPPING_FAILED);
+        }
         OrsRouteResponse.Feature feature = response.features().get(0);
         OrsRouteResponse.Properties props = feature.properties();
         OrsRouteResponse.Summary summary = props.summary();

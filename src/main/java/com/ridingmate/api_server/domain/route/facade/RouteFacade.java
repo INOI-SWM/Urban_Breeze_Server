@@ -4,6 +4,7 @@ import com.ridingmate.api_server.domain.route.dto.request.CreateRouteRequest;
 import com.ridingmate.api_server.domain.route.dto.request.RouteSegmentRequest;
 import com.ridingmate.api_server.domain.route.dto.response.CreateRouteResponse;
 import com.ridingmate.api_server.domain.route.dto.response.RouteSegmentResponse;
+import com.ridingmate.api_server.domain.route.dto.response.ShareRouteResponse;
 import com.ridingmate.api_server.domain.route.entity.Route;
 import com.ridingmate.api_server.domain.route.service.RouteService;
 import com.ridingmate.api_server.infra.aws.s3.S3Manager;
@@ -51,5 +52,10 @@ public class RouteFacade {
                 distanceKm,
                 route.getTotalElevationGain()
                 );
+    }
+
+    public ShareRouteResponse shareRoute(Long routeId) {
+        String shareLink = routeService.createShareLink(routeId);
+        return new ShareRouteResponse(shareLink);
     }
 }
