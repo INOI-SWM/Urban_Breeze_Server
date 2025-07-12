@@ -81,6 +81,22 @@ public class RouteService {
                 .orElseThrow(() -> new RouteException(RouteErrorCode.ROUTE_NOT_FOUND));
     }
 
+    /**
+     * 사용자별 경로 목록을 정렬 타입에 따라 조회
+     * @param userId 사용자 ID
+     * @param page 페이지 번호
+     * @param size 페이지 크기
+     * @param sortType 정렬 타입
+     * @return 정렬된 경로 페이지
+     */
+    public Page<Route> getRoutesByUser(Long userId, int page, int size, RouteSortType sortType) {
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new IllegalArgumentException("User not found"));
+
+        Pageable pageable = PageRequest.of(page, size, sortType.getSort());
+        return routeRepository.findByUser(user, pageable);
+    }
+
     private String getShareId(Route route){
         String shareId = route.getShareId();
         if ( shareId == null || shareId.isBlank()) {

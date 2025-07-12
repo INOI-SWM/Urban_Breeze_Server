@@ -3,10 +3,13 @@ package com.ridingmate.api_server.domain.route.controller;
 import com.ridingmate.api_server.domain.route.dto.request.CreateRouteRequest;
 import com.ridingmate.api_server.domain.route.dto.request.RouteSegmentRequest;
 import com.ridingmate.api_server.domain.route.dto.response.CreateRouteResponse;
+import com.ridingmate.api_server.domain.route.dto.response.RouteListResponse;
 import com.ridingmate.api_server.domain.route.dto.response.RouteSegmentResponse;
 import com.ridingmate.api_server.domain.route.dto.response.ShareRouteResponse;
+import com.ridingmate.api_server.domain.route.enums.RouteSortType;
 import com.ridingmate.api_server.global.exception.CommonResponse;
 import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -14,6 +17,7 @@ import jakarta.validation.Valid;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestParam;
 
 @Tag(name = "Route API", description = "경로 기능 API")
 public interface RouteApi {
@@ -52,4 +56,29 @@ public interface RouteApi {
             @ApiResponse(responseCode = "200", description = "성공: 공유 링크 조회 완료"),
     })
     ResponseEntity<CommonResponse<ShareRouteResponse>> shareRoute(@PathVariable Long routeId);
+
+    @Operation(
+            summary = "내 경로 목록 조회",
+            description = """
+            현재 사용자가 생성한 경로 목록을 페이지네이션과 정렬 옵션으로 조회합니다.
+            
+            - 페이지 크기: 3개 (고정)
+            - 정렬 옵션:
+              * CREATED_AT_DESC: 최신순 (기본값)
+              * CREATED_AT_ASC: 오래된순
+              * DISTANCE_ASC: 주행거리 오름차순
+              * DISTANCE_DESC: 주행거리 내림차순
+            - 포함 정보: 제목, 썸네일, 생성일, 이동거리, 상승고도
+            """
+    )
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "성공: 경로 목록 조회 완료"),
+    })
+    ResponseEntity<CommonResponse<RouteListResponse>> getRouteList(
+            @Parameter(description = "페이지 번호 (0부터 시작)", example = "0")
+            @RequestParam(defaultValue = "0") int page,
+            
+            @Parameter(description = "정렬 타입", example = "CREATED_AT_DESC")
+            @RequestParam(defaultValue = "CREATED_AT_DESC") RouteSortType sortBy
+    );
 }

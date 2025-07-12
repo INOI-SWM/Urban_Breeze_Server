@@ -3,8 +3,10 @@ package com.ridingmate.api_server.domain.route.controller;
 import com.ridingmate.api_server.domain.route.dto.request.CreateRouteRequest;
 import com.ridingmate.api_server.domain.route.dto.request.RouteSegmentRequest;
 import com.ridingmate.api_server.domain.route.dto.response.CreateRouteResponse;
+import com.ridingmate.api_server.domain.route.dto.response.RouteListResponse;
 import com.ridingmate.api_server.domain.route.dto.response.RouteSegmentResponse;
 import com.ridingmate.api_server.domain.route.dto.response.ShareRouteResponse;
+import com.ridingmate.api_server.domain.route.enums.RouteSortType;
 import com.ridingmate.api_server.domain.route.exception.RouteSuccessCode;
 import com.ridingmate.api_server.domain.route.facade.RouteFacade;
 import com.ridingmate.api_server.global.exception.CommonResponse;
@@ -45,5 +47,23 @@ public class RouteController implements RouteApi{
         return ResponseEntity
                 .status(RouteSuccessCode.SHARE_LINK_FETCHED.getStatus())
                 .body(CommonResponse.success(RouteSuccessCode.SHARE_LINK_FETCHED, response));
+    }
+
+    @Override
+    @GetMapping
+    public ResponseEntity<CommonResponse<RouteListResponse>> getRouteList(
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "CREATED_AT_DESC") RouteSortType sortBy) {
+        
+        // 페이지 크기 3개 고정
+        int pageSize = 3;
+        
+        // TODO: 실제 사용자 인증 구현 후 수정 필요
+        Long userId = 1L; // 현재는 mockUser 사용
+        
+        RouteListResponse response = routeFacade.getRouteList(userId, page, pageSize, sortBy);
+        return ResponseEntity
+                .status(RouteSuccessCode.ROUTE_LIST_FETCHED.getStatus())
+                .body(CommonResponse.success(RouteSuccessCode.ROUTE_LIST_FETCHED, response));
     }
 }
