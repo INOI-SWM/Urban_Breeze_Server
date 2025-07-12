@@ -2,6 +2,7 @@ package com.ridingmate.api_server.domain.route.service;
 
 import com.ridingmate.api_server.domain.route.dto.request.CreateRouteRequest;
 import com.ridingmate.api_server.domain.route.entity.Route;
+import com.ridingmate.api_server.domain.route.enums.RouteSortType;
 import com.ridingmate.api_server.domain.route.exception.RouteErrorCode;
 import com.ridingmate.api_server.domain.route.exception.RouteException;
 import com.ridingmate.api_server.domain.route.repository.RouteRepository;
@@ -10,7 +11,11 @@ import com.ridingmate.api_server.domain.user.repository.UserRepository;
 import com.ridingmate.api_server.global.config.AppConfigProperties;
 import lombok.RequiredArgsConstructor;
 import org.locationtech.jts.geom.LineString;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.time.Duration;
 import java.util.UUID;
@@ -24,6 +29,7 @@ public class RouteService {
     private final RouteRepository routeRepository;
     private final UserRepository userRepository;
 
+    @Transactional
     public Route createRoute(CreateRouteRequest request, LineString routeLine) {
         double averageGradient = calculateAverageGradient(request.elevationGain(), request.distance());
 
@@ -49,7 +55,7 @@ public class RouteService {
 
         route.updateThumbnailImagePath(createThumbnailImagePath(route.getId()));
 
-       return route;
+        return route;
     }
 
     private double calculateAverageGradient(double totalElevationGain, double totalDistance) {
