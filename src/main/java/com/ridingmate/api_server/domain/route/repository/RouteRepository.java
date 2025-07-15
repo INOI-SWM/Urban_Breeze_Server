@@ -16,7 +16,7 @@ import java.util.List;
 public interface RouteRepository extends JpaRepository<Route, Long> {
 
     /**
-     * 사용자별 특정 관계 타입의 경로 조회 (페이지네이션)
+     * 사용자별 특정 관계 타입의 경로 조회 (거리 및 고도 필터링 포함)
      */
     @Query("""
         SELECT r FROM Route r
@@ -24,13 +24,21 @@ public interface RouteRepository extends JpaRepository<Route, Long> {
         WHERE ur.user = :user
         AND ur.relationType = :relationType
         AND ur.isDelete = false
+        AND (:minDistance IS NULL OR r.totalDistance >= :minDistance)
+        AND (:maxDistance IS NULL OR r.totalDistance <= :maxDistance)
+        AND (:minElevationGain IS NULL OR r.totalElevationGain >= :minElevationGain)
+        AND (:maxElevationGain IS NULL OR r.totalElevationGain <= :maxElevationGain)
         """)
-    Page<Route> findByUserAndRelationType(@Param("user") User user, 
-                                         @Param("relationType") RouteRelationType relationType, 
-                                         Pageable pageable);
+    Page<Route> findByUserAndRelationTypeWithFilters(@Param("user") User user,
+                                                     @Param("relationType") RouteRelationType relationType,
+                                                     @Param("minDistance") Double minDistance,
+                                                     @Param("maxDistance") Double maxDistance,
+                                                     @Param("minElevationGain") Double minElevationGain,
+                                                     @Param("maxElevationGain") Double maxElevationGain,
+                                                     Pageable pageable);
 
     /**
-     * 사용자별 여러 관계 타입의 경로 조회 (페이지네이션)
+     * 사용자별 여러 관계 타입의 경로 조회 (거리 및 고도 필터링 포함)
      */
     @Query("""
         SELECT r FROM Route r
@@ -38,19 +46,36 @@ public interface RouteRepository extends JpaRepository<Route, Long> {
         WHERE ur.user = :user
         AND ur.relationType IN :relationTypes
         AND ur.isDelete = false
+        AND (:minDistance IS NULL OR r.totalDistance >= :minDistance)
+        AND (:maxDistance IS NULL OR r.totalDistance <= :maxDistance)
+        AND (:minElevationGain IS NULL OR r.totalElevationGain >= :minElevationGain)
+        AND (:maxElevationGain IS NULL OR r.totalElevationGain <= :maxElevationGain)
         """)
-    Page<Route> findByUserAndRelationTypes(@Param("user") User user, 
-                                          @Param("relationTypes") List<RouteRelationType> relationTypes, 
-                                          Pageable pageable);
+    Page<Route> findByUserAndRelationTypesWithFilters(@Param("user") User user,
+                                                      @Param("relationTypes") List<RouteRelationType> relationTypes,
+                                                      @Param("minDistance") Double minDistance,
+                                                      @Param("maxDistance") Double maxDistance,
+                                                      @Param("minElevationGain") Double minElevationGain,
+                                                      @Param("maxElevationGain") Double maxElevationGain,
+                                                      Pageable pageable);
 
     /**
-     * 사용자별 모든 관계 타입의 경로 조회 (페이지네이션)
+     * 사용자별 모든 관계 타입의 경로 조회 (거리 및 고도 필터링 포함)
      */
     @Query("""
         SELECT r FROM Route r
         JOIN UserRoute ur ON ur.route = r
         WHERE ur.user = :user
         AND ur.isDelete = false
+        AND (:minDistance IS NULL OR r.totalDistance >= :minDistance)
+        AND (:maxDistance IS NULL OR r.totalDistance <= :maxDistance)
+        AND (:minElevationGain IS NULL OR r.totalElevationGain >= :minElevationGain)
+        AND (:maxElevationGain IS NULL OR r.totalElevationGain <= :maxElevationGain)
         """)
-    Page<Route> findByUserWithRelations(@Param("user") User user, Pageable pageable);
+    Page<Route> findByUserWithRelationsAndFilters(@Param("user") User user,
+                                                  @Param("minDistance") Double minDistance,
+                                                  @Param("maxDistance") Double maxDistance,
+                                                  @Param("minElevationGain") Double minElevationGain,
+                                                  @Param("maxElevationGain") Double maxElevationGain,
+                                                  Pageable pageable);
 }
