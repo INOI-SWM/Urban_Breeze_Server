@@ -6,6 +6,7 @@ import com.ridingmate.api_server.domain.route.dto.response.CreateRouteResponse;
 import com.ridingmate.api_server.domain.route.dto.response.RouteListResponse;
 import com.ridingmate.api_server.domain.route.dto.response.RouteSegmentResponse;
 import com.ridingmate.api_server.domain.route.dto.response.ShareRouteResponse;
+import com.ridingmate.api_server.domain.route.enums.RouteRelationType;
 import com.ridingmate.api_server.domain.route.enums.RouteSortType;
 import com.ridingmate.api_server.domain.route.exception.RouteSuccessCode;
 import com.ridingmate.api_server.domain.route.facade.RouteFacade;
@@ -14,6 +15,8 @@ import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+
+import java.util.List;
 
 @RestController
 @RequestMapping("/api/routes")
@@ -53,7 +56,8 @@ public class RouteController implements RouteApi{
     @GetMapping
     public ResponseEntity<CommonResponse<RouteListResponse>> getRouteList(
             @RequestParam(defaultValue = "0") int page,
-            @RequestParam(defaultValue = "CREATED_AT_DESC") RouteSortType sortBy) {
+            @RequestParam(defaultValue = "CREATED_AT_DESC") RouteSortType sortBy,
+            @RequestParam(required = false) List<RouteRelationType> filter) {
         
         // 페이지 크기 3개 고정
         int pageSize = 3;
@@ -61,7 +65,7 @@ public class RouteController implements RouteApi{
         // TODO: 실제 사용자 인증 구현 후 수정 필요
         Long userId = 1L; // 현재는 mockUser 사용
         
-        RouteListResponse response = routeFacade.getRouteList(userId, page, pageSize, sortBy);
+        RouteListResponse response = routeFacade.getRouteList(userId, page, pageSize, sortBy, filter);
         return ResponseEntity
                 .status(RouteSuccessCode.ROUTE_LIST_FETCHED.getStatus())
                 .body(CommonResponse.success(RouteSuccessCode.ROUTE_LIST_FETCHED, response));

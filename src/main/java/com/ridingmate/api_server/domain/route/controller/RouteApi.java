@@ -6,6 +6,7 @@ import com.ridingmate.api_server.domain.route.dto.response.CreateRouteResponse;
 import com.ridingmate.api_server.domain.route.dto.response.RouteListResponse;
 import com.ridingmate.api_server.domain.route.dto.response.RouteSegmentResponse;
 import com.ridingmate.api_server.domain.route.dto.response.ShareRouteResponse;
+import com.ridingmate.api_server.domain.route.enums.RouteRelationType;
 import com.ridingmate.api_server.domain.route.enums.RouteSortType;
 import com.ridingmate.api_server.global.exception.CommonResponse;
 import io.swagger.v3.oas.annotations.Operation;
@@ -18,6 +19,8 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestParam;
+
+import java.util.List;
 
 @Tag(name = "Route API", description = "경로 기능 API")
 public interface RouteApi {
@@ -60,7 +63,7 @@ public interface RouteApi {
     @Operation(
             summary = "내 경로 목록 조회",
             description = """
-            현재 사용자가 생성한 경로 목록을 페이지네이션과 정렬 옵션으로 조회합니다.
+            현재 사용자가 생성한 경로 목록을 페이지네이션과 정렬 옵션, 필터로 조회합니다.
             
             - 페이지 크기: 3개 (고정)
             - 정렬 옵션:
@@ -68,6 +71,10 @@ public interface RouteApi {
               * CREATED_AT_ASC: 오래된순
               * DISTANCE_ASC: 주행거리 오름차순
               * DISTANCE_DESC: 주행거리 내림차순
+            - 필터 옵션:
+              * OWNER: 사용자가 직접 생성한 경로
+              * SHARED: 공유받은 경로
+              * 여러 값 지정 가능 (쉼표로 구분)
             - 포함 정보: 제목, 썸네일, 생성일, 이동거리, 상승고도
             """
     )
@@ -79,6 +86,9 @@ public interface RouteApi {
             @RequestParam(defaultValue = "0") int page,
             
             @Parameter(description = "정렬 타입", example = "CREATED_AT_DESC")
-            @RequestParam(defaultValue = "CREATED_AT_DESC") RouteSortType sortBy
+            @RequestParam(defaultValue = "CREATED_AT_DESC") RouteSortType sortBy,
+            
+            @Parameter(description = "관계 타입 필터 (여러 값 지정 가능)", example = "OWNER,BOOKMARKED")
+            @RequestParam(required = false) List<RouteRelationType> filter
     );
 }

@@ -8,6 +8,7 @@ import com.ridingmate.api_server.domain.route.dto.response.RouteListResponse;
 import com.ridingmate.api_server.domain.route.dto.response.RouteSegmentResponse;
 import com.ridingmate.api_server.domain.route.dto.response.ShareRouteResponse;
 import com.ridingmate.api_server.domain.route.entity.Route;
+import com.ridingmate.api_server.domain.route.enums.RouteRelationType;
 import com.ridingmate.api_server.domain.route.enums.RouteSortType;
 import com.ridingmate.api_server.domain.route.service.RouteService;
 import com.ridingmate.api_server.infra.aws.s3.S3Manager;
@@ -65,49 +66,28 @@ public class RouteFacade {
     }
 
     /**
-     * 정렬 타입과 함께 사용자별 경로 목록 조회
+     * 정렬 타입과 필터와 함께 사용자별 경로 목록 조회
      * @param userId 사용자 ID
      * @param page 페이지 번호
      * @param size 페이지 크기
      * @param sortType 정렬 타입
+     * @param relationTypes 관계 타입 필터
      * @return 정렬된 경로 목록 응답
      */
-    public RouteListResponse getRouteList(Long userId, int page, int size, RouteSortType sortType) {
-        Page<Route> routePage = routeService.getRoutesByUser(userId, page, size, sortType);
-        
-        List<RouteListItemResponse> routeItems = routePage.getContent()
-                .stream()
-                .map(this::convertToRouteListItem)
-                .toList();
+    public RouteListResponse getRouteList(Long userId, int page, int size, RouteSortType sortType, 
+                                         List<RouteRelationType> relationTypes) {
+        // Service에서 경로 목록 조회
+        Page<Route> routePage = routeService.getRoutesByUser(userId, page, size, sortType, relationTypes);
 
-        RouteListResponse.PaginationResponse pagination = new RouteListResponse.PaginationResponse(
-                routePage.getNumber(),
-                routePage.getTotalPages(),
-                routePage.getTotalElements(),
-                routePage.getSize(),
-                routePage.hasNext(),
-                routePage.hasPrevious()
-        );
+        // DTO 생성 시 썸네일 URL 추가
+        List<RouteListItemResponse> routeItems = routePage.getContent().stream()
+            .map(route -> {
+                String thumbnailUrl = s3Manager.getPresignedUrl(route.getThumbnailImagePath());
+                return RouteListItemResponse.from(route, thumbnailUrl);
+            })
+            .toList();
 
-        return new RouteListResponse(routeItems, pagination);
+        return RouteListResponse.of(routeItems, routePage);
     }
 
-    private RouteListItemResponse convertToRouteListItem(Route route) {
-        // 거리를 km 단위로 변환 (소수점 2자리)
-        double distanceKm = new BigDecimal(route.getTotalDistance() / 1000.0)
-                .setScale(2, RoundingMode.DOWN)
-                .doubleValue();
-
-        // S3 URL 생성
-        String thumbnailUrl = s3Manager.getPresignedUrl(route.getThumbnailImagePath());
-
-        return new RouteListItemResponse(
-                route.getId(),
-                route.getTitle(),
-                thumbnailUrl,
-                route.getCreatedAt(),
-                distanceKm,
-                route.getTotalElevationGain()
-        );
-    }
 }
