@@ -4,7 +4,6 @@ import com.ridingmate.api_server.domain.route.dto.request.CreateRouteRequest;
 import com.ridingmate.api_server.domain.route.entity.Route;
 import com.ridingmate.api_server.domain.route.entity.UserRoute;
 import com.ridingmate.api_server.domain.route.enums.RouteRelationType;
-import com.ridingmate.api_server.domain.route.enums.RouteSortType;
 import com.ridingmate.api_server.domain.route.exception.RouteErrorCode;
 import com.ridingmate.api_server.domain.route.exception.RouteException;
 import com.ridingmate.api_server.domain.route.repository.RouteRepository;
@@ -21,8 +20,8 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.Duration;
-import java.util.List;
 import java.util.UUID;
+import com.ridingmate.api_server.domain.route.dto.request.RouteListRequest;
 
 @Service
 @RequiredArgsConstructor
@@ -124,27 +123,31 @@ public class RouteService {
     /**
      * 사용자별 경로 목록을 정렬 타입과 필터에 따라 조회
      * @param userId 사용자 ID
-     * @param page 페이지 번호
-     * @param size 페이지 크기
-     * @param sortType 정렬 타입
-     * @param relationTypes 관계 타입 필터 (null이면 모든 관계 타입)
+     * @param request 경로 목록 조회 요청 정보
      * @return 정렬된 경로 페이지
      */
-    public Page<Route> getRoutesByUser(Long userId, int page, int size, RouteSortType sortType, List<RouteRelationType> relationTypes) {
+    public Page<Route> getRoutesByUser(Long userId, RouteListRequest request) {
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new IllegalArgumentException("User not found"));
 
-        Pageable pageable = PageRequest.of(page, size, sortType.getSort());
+        Pageable pageable = PageRequest.of(request.getPage(), request.getSize(), request.getSortType().getSort());
 
-        if (relationTypes == null || relationTypes.isEmpty()) {
+        if (request.getRelationTypes() == null || request.getRelationTypes().isEmpty()) {
             // 모든 관계 타입 조회
-            return routeRepository.findByUserWithRelations(user, pageable);
-        } else if (relationTypes.size() == 1) {
+            return routeRepository.findByUserWithRelationsAndFilters(user, 
+                    request.getMinDistanceInMeter(), request.getMaxDistanceInMeter(), 
+                    request.getMinElevationGain(), request.getMaxElevationGain(), pageable);
+        } else if (request.getRelationTypes().size() == 1) {
             // 단일 관계 타입 조회
-            return routeRepository.findByUserAndRelationType(user, relationTypes.get(0), pageable);
+            return routeRepository.findByUserAndRelationTypeWithFilters(user, request.getRelationTypes().get(0), 
+                    request.getMinDistanceInMeter(), request.getMaxDistanceInMeter(), 
+                    request.getMinElevationGain(), request.getMaxElevationGain(), pageable);
         } else {
             // 여러 관계 타입 조회
-            return routeRepository.findByUserAndRelationTypes(user, relationTypes, pageable);
+            return routeRepository.findByUserAndRelationTypesWithFilters(user, request.getRelationTypes(), 
+                    request.getMinDistanceInMeter(), request.getMaxDistanceInMeter(), 
+                    request.getMinElevationGain(), request.getMaxElevationGain(), pageable);
         }
     }
+
 }

@@ -2,14 +2,13 @@ package com.ridingmate.api_server.domain.route.facade;
 
 import com.ridingmate.api_server.domain.route.dto.request.CreateRouteRequest;
 import com.ridingmate.api_server.domain.route.dto.request.RouteSegmentRequest;
+import com.ridingmate.api_server.domain.route.dto.request.RouteListRequest;
 import com.ridingmate.api_server.domain.route.dto.response.CreateRouteResponse;
 import com.ridingmate.api_server.domain.route.dto.response.RouteListItemResponse;
 import com.ridingmate.api_server.domain.route.dto.response.RouteListResponse;
 import com.ridingmate.api_server.domain.route.dto.response.RouteSegmentResponse;
 import com.ridingmate.api_server.domain.route.dto.response.ShareRouteResponse;
 import com.ridingmate.api_server.domain.route.entity.Route;
-import com.ridingmate.api_server.domain.route.enums.RouteRelationType;
-import com.ridingmate.api_server.domain.route.enums.RouteSortType;
 import com.ridingmate.api_server.domain.route.service.RouteService;
 import com.ridingmate.api_server.infra.aws.s3.S3Manager;
 import com.ridingmate.api_server.infra.geoapify.GeoapifyClient;
@@ -68,16 +67,12 @@ public class RouteFacade {
     /**
      * 정렬 타입과 필터와 함께 사용자별 경로 목록 조회
      * @param userId 사용자 ID
-     * @param page 페이지 번호
-     * @param size 페이지 크기
-     * @param sortType 정렬 타입
-     * @param relationTypes 관계 타입 필터
+     * @param request 경로 목록 조회 요청 정보
      * @return 정렬된 경로 목록 응답
      */
-    public RouteListResponse getRouteList(Long userId, int page, int size, RouteSortType sortType, 
-                                         List<RouteRelationType> relationTypes) {
+    public RouteListResponse getRouteList(Long userId, RouteListRequest request) {
         // Service에서 경로 목록 조회
-        Page<Route> routePage = routeService.getRoutesByUser(userId, page, size, sortType, relationTypes);
+        Page<Route> routePage = routeService.getRoutesByUser(userId, request);
 
         // DTO 생성 시 썸네일 URL 추가
         List<RouteListItemResponse> routeItems = routePage.getContent().stream()
