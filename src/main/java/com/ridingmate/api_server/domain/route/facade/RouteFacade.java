@@ -2,7 +2,10 @@ package com.ridingmate.api_server.domain.route.facade;
 
 import com.ridingmate.api_server.domain.route.dto.request.CreateRouteRequest;
 import com.ridingmate.api_server.domain.route.dto.request.RouteSegmentRequest;
+import com.ridingmate.api_server.domain.route.dto.request.RouteListRequest;
 import com.ridingmate.api_server.domain.route.dto.response.CreateRouteResponse;
+import com.ridingmate.api_server.domain.route.dto.response.RouteListItemResponse;
+import com.ridingmate.api_server.domain.route.dto.response.RouteListResponse;
 import com.ridingmate.api_server.domain.route.dto.response.RouteSegmentResponse;
 import com.ridingmate.api_server.domain.route.dto.response.ShareRouteResponse;
 import com.ridingmate.api_server.domain.route.entity.Route;
@@ -15,10 +18,12 @@ import com.ridingmate.api_server.infra.ors.dto.response.OrsRouteResponse;
 import com.ridingmate.api_server.global.util.GeometryUtil;
 import lombok.RequiredArgsConstructor;
 import org.locationtech.jts.geom.LineString;
+import org.springframework.data.domain.Page;
 import org.springframework.stereotype.Component;
 
 import java.math.BigDecimal;
 import java.math.RoundingMode;
+import java.util.List;
 
 @Component
 @RequiredArgsConstructor
@@ -58,4 +63,26 @@ public class RouteFacade {
         String shareLink = routeService.createShareLink(routeId);
         return new ShareRouteResponse(shareLink);
     }
+
+    /**
+     * 정렬 타입과 필터와 함께 사용자별 경로 목록 조회
+     * @param userId 사용자 ID
+     * @param request 경로 목록 조회 요청 정보
+     * @return 정렬된 경로 목록 응답
+     */
+    public RouteListResponse getRouteList(Long userId, RouteListRequest request) {
+        // Service에서 경로 목록 조회
+        Page<Route> routePage = routeService.getRoutesByUser(userId, request);
+
+        // DTO 생성 시 썸네일 URL 추가
+        List<RouteListItemResponse> routeItems = routePage.getContent().stream()
+            .map(route -> {
+                String thumbnailUrl = s3Manager.getPresignedUrl(route.getThumbnailImagePath());
+                return RouteListItemResponse.from(route, thumbnailUrl);
+            })
+            .toList();
+
+        return RouteListResponse.of(routeItems, routePage);
+    }
+
 }

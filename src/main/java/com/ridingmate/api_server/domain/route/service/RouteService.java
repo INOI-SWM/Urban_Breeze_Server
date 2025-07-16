@@ -2,18 +2,26 @@ package com.ridingmate.api_server.domain.route.service;
 
 import com.ridingmate.api_server.domain.route.dto.request.CreateRouteRequest;
 import com.ridingmate.api_server.domain.route.entity.Route;
+import com.ridingmate.api_server.domain.route.entity.UserRoute;
+import com.ridingmate.api_server.domain.route.enums.RouteRelationType;
 import com.ridingmate.api_server.domain.route.exception.RouteErrorCode;
 import com.ridingmate.api_server.domain.route.exception.RouteException;
 import com.ridingmate.api_server.domain.route.repository.RouteRepository;
+import com.ridingmate.api_server.domain.route.repository.UserRouteRepository;
 import com.ridingmate.api_server.domain.user.entity.User;
 import com.ridingmate.api_server.domain.user.repository.UserRepository;
 import com.ridingmate.api_server.global.config.AppConfigProperties;
 import lombok.RequiredArgsConstructor;
 import org.locationtech.jts.geom.LineString;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.time.Duration;
 import java.util.UUID;
+import com.ridingmate.api_server.domain.route.dto.request.RouteListRequest;
 
 @Service
 @RequiredArgsConstructor
@@ -22,8 +30,10 @@ public class RouteService {
     private final AppConfigProperties appConfigProperties;
 
     private final RouteRepository routeRepository;
+    private final UserRouteRepository userRouteRepository;
     private final UserRepository userRepository;
 
+    @Transactional
     public Route createRoute(CreateRouteRequest request, LineString routeLine) {
         double averageGradient = calculateAverageGradient(request.elevationGain(), request.distance());
 
@@ -49,7 +59,10 @@ public class RouteService {
 
         route.updateThumbnailImagePath(createThumbnailImagePath(route.getId()));
 
-       return route;
+        // 생성자와 경로 간의 OWNER 관계 생성
+        createUserRouteRelation(mockUser, route, RouteRelationType.OWNER);
+
+        return route;
     }
 
     private double calculateAverageGradient(double totalElevationGain, double totalDistance) {
@@ -75,6 +88,30 @@ public class RouteService {
                 .orElseThrow(() -> new RouteException(RouteErrorCode.ROUTE_NOT_FOUND));
     }
 
+    /**
+     * 사용자와 경로 간의 관계 생성
+     * @param user 사용자
+     * @param route 경로
+     * @param relationType 관계 타입
+     */
+    @Transactional
+    public void createUserRouteRelation(User user, Route route, RouteRelationType relationType) {
+        // 이미 활성 관계가 있는지 확인
+        var activeRelation = userRouteRepository.findByUserAndRouteAndRelationTypeAndIsDeleteFalse(user, route, relationType);
+        if (activeRelation.isPresent()) {
+            // 이미 활성 관계가 있으면 아무것도 하지 않음
+            return;
+        }
+
+        // 새로운 관계 생성
+        UserRoute userRoute = UserRoute.builder()
+                .user(user)
+                .route(route)
+                .relationType(relationType)
+                .build();
+        userRouteRepository.save(userRoute);
+    }
+
     private String getShareId(Route route){
         String shareId = route.getShareId();
         if ( shareId == null || shareId.isBlank()) {
@@ -82,4 +119,35 @@ public class RouteService {
         }
         return shareId;
     }
+
+    /**
+     * 사용자별 경로 목록을 정렬 타입과 필터에 따라 조회
+     * @param userId 사용자 ID
+     * @param request 경로 목록 조회 요청 정보
+     * @return 정렬된 경로 페이지
+     */
+    public Page<Route> getRoutesByUser(Long userId, RouteListRequest request) {
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new IllegalArgumentException("User not found"));
+
+        Pageable pageable = PageRequest.of(request.getPage(), request.getSize(), request.getSortType().getSort());
+
+        if (request.getRelationTypes() == null || request.getRelationTypes().isEmpty()) {
+            // 모든 관계 타입 조회
+            return routeRepository.findByUserWithRelationsAndFilters(user, 
+                    request.getMinDistanceInMeter(), request.getMaxDistanceInMeter(), 
+                    request.getMinElevationGain(), request.getMaxElevationGain(), pageable);
+        } else if (request.getRelationTypes().size() == 1) {
+            // 단일 관계 타입 조회
+            return routeRepository.findByUserAndRelationTypeWithFilters(user, request.getRelationTypes().get(0), 
+                    request.getMinDistanceInMeter(), request.getMaxDistanceInMeter(), 
+                    request.getMinElevationGain(), request.getMaxElevationGain(), pageable);
+        } else {
+            // 여러 관계 타입 조회
+            return routeRepository.findByUserAndRelationTypesWithFilters(user, request.getRelationTypes(), 
+                    request.getMinDistanceInMeter(), request.getMaxDistanceInMeter(), 
+                    request.getMinElevationGain(), request.getMaxElevationGain(), pageable);
+        }
+    }
+
 }
