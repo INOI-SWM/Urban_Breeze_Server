@@ -3,12 +3,10 @@ package com.ridingmate.api_server.domain.route.controller;
 import com.ridingmate.api_server.domain.route.dto.request.CreateRouteRequest;
 import com.ridingmate.api_server.domain.route.dto.request.RouteListRequest;
 import com.ridingmate.api_server.domain.route.dto.request.RouteSegmentRequest;
-import com.ridingmate.api_server.domain.route.dto.response.CreateRouteResponse;
-import com.ridingmate.api_server.domain.route.dto.response.RouteListResponse;
-import com.ridingmate.api_server.domain.route.dto.response.RouteSegmentResponse;
-import com.ridingmate.api_server.domain.route.dto.response.ShareRouteResponse;
+import com.ridingmate.api_server.domain.route.dto.response.*;
 import com.ridingmate.api_server.global.exception.CommonResponse;
 import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -17,6 +15,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.ModelAttribute;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestParam;
 
 @Tag(name = "Route API", description = "경로 기능 API")
 public interface RouteApi {
@@ -80,4 +79,31 @@ public interface RouteApi {
             @ApiResponse(responseCode = "200", description = "성공: 경로 목록 조회 완료"),
     })
     ResponseEntity<CommonResponse<RouteListResponse>> getRouteList(@ModelAttribute RouteListRequest request);
+
+    @Operation(
+            summary = "지도 장소 검색",
+            description = """
+                    카카오 API를 통해 특정 위치 주변의 장소를 검색합니다.
+                    
+                    검색 키워드에 장소와 관련된 키워드가 있다면 장소 기준으로 검색을 합니다.
+                    만약 검색키워드에 장소 관련 키워드가 없다면 검색 중심점 좌표를 기준으로 검색을 실시합니다.
+                    
+                    현재 페이지 1개, 페이지당 15개의 장소가 검색되고 있으며 정확도 순으로 정렬됩니다.
+                    """
+    )
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "성공: 지도 장소 검색 조회 완료"),
+            @ApiResponse(responseCode = "400", description = "잘못된 요청 - 필수 파라미터 누락 또는 잘못된 형식"),
+            @ApiResponse(responseCode = "502", description = "카카오 API 서버 통신 오류")
+    })
+    ResponseEntity<CommonResponse<MapSearchResponse>> getMapSearch(
+            @Parameter(description = "검색할 키워드 (예: 카페, 맛집, 병원)", required = true, example = "카페")
+            @RequestParam String query,
+            
+            @Parameter(description = "검색 중심점 경도 (longitude)", required = true, example = "126.9780")
+            @RequestParam Double lon,
+            
+            @Parameter(description = "검색 중심점 위도 (latitude)", required = true, example = "37.5665")
+            @RequestParam Double lat
+    );
 }

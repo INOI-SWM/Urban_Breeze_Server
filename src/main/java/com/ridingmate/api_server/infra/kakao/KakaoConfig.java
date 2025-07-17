@@ -17,7 +17,7 @@ public class KakaoConfig {
     public WebClient kakaoWebClient() {
         return WebClient.builder()
                 .baseUrl(kakaoProperty.baseUrl())
-                .defaultHeader("Authorization", kakaoProperty.apiKey())
+                .defaultHeader("Authorization", "KakaoAK " + kakaoProperty.apiKey())
                 .build();
     }
 

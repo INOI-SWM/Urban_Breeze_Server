@@ -1,33 +1,27 @@
 package com.ridingmate.api_server.infra.kakao.dto.response;
 
-import lombok.Builder;
-
 import java.util.List;
 
-@Builder
 public record KakaoSearchResponse(
         Meta meta,
         List<Document> documents
 ) {
-    
-    @Builder
+
     public record Meta(
             Integer total_count,
             Integer pageable_count,
             Boolean is_end,
-            RegionInfo region_info
+            SameName same_name
     ) {
     }
-    
-    @Builder
-    public record RegionInfo(
-            String region,
+
+    public record SameName(
             String keyword,
-            Boolean selected_region
+            List<String> region,
+            String selected_region
     ) {
     }
-    
-    @Builder
+
     public record Document(
             String place_name,
             String distance,
