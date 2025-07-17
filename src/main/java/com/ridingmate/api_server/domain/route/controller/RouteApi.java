@@ -79,5 +79,7 @@ public interface RouteApi {
     @ApiResponses({
             @ApiResponse(responseCode = "200", description = "성공: 경로 목록 조회 완료"),
     })
-    ResponseEntity<CommonResponse<RouteListResponse>> getRouteList(@ModelAttribute RouteListRequest request);
+    ResponseEntity<CommonResponse<RouteListResponse>> getRouteList(
+            @ModelAttribute RouteListRequest request
+    );
 }

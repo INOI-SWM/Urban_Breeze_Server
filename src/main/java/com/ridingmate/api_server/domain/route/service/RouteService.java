@@ -130,23 +130,24 @@ public class RouteService {
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new IllegalArgumentException("User not found"));
 
-        Pageable pageable = PageRequest.of(request.getPage(), request.getSize(), request.getSortType().getSort());
+        Pageable pageable = PageRequest.of(request.page(), request.size(), request.sortType().getSort());
 
-        if (request.getRelationTypes() == null || request.getRelationTypes().isEmpty()) {
+        if (request.relationTypes() == null || request.relationTypes().isEmpty()) {
             // 모든 관계 타입 조회
-            return routeRepository.findByUserWithRelationsAndFilters(user, 
+
+            return routeRepository.findByUserWithRelationsAndFilters(user,
                     request.getMinDistanceInMeter(), request.getMaxDistanceInMeter(), 
-                    request.getMinElevationGain(), request.getMaxElevationGain(), pageable);
-        } else if (request.getRelationTypes().size() == 1) {
+                    request.minElevationGain(), request.maxElevationGain(), pageable);
+        } else if (request.relationTypes().size() == 1) {
             // 단일 관계 타입 조회
-            return routeRepository.findByUserAndRelationTypeWithFilters(user, request.getRelationTypes().get(0), 
+            return routeRepository.findByUserAndRelationTypeWithFilters(user, request.relationTypes().get(0),
                     request.getMinDistanceInMeter(), request.getMaxDistanceInMeter(), 
-                    request.getMinElevationGain(), request.getMaxElevationGain(), pageable);
+                    request.minElevationGain(), request.maxElevationGain(), pageable);
         } else {
             // 여러 관계 타입 조회
-            return routeRepository.findByUserAndRelationTypesWithFilters(user, request.getRelationTypes(), 
+            return routeRepository.findByUserAndRelationTypesWithFilters(user, request.relationTypes(),
                     request.getMinDistanceInMeter(), request.getMaxDistanceInMeter(), 
-                    request.getMinElevationGain(), request.getMaxElevationGain(), pageable);
+                    request.minElevationGain(), request.maxElevationGain(), pageable);
         }
     }
 
