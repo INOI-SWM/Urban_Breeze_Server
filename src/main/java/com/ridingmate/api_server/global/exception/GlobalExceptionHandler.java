@@ -6,6 +6,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.validation.BindException;
 import org.springframework.web.HttpRequestMethodNotSupportedException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
+import org.springframework.web.bind.MissingServletRequestParameterException;
 import org.springframework.web.bind.annotation.ControllerAdvice;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
@@ -55,6 +56,23 @@ public class GlobalExceptionHandler {
         return ResponseEntity
                 .status(GlobalErrorCode.BAD_REQUEST.getStatus())
                 .body(CommonResponse.error(GlobalErrorCode.BAD_REQUEST, null));
+    }
+
+    /**
+     * 필수 @RequestParam 파라미터가 누락되었을 때 발생
+     */
+    @ExceptionHandler(MissingServletRequestParameterException.class)
+    protected ResponseEntity<CommonResponse<ErrorResponse>> handleMissingParameter(MissingServletRequestParameterException e) {
+        log.error("MissingServletRequestParameterException - 누락된 파라미터: {}", e.getParameterName(), e);
+        String fieldName = e.getParameterName();
+        String parameterType = e.getParameterType();
+        String reason = String.format("필수 파라미터입니다. (타입: %s)", parameterType);
+        
+        List<ErrorResponse.FieldError> fieldErrors = ErrorResponse.FieldError.of(fieldName, reason);
+        
+        return ResponseEntity
+                .status(GlobalErrorCode.MISSING_PARAMETER.getStatus())
+                .body(CommonResponse.error(GlobalErrorCode.MISSING_PARAMETER, fieldErrors));
     }
 
     /**

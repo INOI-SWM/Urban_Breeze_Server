@@ -64,6 +64,10 @@ public class ErrorResponse {
                     .collect(Collectors.toList());
         }
 
+        public static List<FieldError> of(String field, String reason) {
+            return List.of(new FieldError(field, "", reason));
+        }
+
         FieldError(String field, String value, String reason) {
             this.field = field;
             this.value = value;
