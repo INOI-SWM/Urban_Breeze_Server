@@ -48,7 +48,9 @@ public class RouteController implements RouteApi{
 
     @Override
     @GetMapping
-    public ResponseEntity<CommonResponse<RouteListResponse>> getRouteList(@ModelAttribute RouteListRequest request) {
+    public ResponseEntity<CommonResponse<RouteListResponse>> getRouteList(
+            @ModelAttribute RouteListRequest request
+    ) {
         // TODO: 실제 사용자 인증 구현 후 수정 필요
         Long userId = 1L; // 현재는 mockUser 사용
         
