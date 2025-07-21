@@ -3,10 +3,7 @@ package com.ridingmate.api_server.domain.route.controller;
 import com.ridingmate.api_server.domain.route.dto.request.CreateRouteRequest;
 import com.ridingmate.api_server.domain.route.dto.request.RouteListRequest;
 import com.ridingmate.api_server.domain.route.dto.request.RouteSegmentRequest;
-import com.ridingmate.api_server.domain.route.dto.response.CreateRouteResponse;
-import com.ridingmate.api_server.domain.route.dto.response.RouteListResponse;
-import com.ridingmate.api_server.domain.route.dto.response.RouteSegmentResponse;
-import com.ridingmate.api_server.domain.route.dto.response.ShareRouteResponse;
+import com.ridingmate.api_server.domain.route.dto.response.*;
 import com.ridingmate.api_server.domain.route.exception.RouteSuccessCode;
 import com.ridingmate.api_server.domain.route.facade.RouteFacade;
 import com.ridingmate.api_server.global.exception.CommonResponse;
@@ -61,5 +58,17 @@ public class RouteController implements RouteApi{
         return ResponseEntity
                 .status(RouteSuccessCode.ROUTE_LIST_FETCHED.getStatus())
                 .body(CommonResponse.success(RouteSuccessCode.ROUTE_LIST_FETCHED, response));
+    }
+
+    @Override
+    @GetMapping("/search")
+    public ResponseEntity<CommonResponse<MapSearchResponse>> getMapSearch(
+            @RequestParam String query,
+            @RequestParam Double lon,
+            @RequestParam Double lat) {
+        MapSearchResponse response = routeFacade.getMapSearch(query, lon, lat);
+        return ResponseEntity
+                .status(RouteSuccessCode.MAP_SEARCH_FETCHED.getStatus())
+                .body(CommonResponse.success(RouteSuccessCode.MAP_SEARCH_FETCHED, response));
     }
 }

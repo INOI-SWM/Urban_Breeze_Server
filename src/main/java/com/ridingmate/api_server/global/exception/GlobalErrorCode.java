@@ -10,7 +10,8 @@ public enum GlobalErrorCode implements ErrorCode {
 
     BAD_REQUEST(HttpStatus.BAD_REQUEST, "GLOBAL_001", "잘못된 요청입니다."),
     VALIDATION_ERROR(HttpStatus.BAD_REQUEST, "GLOBAL_002", "요청 데이터가 유효하지 않습니다."),
-    METHOD_NOT_ALLOWED(HttpStatus.METHOD_NOT_ALLOWED, "GLOBAL_003", "허용되지 않은 HTTP 메서드입니다."),
+    MISSING_PARAMETER(HttpStatus.BAD_REQUEST, "GLOBAL_003", "필수 파라미터가 누락되었습니다."),
+    METHOD_NOT_ALLOWED(HttpStatus.METHOD_NOT_ALLOWED, "GLOBAL_004", "허용되지 않은 HTTP 메서드입니다."),
 
     FORBIDDEN(HttpStatus.FORBIDDEN, "GLOBAL_011", "권한이 없습니다."),
 
