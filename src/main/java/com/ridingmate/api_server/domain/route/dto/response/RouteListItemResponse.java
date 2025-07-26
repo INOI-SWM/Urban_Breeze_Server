@@ -40,7 +40,7 @@ public record RouteListItemResponse(
                 thumbnailUrl,
                 route.getCreatedAt(),
                 route.getDistanceInKm(),
-                route.getTotalElevationGain()
+                route.getElevationGain()
         );
     }
 } 
