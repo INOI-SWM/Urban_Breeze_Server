@@ -45,12 +45,5 @@ public record CreateRouteRequest(
                 description = "경로 Bounding Box 좌표 [minLon, minLat, maxLon, maxLat]",
                 example = "[127.01, 37.50, 127.05, 37.55]"
         )
-        List<Double> bbox,
-
-        @Schema(description = "지역 코드", example = "SEOUL_EAST")
-        String region,
-
-        @Schema(description = "난이도", example = "EASY")
-        String difficulty
-
+        List<Double> bbox
 ) {}

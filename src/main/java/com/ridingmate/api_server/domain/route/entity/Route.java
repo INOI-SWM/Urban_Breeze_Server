@@ -1,5 +1,7 @@
 package com.ridingmate.api_server.domain.route.entity;
 
+import com.ridingmate.api_server.domain.route.enums.Difficulty;
+import com.ridingmate.api_server.domain.route.enums.Region;
 import com.ridingmate.api_server.domain.user.entity.User;
 import com.ridingmate.api_server.global.entity.BaseTimeEntity;
 import jakarta.persistence.*;
@@ -53,10 +55,10 @@ public class Route extends BaseTimeEntity {
     private String shareId;
 
     @Column(name = "region")
-    private String region;
+    private Region region;
 
     @Column(name = "difficulty")
-    private String difficulty;
+    private Difficulty difficulty;
 
     @Column(name = "thumbnail_image_path")
     private String thumbnailImagePath;
@@ -70,7 +72,7 @@ public class Route extends BaseTimeEntity {
 
     @Builder
     private Route(User user, String title, String description, Double distance, Duration duration, Double elevationGain,
-                  String shareId, String region, String difficulty, String thumbnailImagePath) {
+                  String shareId) {
         this.user = user;
         this.title = title;
         this.description = description;
@@ -78,8 +80,6 @@ public class Route extends BaseTimeEntity {
         this.duration = duration;
         this.elevationGain = elevationGain;
         this.shareId = shareId;
-        this.region = region;
-        this.difficulty = difficulty;
     }
 
     /**
