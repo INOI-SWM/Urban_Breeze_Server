@@ -10,7 +10,7 @@ import org.locationtech.jts.geom.LineString;
 @Entity
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
-@Table(name = "route_geometry")
+@Table(name = "route_geometries")
 public class RouteGeometry {
 
     @Id
@@ -39,7 +39,7 @@ public class RouteGeometry {
     @Column(name = "average_gradient", nullable = false)
     private double averageGradient;
 
-    @Column(name = "route_line", nullable = false, columnDefinition = "LineString")
+    @Column(name = "route_line", nullable = false, columnDefinition = "geometry(LineString, 4326)")
     private LineString routeLine;
 
     @Builder
