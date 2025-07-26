@@ -9,7 +9,6 @@ import lombok.AccessLevel;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
-import org.locationtech.jts.geom.LineString;
 
 import java.time.Duration;
 
@@ -54,9 +53,11 @@ public class Route extends BaseTimeEntity {
     @Column(name = "share_id", nullable = false)
     private String shareId;
 
+    @Enumerated(EnumType.STRING)
     @Column(name = "region")
     private Region region;
 
+    @Enumerated(EnumType.STRING)
     @Column(name = "difficulty")
     private Difficulty difficulty;
 
