@@ -22,6 +22,7 @@ import org.springframework.transaction.annotation.Transactional;
 import java.time.Duration;
 import java.util.UUID;
 import com.ridingmate.api_server.domain.route.dto.request.RouteListRequest;
+import com.ridingmate.api_server.domain.route.entity.RouteGeometry;
 
 @Service
 @RequiredArgsConstructor
@@ -35,39 +36,46 @@ public class RouteService {
 
     @Transactional
     public Route createRoute(CreateRouteRequest request, LineString routeLine) {
-        double averageGradient = calculateAverageGradient(request.elevationGain(), request.distance());
-
         User mockUser = userRepository.findById(1L)
                 .orElseThrow(() -> new IllegalArgumentException("Mock user not found"));
 
+        // Route 엔티티 생성
         Route route = Route.builder()
                 .user(mockUser)
-                .shareId(UUID.randomUUID().toString())
                 .title(request.title())
+                .description(request.description())
+                .distance(request.distance())
+                .duration(Duration.ofMinutes(request.duration()))
+                .elevationGain(request.elevationGain())
+                .shareId(UUID.randomUUID().toString())
+                .region(request.region())
+                .difficulty(request.difficulty())
+                .build();
+
+        // RouteGeometry 엔티티 생성
+        RouteGeometry routeGeometry = RouteGeometry.builder()
+                .route(route)
                 .routeLine(routeLine)
-                .totalDistance(request.distance())
-                .totalDuration(Duration.ofMinutes(request.duration()))
-                .totalElevationGain(request.elevationGain())
-                .averageGradient(averageGradient)
+                .averageGradient(request.averageGradient())
                 .minLon(request.bbox().get(0))
                 .minLat(request.bbox().get(1))
                 .maxLon(request.bbox().get(2))
                 .maxLat(request.bbox().get(3))
                 .build();
 
+        // 연관관계 설정
+        route.setRouteGeometry(routeGeometry);
+
+        // Route 저장 (RouteGeometry는 cascade 옵션으로 자동 저장)
         routeRepository.save(route);
 
+        // ID가 생성된 후 썸네일 경로 업데이트
         route.updateThumbnailImagePath(createThumbnailImagePath(route.getId()));
 
         // 생성자와 경로 간의 OWNER 관계 생성
         createUserRouteRelation(mockUser, route, RouteRelationType.OWNER);
 
         return route;
-    }
-
-    private double calculateAverageGradient(double totalElevationGain, double totalDistance) {
-        if (totalDistance == 0) return 0.0;
-        return (totalElevationGain / totalDistance) * 100;
     }
 
     private String createThumbnailImagePath(Long routeId) {

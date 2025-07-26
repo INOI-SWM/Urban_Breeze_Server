@@ -48,17 +48,7 @@ public class RouteFacade {
         Route route = routeService.createRoute(request, routeLine);
         s3Manager.uploadByteFiles(route.getThumbnailImagePath(), thumbnailBytes);
 
-        double distanceKm = new BigDecimal(route.getTotalDistance())
-                .setScale(2, RoundingMode.DOWN)
-                .doubleValue();
-
-        return new CreateRouteResponse(
-                route.getId(),
-                route.getTitle(),
-                route.getTotalDuration().toMinutes(),
-                distanceKm,
-                route.getTotalElevationGain()
-                );
+        return CreateRouteResponse.from(route);
     }
 
     public ShareRouteResponse shareRoute(Long routeId) {

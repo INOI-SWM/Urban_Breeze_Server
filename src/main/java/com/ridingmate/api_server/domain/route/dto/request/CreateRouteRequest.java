@@ -6,17 +6,19 @@ import jakarta.validation.constraints.NotEmpty;
 import jakarta.validation.constraints.NotNull;
 
 import io.swagger.v3.oas.annotations.media.Schema;
-import org.locationtech.jts.geom.Coordinate;
 
 import java.util.List;
 
 public record CreateRouteRequest(
 
-        @Schema(description = "경로 이름", example = "한강 라이딩 경로")
+        @Schema(description = "경로 제목", example = "한강 라이딩 경로")
         @NotBlank
         String title,
 
-        @Schema(description = "Polyline 경로", example = "o{~vFf`miWvCkGbAaJjGgQxBwF")
+        @Schema(description = "경로 상세 설명", example = "아름다운 한강을 따라 달리는 초심자용 코스입니다.")
+        String description,
+
+        @Schema(description = "경로 Polyline", example = "o{~vFf`miWvCkGbAaJjGgQxBwF")
         @NotEmpty
         String polyline,
 
@@ -24,13 +26,17 @@ public record CreateRouteRequest(
         @NotNull
         Double distance,
 
-        @Schema(description = "총 소요 시간 (초)", example = "3600")
+        @Schema(description = "예상 소요 시간 (초)", example = "3600")
         @NotNull
         Long duration,
 
         @Schema(description = "총 상승 고도 (미터)", example = "120.4")
         @NotNull
         Double elevationGain,
+
+        @Schema(description = "평균 경사도", example = "2.5")
+        @NotNull
+        Double averageGradient,
 
         @Schema(description = "고도 정보 목록", example = "[20.5, 25.0, 30.2]")
         List<Double> elevations,
@@ -39,6 +45,12 @@ public record CreateRouteRequest(
                 description = "경로 Bounding Box 좌표 [minLon, minLat, maxLon, maxLat]",
                 example = "[127.01, 37.50, 127.05, 37.55]"
         )
-        List<Double> bbox
+        List<Double> bbox,
+
+        @Schema(description = "지역 코드", example = "SEOUL_EAST")
+        String region,
+
+        @Schema(description = "난이도", example = "EASY")
+        String difficulty
 
 ) {}
