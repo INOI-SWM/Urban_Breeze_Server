@@ -24,23 +24,36 @@ public record RouteListItemResponse(
         Double distance,
 
         @Schema(description = "총 상승 고도 (m)", example = "120.4")
-        Double elevationGain
+        Double elevationGain,
+
+        @Schema(description = "사용자 ID", example = "1")
+        Long userId,
+
+        @Schema(description = "사용자 닉네임", example = "라이더123")
+        String nickname,
+
+        @Schema(description = "프로필 이미지 URL", example = "https://s3.amazonaws.com/bucket/profile-1.jpg")
+        String profileImageUrl
 ) {
 
     /**
-     * Route 엔티티와 썸네일 URL로부터 RouteListItemResponse 생성
+     * Route 엔티티와 썸네일 URL, 프로필 이미지 URL로부터 RouteListItemResponse 생성
      * @param route Route 엔티티
      * @param thumbnailUrl 썸네일 이미지 URL
+     * @param profileImageUrl 프로필 이미지 URL
      * @return RouteListItemResponse DTO
      */
-    public static RouteListItemResponse from(Route route, String thumbnailUrl) {
+    public static RouteListItemResponse from(Route route, String thumbnailUrl, String profileImageUrl) {
         return new RouteListItemResponse(
                 route.getId(),
                 route.getTitle(),
                 thumbnailUrl,
                 route.getCreatedAt(),
                 route.getDistanceInKm(),
-                route.getElevationGain()
+                route.getElevationGain(),
+                route.getUser().getId(),
+                route.getUser().getNickname(),
+                profileImageUrl
         );
     }
 } 
