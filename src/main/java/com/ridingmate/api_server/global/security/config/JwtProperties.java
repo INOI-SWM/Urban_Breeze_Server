@@ -14,13 +14,13 @@ import java.util.Map;
 @Setter
 public class JwtProperties {
 
-    private String secretKey = "dGhpc2lzYXNlY3JldGtleWZvcnJpZGluZ21hdGVhcGlzZXJ2ZXJqdHRva2VuZ2VuZXJhdGlvbmFuZHZlcmlmaWNhdGlvbnRoaXNpc2F0bGVhc3QyNTZiaXRzCg==";
+    private String secretKey;
 
-    private long accessTokenExpireTime = 3600000; // 1시간
+    private long accessTokenExpireTime;
 
-    private long refreshTokenExpireTime = 604800000; // 7일
+    private long refreshTokenExpireTime;
 
-    private String issuer = "ridingmate-api";
+    private String issuer;
 
     private Map<String, String> oauth2ClientIds = new HashMap<>();
 
