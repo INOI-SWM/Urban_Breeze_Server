@@ -1,5 +1,7 @@
 package com.ridingmate.api_server.global.security.config;
 
+import com.ridingmate.api_server.global.security.filter.JwtAuthenticationFilter;
+import com.ridingmate.api_server.global.security.filter.JwtExceptionFilter;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -8,6 +10,7 @@ import org.springframework.security.config.annotation.web.configuration.EnableWe
 import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
 import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.web.SecurityFilterChain;
+import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.CorsConfigurationSource;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
@@ -19,7 +22,8 @@ import java.util.List;
 @RequiredArgsConstructor
 public class SecurityConfig {
     
-    // TODO: JWT 필터들이 생성되면 주입받아서 사용
+    private final JwtAuthenticationFilter jwtAuthenticationFilter;
+    private final JwtExceptionFilter jwtExceptionFilter;
     
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
@@ -35,9 +39,9 @@ public class SecurityConfig {
                 .requestMatchers("/v3/api-docs/**").permitAll()   // API 문서
                 .requestMatchers("/").permitAll()                 // 루트 경로
                 .anyRequest().authenticated()
-            );
-            
-            // TODO: JWT 필터 추가 (필터 구현 후 활성화)
+            )
+            .addFilterBefore(jwtExceptionFilter, UsernamePasswordAuthenticationFilter.class)
+            .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);
         
         return http.build();
     }
