@@ -111,8 +111,14 @@ public class JwtTokenProvider {
     
     /**
      * JWT 토큰 유효성 검증
+     * JWT 예외들을 JwtExceptionFilter에서 처리할 수 있도록 그대로 던짐
      * @param token JWT 토큰 문자열
      * @return 유효하면 true, 무효하면 false
+     * @throws ExpiredJwtException 토큰이 만료된 경우
+     * @throws MalformedJwtException 토큰 형식이 잘못된 경우
+     * @throws UnsupportedJwtException 지원되지 않는 토큰인 경우
+     * @throws SecurityException 토큰 서명이 잘못된 경우
+     * @throws IllegalArgumentException 토큰이 비어있는 경우
      */
     public boolean validateToken(String token) {
         try {
@@ -122,15 +128,21 @@ public class JwtTokenProvider {
                 .parseSignedClaims(token);
             return true;
         } catch (ExpiredJwtException e) {
-            log.warn("만료된 JWT 토큰입니다: {}", e.getMessage());
+            log.debug("만료된 JWT 토큰 - JwtExceptionFilter로 전달: {}", e.getMessage());
+            throw e; // JwtExceptionFilter에서 처리하도록 예외 재던지기
         } catch (UnsupportedJwtException e) {
-            log.warn("지원되지 않는 JWT 토큰입니다: {}", e.getMessage());
+            log.debug("지원되지 않는 JWT 토큰 - JwtExceptionFilter로 전달: {}", e.getMessage());
+            throw e; // JwtExceptionFilter에서 처리하도록 예외 재던지기
         } catch (MalformedJwtException e) {
-            log.warn("잘못된 형식의 JWT 토큰입니다: {}", e.getMessage());
-        } catch (SecurityException | IllegalArgumentException e) {
-            log.warn("잘못된 JWT 서명입니다: {}", e.getMessage());
+            log.debug("잘못된 형식의 JWT 토큰 - JwtExceptionFilter로 전달: {}", e.getMessage());
+            throw e; // JwtExceptionFilter에서 처리하도록 예외 재던지기
+        } catch (SecurityException e) {
+            log.debug("잘못된 JWT 서명 - JwtExceptionFilter로 전달: {}", e.getMessage());
+            throw e; // JwtExceptionFilter에서 처리하도록 예외 재던지기
+        } catch (IllegalArgumentException e) {
+            log.debug("JWT 토큰이 비어있음 - JwtExceptionFilter로 전달: {}", e.getMessage());
+            throw e; // JwtExceptionFilter에서 처리하도록 예외 재던지기
         }
-        return false;
     }
     
     /**

@@ -1,8 +1,8 @@
 package com.ridingmate.api_server.global.security.config;
 
 import com.ridingmate.api_server.global.security.filter.JwtAuthenticationFilter;
-import com.ridingmate.api_server.global.security.filter.JwtExceptionFilter;
 import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
@@ -23,7 +23,6 @@ import java.util.List;
 public class SecurityConfig {
     
     private final JwtAuthenticationFilter jwtAuthenticationFilter;
-    private final JwtExceptionFilter jwtExceptionFilter;
     
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
@@ -40,7 +39,6 @@ public class SecurityConfig {
                 .requestMatchers("/").permitAll()                 // 루트 경로
                 .anyRequest().authenticated()
             )
-            .addFilterBefore(jwtExceptionFilter, UsernamePasswordAuthenticationFilter.class)
             .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);
         
         return http.build();

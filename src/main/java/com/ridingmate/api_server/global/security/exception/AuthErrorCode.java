@@ -7,7 +7,7 @@ import org.springframework.http.HttpStatus;
 
 @Getter
 @RequiredArgsConstructor
-public enum JwtErrorCode implements ErrorCode {
+public enum AuthErrorCode implements ErrorCode {
     
     /**
      * JWT 토큰 관련 에러코드들
