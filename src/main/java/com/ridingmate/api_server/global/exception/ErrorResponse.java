@@ -20,12 +20,7 @@ public class ErrorResponse {
     private ErrorResponse(ErrorCode code) {
         this.code = code.getCode();
         this.message = code.getMessage();
-        this.errors = new ArrayList<>();
-    }
-
-    private ErrorResponse(final ErrorCode code,  final String message) {
-        this.code = code.getCode();
-        this.message = message;
+        this.errors = null; // null로 설정하여 JSON에서 제외
     }
 
     private ErrorResponse(ErrorCode code, List<FieldError> errors) {
@@ -37,11 +32,6 @@ public class ErrorResponse {
     public static ErrorResponse of(final ErrorCode code) {
         return new ErrorResponse(code);
     }
-
-    public static ErrorResponse of(final ErrorCode code,  final String message){
-        return new ErrorResponse(code, message);
-    }
-
 
     public static ErrorResponse of(final ErrorCode code, final BindingResult bindingResult) {
         return new ErrorResponse(code, FieldError.of(bindingResult));
