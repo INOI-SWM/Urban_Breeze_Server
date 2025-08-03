@@ -46,6 +46,10 @@ dependencies {
 	// Spring OAuth2 Client
 	implementation 'org.springframework.boot:spring-boot-starter-oauth2-client'
 
+	// Google ID Token 검증
+	implementation 'com.google.api-client:google-api-client:2.2.0'
+	implementation 'com.google.auth:google-auth-library-oauth2-http:1.19.0'
+
 	// API 문서
 	implementation 'org.springdoc:springdoc-openapi-starter-webmvc-ui:2.7.0'
 
