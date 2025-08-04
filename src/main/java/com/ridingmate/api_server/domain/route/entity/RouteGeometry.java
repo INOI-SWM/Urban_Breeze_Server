@@ -36,14 +36,11 @@ public class RouteGeometry {
     @Column(name = "min_lon", nullable = false)
     private double minLon;
 
-    @Column(name = "average_gradient", nullable = false)
-    private double averageGradient;
-
     @Column(name = "route_line", nullable = false, columnDefinition = "geometry(LineString, 4326)")
     private LineString routeLine;
 
     @Builder
-    public RouteGeometry(Long id, Route route, String gpxFilePath, double maxLat, double maxLon, double minLat, double minLon, double averageGradient, LineString routeLine) {
+    public RouteGeometry(Long id, Route route, String gpxFilePath, double maxLat, double maxLon, double minLat, double minLon, LineString routeLine) {
         this.id = id;
         this.route = route;
         this.gpxFilePath = gpxFilePath;
@@ -51,7 +48,6 @@ public class RouteGeometry {
         this.maxLon = maxLon;
         this.minLat = minLat;
         this.minLon = minLon;
-        this.averageGradient = averageGradient;
         this.routeLine = routeLine;
     }
 } 
