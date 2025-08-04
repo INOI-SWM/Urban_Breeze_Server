@@ -50,7 +50,7 @@ public record RouteListItemResponse(
                 thumbnailUrl,
                 route.getCreatedAt(),
                 route.getDistanceInKm(),
-                route.getElevationGain(),
+                route.getRoundedElevationGain(),
                 route.getUser().getId(),
                 route.getUser().getNickname(),
                 profileImageUrl

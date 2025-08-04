@@ -93,6 +93,14 @@ public class Route extends BaseTimeEntity {
                 .doubleValue();
     }
 
+    /**
+     * 총 상승 고도를 소수 둘째자리에서 반올림해서 반환
+     * @return 상승 고도 (m)
+     */
+    public double getRoundedElevationGain() {
+        return Math.round(this.elevationGain * 100.0) / 100.0;
+    }
+
     public void updateThumbnailImagePath(String thumbnailImagePath) {
         this.thumbnailImagePath = thumbnailImagePath;
     }
