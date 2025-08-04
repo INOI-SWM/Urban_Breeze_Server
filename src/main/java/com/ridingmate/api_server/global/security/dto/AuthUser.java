@@ -1,5 +1,6 @@
 package com.ridingmate.api_server.global.security.dto;
 
+import com.ridingmate.api_server.domain.user.entity.User;
 import com.ridingmate.api_server.global.security.enums.SocialProvider;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -16,32 +17,15 @@ import java.util.List;
 @NoArgsConstructor
 @AllArgsConstructor
 public class AuthUser {
-    
-    /**
-     * 사용자 ID (DB의 Primary Key)
-     */
+
     private Long userId;
-    
-    /**
-     * 사용자 이메일
-     */
+
     private String email;
-    
-    /**
-     * 사용자 닉네임  
-     */
+
     private String nickname;
-    
-    /**
-     * 프로필 이미지 URL
-     */
+
     private String profileImageUrl;
-    
-    // ===== 소셜 로그인 관련 =====
-    
-    /**
-     * 소셜 로그인 제공자 (GOOGLE, KAKAO, NAVER, APPLE)
-     */
+
     private SocialProvider provider;
     
     /**
@@ -59,5 +43,22 @@ public class AuthUser {
      */
     public Collection<? extends GrantedAuthority> getAuthorities() {
         return List.of(new SimpleGrantedAuthority("ROLE_USER"));
+    }
+
+    /**
+     * User 엔티티로부터 AuthUser 생성
+     *
+     * @param user 사용자 엔티티
+     * @return AuthUser 인증 사용자 정보
+     */
+    public static AuthUser from(User user) {
+        return AuthUser.builder()
+                .userId(user.getId())
+                .provider(user.getSocialProvider())
+                .socialId(user.getSocialId())
+                .email(user.getEmail())
+                .nickname(user.getNickname())
+                .profileImageUrl(user.getProfileImagePath())
+                .build();
     }
 } 

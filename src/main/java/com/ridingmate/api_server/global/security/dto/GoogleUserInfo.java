@@ -6,7 +6,7 @@ import lombok.Getter;
 
 @Getter
 @Builder
-public class GoogleUserInfo {
+public class GoogleUserInfo implements SocialUserInfo {
     
     private String userId;        // Google 사용자 ID
     private String email;         // 이메일
@@ -34,5 +34,26 @@ public class GoogleUserInfo {
     public boolean isValid() {
         return userId != null && !userId.isEmpty() && 
                email != null && !email.isEmpty();
+    }
+
+    // SocialUserInfo 인터페이스 구현
+    @Override
+    public SocialProvider getProvider() {
+        return SocialProvider.GOOGLE;
+    }
+
+    @Override
+    public String getSocialId() {
+        return userId;
+    }
+
+    @Override
+    public String getNickname() {
+        return name != null ? name : "사용자";
+    }
+
+    @Override
+    public String getProfileImageUrl() {
+        return picture;
     }
 } 

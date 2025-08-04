@@ -1,7 +1,5 @@
 package com.ridingmate.api_server.domain.user.entity;
 
-   import com.ridingmate.api_server.domain.activity.entity.Activity;
-import com.ridingmate.api_server.domain.route.entity.UserRoute;
 import com.ridingmate.api_server.global.entity.BaseTimeEntity;
 import com.ridingmate.api_server.global.security.enums.SocialProvider;
 import jakarta.persistence.*;
@@ -10,8 +8,6 @@ import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
-import java.util.ArrayList;
-import java.util.List;
 
 @Entity
 @Table(name = "users")
@@ -24,10 +20,10 @@ public class User extends BaseTimeEntity {
     private Long id;
 
     @Enumerated(EnumType.STRING)
-    @Column(name = "social_provider", nullable = false)
+    @Column(name = "social_provider")
     private SocialProvider socialProvider;
 
-    @Column(name = "social_id", nullable = false)
+    @Column(name = "social_id")
     private String socialId;
 
     @Column(name = "email", unique = true)
@@ -38,9 +34,6 @@ public class User extends BaseTimeEntity {
 
     @Column(name = "profile_image_path")
     private String profileImagePath;
-
-
-
 
         @Builder
     public User(SocialProvider socialProvider, String socialId, String email, 
@@ -66,4 +59,6 @@ public class User extends BaseTimeEntity {
                 .profileImagePath(profileImagePath)
                 .build();
     }
+
+
 }
