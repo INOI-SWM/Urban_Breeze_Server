@@ -23,7 +23,7 @@ public class ActivityImage extends BaseTimeEntity {
     @Column(name = "image_path", nullable = false)
     private String image_path;
 
-    @Column(name = "order", nullable = false)
-    private String order;
+    @Column(name = "display_order", nullable = false)
+    private String displayOrder;
 
 }
