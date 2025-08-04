@@ -24,10 +24,10 @@ public interface RouteRepository extends JpaRepository<Route, Long> {
         WHERE ur.user = :user
         AND ur.relationType = :relationType
         AND ur.isDelete = false
-        AND (:minDistance IS NULL OR r.totalDistance >= :minDistance)
-        AND (:maxDistance IS NULL OR r.totalDistance <= :maxDistance)
-        AND (:minElevationGain IS NULL OR r.totalElevationGain >= :minElevationGain)
-        AND (:maxElevationGain IS NULL OR r.totalElevationGain <= :maxElevationGain)
+        AND (:minDistance IS NULL OR r.distance >= :minDistance)
+        AND (:maxDistance IS NULL OR r.distance <= :maxDistance)
+        AND (:minElevationGain IS NULL OR r.elevationGain >= :minElevationGain)
+        AND (:maxElevationGain IS NULL OR r.elevationGain <= :maxElevationGain)
         """)
     Page<Route> findByUserAndRelationTypeWithFilters(@Param("user") User user,
                                                      @Param("relationType") RouteRelationType relationType,
@@ -46,10 +46,10 @@ public interface RouteRepository extends JpaRepository<Route, Long> {
         WHERE ur.user = :user
         AND ur.relationType IN :relationTypes
         AND ur.isDelete = false
-        AND (:minDistance IS NULL OR r.totalDistance >= :minDistance)
-        AND (:maxDistance IS NULL OR r.totalDistance <= :maxDistance)
-        AND (:minElevationGain IS NULL OR r.totalElevationGain >= :minElevationGain)
-        AND (:maxElevationGain IS NULL OR r.totalElevationGain <= :maxElevationGain)
+        AND (:minDistance IS NULL OR r.distance >= :minDistance)
+        AND (:maxDistance IS NULL OR r.distance <= :maxDistance)
+        AND (:minElevationGain IS NULL OR r.elevationGain >= :minElevationGain)
+        AND (:maxElevationGain IS NULL OR r.elevationGain <= :maxElevationGain)
         """)
     Page<Route> findByUserAndRelationTypesWithFilters(@Param("user") User user,
                                                       @Param("relationTypes") List<RouteRelationType> relationTypes,
@@ -67,10 +67,10 @@ public interface RouteRepository extends JpaRepository<Route, Long> {
         JOIN UserRoute ur ON ur.route = r
         WHERE ur.user = :user
         AND ur.isDelete = false
-        AND (:minDistance IS NULL OR r.totalDistance >= :minDistance)
-        AND (:maxDistance IS NULL OR r.totalDistance <= :maxDistance)
-        AND (:minElevationGain IS NULL OR r.totalElevationGain >= :minElevationGain)
-        AND (:maxElevationGain IS NULL OR r.totalElevationGain <= :maxElevationGain)
+        AND (:minDistance IS NULL OR r.distance >= :minDistance)
+        AND (:maxDistance IS NULL OR r.distance <= :maxDistance)
+        AND (:minElevationGain IS NULL OR r.elevationGain >= :minElevationGain)
+        AND (:maxElevationGain IS NULL OR r.elevationGain <= :maxElevationGain)
         """)
     Page<Route> findByUserWithRelationsAndFilters(@Param("user") User user,
                                                   @Param("minDistance") Double minDistance,

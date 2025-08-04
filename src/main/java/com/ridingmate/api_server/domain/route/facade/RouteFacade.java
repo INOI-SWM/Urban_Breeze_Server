@@ -48,17 +48,7 @@ public class RouteFacade {
         Route route = routeService.createRoute(request, routeLine);
         s3Manager.uploadByteFiles(route.getThumbnailImagePath(), thumbnailBytes);
 
-        double distanceKm = new BigDecimal(route.getTotalDistance())
-                .setScale(2, RoundingMode.DOWN)
-                .doubleValue();
-
-        return new CreateRouteResponse(
-                route.getId(),
-                route.getTitle(),
-                route.getTotalDuration().toMinutes(),
-                distanceKm,
-                route.getTotalElevationGain()
-                );
+        return CreateRouteResponse.from(route);
     }
 
     public ShareRouteResponse shareRoute(Long routeId) {
@@ -76,11 +66,12 @@ public class RouteFacade {
         // Service에서 경로 목록 조회
         Page<Route> routePage = routeService.getRoutesByUser(userId, request);
 
-        // DTO 생성 시 썸네일 URL 추가
+        // DTO 생성 시 썸네일 URL과 프로필 이미지 URL 추가
         List<RouteListItemResponse> routeItems = routePage.getContent().stream()
             .map(route -> {
                 String thumbnailUrl = s3Manager.getPresignedUrl(route.getThumbnailImagePath());
-                return RouteListItemResponse.from(route, thumbnailUrl);
+                String profileImageUrl = s3Manager.getPresignedUrl(route.getUser().getProfileImagePath());
+                return RouteListItemResponse.from(route, thumbnailUrl, profileImageUrl);
             })
             .toList();
 
