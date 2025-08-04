@@ -34,10 +34,6 @@ public record CreateRouteRequest(
         @NotNull
         Double elevationGain,
 
-        @Schema(description = "평균 경사도", example = "2.5")
-        @NotNull
-        Double averageGradient,
-
         @Schema(description = "고도 정보 목록", example = "[20.5, 25.0, 30.2]")
         List<Double> elevations,
 

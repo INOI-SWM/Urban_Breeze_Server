@@ -50,11 +50,11 @@ public class RouteService {
                 .shareId(UUID.randomUUID().toString())
                 .build();
 
+        
         // RouteGeometry 엔티티 생성
         RouteGeometry routeGeometry = RouteGeometry.builder()
                 .route(route)
                 .routeLine(routeLine)
-                .averageGradient(request.averageGradient())
                 .minLon(request.bbox().get(0))
                 .minLat(request.bbox().get(1))
                 .maxLon(request.bbox().get(2))
@@ -75,7 +75,6 @@ public class RouteService {
 
         return route;
     }
-
     private String createThumbnailImagePath(Long routeId) {
         String uuid = UUID.randomUUID().toString();
         return String.format("ridingmate/route-thumbnails/%d/%s.png", routeId, uuid);
