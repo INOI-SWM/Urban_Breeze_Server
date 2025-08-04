@@ -140,7 +140,8 @@ public class RouteService {
 
         if (request.relationTypes() == null || request.relationTypes().isEmpty()) {
             // 모든 관계 타입 조회
-            return routeRepository.findByUserWithRelationsAndFilters(user, 
+
+            return routeRepository.findByUserWithRelationsAndFilters(user,
                     request.getMinDistanceInMeter(), request.getMaxDistanceInMeter(), 
                     request.minElevationGain(), request.maxElevationGain(), pageable);
         } else if (request.relationTypes().size() == 1) {
