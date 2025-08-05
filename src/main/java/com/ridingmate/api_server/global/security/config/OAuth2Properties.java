@@ -5,52 +5,59 @@ import lombok.Setter;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.stereotype.Component;
 
-import java.util.Map;
+import java.util.List;
 
+/**
+ * OAuth2 설정 프로퍼티
+ */
 @Getter
 @Setter
 @Component
-@ConfigurationProperties(prefix = "jwt.oauth2-client-ids")
+@ConfigurationProperties(prefix = "oauth2")
 public class OAuth2Properties {
-    
-    private String google;
-    private String apple;
-    private String kakao;
-    
+
     /**
-     * Google 클라이언트 ID 조회
+     * Google Client ID 목록 (iOS, Android 등)
+     */
+    private List<String> googleClientIds;
+
+    /**
+     * Apple Client ID (단일 - iOS/Android 공통)
+     */
+    private String appleClientId;
+
+    /**
+     * Kakao Client ID (단일 - iOS/Android 공통)
+     */
+    private String kakaoClientId;
+
+    /**
+     * Google Client ID 목록 반환
+     */
+    public List<String> getGoogleClientIds() {
+        return googleClientIds;
+    }
+
+    /**
+     * 첫 번째 Google Client ID 반환 (하위 호환성)
      */
     public String getGoogleClientId() {
-        return google;
+        return googleClientIds != null && !googleClientIds.isEmpty() 
+            ? googleClientIds.get(0) 
+            : null;
     }
-    
+
     /**
-     * Apple 클라이언트 ID 조회
+     * Apple Client ID 반환
      */
     public String getAppleClientId() {
-        return apple;
+        return appleClientId;
     }
-    
+
     /**
-     * Kakao 클라이언트 ID 조회
+     * Kakao Client ID 반환
      */
     public String getKakaoClientId() {
-        return kakao;
-    }
-    
-    /**
-     * 특정 provider의 클라이언트 ID 조회
-     */
-    public String getClientId(String provider) {
-        switch (provider.toLowerCase()) {
-            case "google":
-                return getGoogleClientId();
-            case "apple":
-                return getAppleClientId();
-            case "kakao":
-                return getKakaoClientId();
-            default:
-                throw new IllegalArgumentException("Unsupported provider: " + provider);
-        }
+        return kakaoClientId;
     }
 } 

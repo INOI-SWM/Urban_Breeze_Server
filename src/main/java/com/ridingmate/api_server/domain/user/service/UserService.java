@@ -8,10 +8,12 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+/**
+ * 사용자 관리 서비스
+ */
 @Slf4j
 @Service
 @RequiredArgsConstructor
-@Transactional
 public class UserService {
 
     private final UserRepository userRepository;
@@ -22,6 +24,7 @@ public class UserService {
      * @param socialUserInfo 소셜 사용자 정보
      * @return User 사용자 엔티티
      */
+    @Transactional
     public User findOrCreateUser(SocialUserInfo socialUserInfo) {
         // 기존 사용자 조회
         return userRepository.findBySocialProviderAndSocialId(

@@ -29,7 +29,6 @@ public class AuthFacade {
      */
     public LoginResponse googleLogin(GoogleLoginRequest request) {
         // 1. Google ID 토큰 검증
-
         GoogleUserInfo googleUserInfo = tokenService.verifyGoogleToken(request.getIdToken());
         
         // 2. 사용자 조회 또는 생성
@@ -39,7 +38,9 @@ public class AuthFacade {
         TokenInfo tokenInfo = tokenService.generateToken(user);
         
         // 4. 응답 생성
-        return createLoginResponse(tokenInfo, user);
+        return LoginResponse.of(tokenInfo, user.getId(), user.getEmail(),
+                user.getNickname(), user.getProfileImagePath()
+        );
     }
 
     /**
@@ -62,20 +63,5 @@ public class AuthFacade {
     public LoginResponse kakaoLogin(KakaoLoginRequest request) {
         // TODO: Kakao ID 토큰 검증 구현
         throw new UnsupportedOperationException("Kakao 로그인은 아직 지원되지 않습니다.");
-    }
-
-    /**
-     * 로그인 응답 생성
-     */
-    private LoginResponse createLoginResponse(TokenInfo tokenInfo, User user) {
-        return new LoginResponse(
-            tokenInfo,
-            new LoginResponse.UserInfo(
-                user.getId(),
-                user.getEmail(),
-                user.getNickname(),
-                user.getProfileImagePath()
-            )
-        );
     }
 }

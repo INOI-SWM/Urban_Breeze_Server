@@ -10,6 +10,9 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
+/**
+ * JWT 토큰 생성 및 검증 서비스
+ */
 @Slf4j
 @Service
 @RequiredArgsConstructor
@@ -50,7 +53,6 @@ public class TokenService {
         return googleIdTokenValidator.verify(idToken);
     }
 
-
     /**
      * 토큰에서 사용자 정보 추출
      *
@@ -58,8 +60,7 @@ public class TokenService {
      * @return 사용자 정보
      */
     public User getUserFromToken(String token) {
-        // 토큰에서 AuthUser 추출 후 User로 변환하는 로직
-        // (현재는 JwtTokenProvider에서 직접 처리)
-        return null; // TODO: 구현 필요
+        // TODO: 토큰에서 사용자 정보 추출 로직 구현
+        return null;
     }
 } 
