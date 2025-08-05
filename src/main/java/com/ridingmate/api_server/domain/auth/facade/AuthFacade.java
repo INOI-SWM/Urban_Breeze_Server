@@ -8,6 +8,7 @@ import com.ridingmate.api_server.domain.auth.service.TokenService;
 import com.ridingmate.api_server.domain.user.entity.User;
 import com.ridingmate.api_server.domain.user.service.UserService;
 import com.ridingmate.api_server.global.security.dto.GoogleUserInfo;
+import com.ridingmate.api_server.global.security.dto.KakaoUserInfo;
 import com.ridingmate.api_server.global.security.dto.TokenInfo;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -61,7 +62,18 @@ public class AuthFacade {
      * @return LoginResponse 로그인 응답
      */
     public LoginResponse kakaoLogin(KakaoLoginRequest request) {
-        // TODO: Kakao ID 토큰 검증 구현
-        throw new UnsupportedOperationException("Kakao 로그인은 아직 지원되지 않습니다.");
+        // 1. Kakao Access Token 검증
+        KakaoUserInfo kakaoUserInfo = tokenService.verifyKakaoToken(request.getIdToken());
+        
+        // 2. 사용자 조회 또는 생성
+        User user = userService.findOrCreateUser(kakaoUserInfo);
+        
+        // 3. JWT 토큰 생성
+        TokenInfo tokenInfo = tokenService.generateToken(user);
+        
+        // 4. 응답 생성
+        return LoginResponse.of(tokenInfo, user.getId(), user.getEmail(),
+                user.getNickname(), user.getProfileImagePath()
+        );
     }
 }

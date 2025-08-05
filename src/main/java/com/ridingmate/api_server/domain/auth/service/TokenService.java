@@ -3,8 +3,10 @@ package com.ridingmate.api_server.domain.auth.service;
 import com.ridingmate.api_server.domain.user.entity.User;
 import com.ridingmate.api_server.global.security.dto.AuthUser;
 import com.ridingmate.api_server.global.security.dto.GoogleUserInfo;
+import com.ridingmate.api_server.global.security.dto.KakaoUserInfo;
 import com.ridingmate.api_server.global.security.dto.TokenInfo;
 import com.ridingmate.api_server.global.security.provider.GoogleIdTokenValidator;
+import com.ridingmate.api_server.global.security.provider.KakaoIdTokenValidator;
 import com.ridingmate.api_server.global.security.provider.JwtTokenProvider;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -20,6 +22,7 @@ public class TokenService {
 
     private final JwtTokenProvider jwtTokenProvider;
     private final GoogleIdTokenValidator googleIdTokenValidator;
+    private final KakaoIdTokenValidator kakaoIdTokenValidator;
 
     /**
      * JWT 토큰 생성
@@ -51,6 +54,17 @@ public class TokenService {
     public GoogleUserInfo verifyGoogleToken(String idToken) {
         log.debug("Google ID 토큰 검증 시작");
         return googleIdTokenValidator.verify(idToken);
+    }
+
+    /**
+     * Kakao Access Token 검증
+     *
+     * @param accessToken Kakao Access Token
+     * @return KakaoUserInfo Kakao 사용자 정보
+     */
+    public KakaoUserInfo verifyKakaoToken(String accessToken) {
+        log.debug("Kakao Access Token 검증 시작");
+        return kakaoIdTokenValidator.verify(accessToken);
     }
 
     /**

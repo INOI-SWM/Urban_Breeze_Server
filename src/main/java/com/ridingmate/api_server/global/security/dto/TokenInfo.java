@@ -1,30 +1,19 @@
 package com.ridingmate.api_server.global.security.dto;
 
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
+/**
+ * JWT 토큰 정보 DTO
+ */
+public record TokenInfo(
+    String accessToken,
+    String refreshToken,
+    String tokenType,
+    Long expiresIn
+) {
 
-@Getter
-@Builder
-@NoArgsConstructor
-@AllArgsConstructor
-public class TokenInfo {
-
-    private String accessToken;
-
-    private String refreshToken;
-
-    private String tokenType;
-
-    private Long expiresIn;
-
+    /**
+     * Bearer 토큰 정보 생성
+     */
     public static TokenInfo bearer(String accessToken, String refreshToken, Long expiresIn) {
-        return TokenInfo.builder()
-                .accessToken(accessToken)
-                .refreshToken(refreshToken)
-                .tokenType("Bearer")
-                .expiresIn(expiresIn)
-                .build();
+        return new TokenInfo(accessToken, refreshToken, "Bearer", expiresIn);
     }
 } 
