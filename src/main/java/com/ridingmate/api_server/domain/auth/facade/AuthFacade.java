@@ -7,6 +7,7 @@ import com.ridingmate.api_server.domain.auth.dto.response.LoginResponse;
 import com.ridingmate.api_server.domain.auth.service.TokenService;
 import com.ridingmate.api_server.domain.user.entity.User;
 import com.ridingmate.api_server.domain.user.service.UserService;
+import com.ridingmate.api_server.global.security.dto.AppleUserInfo;
 import com.ridingmate.api_server.global.security.dto.GoogleUserInfo;
 import com.ridingmate.api_server.global.security.dto.KakaoUserInfo;
 import com.ridingmate.api_server.global.security.dto.TokenInfo;
@@ -30,7 +31,7 @@ public class AuthFacade {
      */
     public LoginResponse googleLogin(GoogleLoginRequest request) {
         // 1. Google ID 토큰 검증
-        GoogleUserInfo googleUserInfo = tokenService.verifyGoogleToken(request.getIdToken());
+        GoogleUserInfo googleUserInfo = tokenService.verifyGoogleToken(request.idToken());
         
         // 2. 사용자 조회 또는 생성
         User user = userService.findOrCreateUser(googleUserInfo);
@@ -51,7 +52,10 @@ public class AuthFacade {
      * @return LoginResponse 로그인 응답
      */
     public LoginResponse appleLogin(AppleLoginRequest request) {
-        // TODO: Apple ID 토큰 검증 구현
+
+        AppleUserInfo appleUserInfo = tokenService.verifyAppleToken(request.idToken());
+
+
         throw new UnsupportedOperationException("Apple 로그인은 아직 지원되지 않습니다.");
     }
 
@@ -63,7 +67,7 @@ public class AuthFacade {
      */
     public LoginResponse kakaoLogin(KakaoLoginRequest request) {
         // 1. Kakao Access Token 검증
-        KakaoUserInfo kakaoUserInfo = tokenService.verifyKakaoToken(request.getIdToken());
+        KakaoUserInfo kakaoUserInfo = tokenService.verifyKakaoToken(request.idToken());
         
         // 2. 사용자 조회 또는 생성
         User user = userService.findOrCreateUser(kakaoUserInfo);
