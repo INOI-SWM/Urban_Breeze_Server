@@ -55,8 +55,12 @@ public class AuthFacade {
 
         AppleUserInfo appleUserInfo = tokenService.verifyAppleToken(request.idToken());
 
+        User user = userService.findOrCreateUser(appleUserInfo);
 
-        throw new UnsupportedOperationException("Apple 로그인은 아직 지원되지 않습니다.");
+        TokenInfo tokenInfo = tokenService.generateToken(user);
+
+        return LoginResponse.of(tokenInfo, user.getId(), user.getEmail(),
+                user.getNickname(), user.getProfileImagePath());
     }
 
     /**

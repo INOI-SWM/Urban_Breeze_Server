@@ -1,10 +1,8 @@
 package com.ridingmate.api_server.domain.auth.service;
 
 import com.ridingmate.api_server.domain.user.entity.User;
-import com.ridingmate.api_server.global.security.dto.AuthUser;
-import com.ridingmate.api_server.global.security.dto.GoogleUserInfo;
-import com.ridingmate.api_server.global.security.dto.KakaoUserInfo;
-import com.ridingmate.api_server.global.security.dto.TokenInfo;
+import com.ridingmate.api_server.global.security.dto.*;
+import com.ridingmate.api_server.global.security.provider.AppleIdTokenValidator;
 import com.ridingmate.api_server.global.security.provider.GoogleIdTokenValidator;
 import com.ridingmate.api_server.global.security.provider.KakaoIdTokenValidator;
 import com.ridingmate.api_server.global.security.provider.JwtTokenProvider;
@@ -23,6 +21,7 @@ public class TokenService {
     private final JwtTokenProvider jwtTokenProvider;
     private final GoogleIdTokenValidator googleIdTokenValidator;
     private final KakaoIdTokenValidator kakaoIdTokenValidator;
+    private final AppleIdTokenValidator appleIdTokenValidator;
 
     /**
      * JWT 토큰 생성
@@ -54,6 +53,11 @@ public class TokenService {
     public GoogleUserInfo verifyGoogleToken(String idToken) {
         log.debug("Google ID 토큰 검증 시작");
         return googleIdTokenValidator.verify(idToken);
+    }
+
+    public AppleUserInfo verifyAppleToken(String idToken) {
+        log.debug("Apple ID 토큰 검증 시작");
+        return appleIdTokenValidator.verify(idToken);
     }
 
     /**
