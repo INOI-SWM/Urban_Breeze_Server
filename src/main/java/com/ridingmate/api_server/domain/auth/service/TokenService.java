@@ -1,5 +1,6 @@
 package com.ridingmate.api_server.domain.auth.service;
 
+import com.ridingmate.api_server.domain.auth.entity.RefreshToken;
 import com.ridingmate.api_server.domain.user.entity.User;
 import com.ridingmate.api_server.global.security.dto.*;
 import com.ridingmate.api_server.global.security.provider.AppleIdTokenValidator;
@@ -22,16 +23,29 @@ public class TokenService {
     private final GoogleIdTokenValidator googleIdTokenValidator;
     private final KakaoIdTokenValidator kakaoIdTokenValidator;
     private final AppleIdTokenValidator appleIdTokenValidator;
+    private final RefreshTokenService refreshTokenService;
 
     /**
-     * JWT 토큰 생성
+     * JWT 토큰 생성 (Access Token + Refresh Token)
      *
      * @param user 사용자 엔티티
      * @return TokenInfo JWT 토큰 정보
      */
     public TokenInfo generateToken(User user) {
         log.debug("JWT 토큰 생성 - 사용자: {}", user.getId());
-        return jwtTokenProvider.generateTokenInfo(AuthUser.from(user));
+        
+        // Access Token 생성
+        TokenInfo basicTokenInfo = jwtTokenProvider.generateTokenInfo(AuthUser.from(user));
+        
+        // Refresh Token 생성 및 저장
+        RefreshToken refreshToken = refreshTokenService.createRefreshToken(user, null, null);
+        
+        // 새로운 Refresh Token으로 TokenInfo 생성
+        return TokenInfo.bearer(
+                basicTokenInfo.accessToken(),
+                refreshToken.getToken(),
+                basicTokenInfo.expiresIn()
+        );
     }
 
     /**
@@ -72,13 +86,12 @@ public class TokenService {
     }
 
     /**
-     * 토큰에서 사용자 정보 추출
+     * 사용자의 모든 Refresh Token 무효화 (로그아웃)
      *
-     * @param token JWT 토큰
-     * @return 사용자 정보
+     * @param user 사용자
      */
-    public User getUserFromToken(String token) {
-        // TODO: 토큰에서 사용자 정보 추출 로직 구현
-        return null;
+    public void revokeAllUserTokens(User user) {
+        log.info("사용자 모든 토큰 무효화 - 사용자: {}", user.getId());
+        refreshTokenService.revokeAllUserTokens(user);
     }
 } 

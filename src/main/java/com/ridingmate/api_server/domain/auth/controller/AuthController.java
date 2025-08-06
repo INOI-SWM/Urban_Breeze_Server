@@ -3,10 +3,13 @@ package com.ridingmate.api_server.domain.auth.controller;
 import com.ridingmate.api_server.domain.auth.dto.request.AppleLoginRequest;
 import com.ridingmate.api_server.domain.auth.dto.request.GoogleLoginRequest;
 import com.ridingmate.api_server.domain.auth.dto.request.KakaoLoginRequest;
+import com.ridingmate.api_server.domain.auth.dto.request.RefreshTokenRequest;
 import com.ridingmate.api_server.domain.auth.dto.response.LoginResponse;
 import com.ridingmate.api_server.domain.auth.exception.AuthSuccessCode;
 import com.ridingmate.api_server.domain.auth.facade.AuthFacade;
+import com.ridingmate.api_server.domain.auth.service.TokenService;
 import com.ridingmate.api_server.global.exception.CommonResponse;
+import com.ridingmate.api_server.global.security.dto.TokenInfo;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -49,5 +52,17 @@ public class AuthController implements AuthApi {
         return ResponseEntity
                 .status(AuthSuccessCode.KAKAO_LOGIN_SUCCESS.getStatus())
                 .body(CommonResponse.success(AuthSuccessCode.KAKAO_LOGIN_SUCCESS, response));
+    }
+
+    /**
+     * 토큰 갱신 API
+     */
+    @PostMapping("/refresh")
+    public ResponseEntity<CommonResponse<TokenInfo>> refreshToken(@Valid @RequestBody RefreshTokenRequest request) {
+        log.info("토큰 갱신 요청");
+        TokenInfo response = authFacade.refreshAccessToken(request.refreshToken());
+        return ResponseEntity
+                .status(AuthSuccessCode.TOKEN_REFRESH_SUCCESS.getStatus())
+                .body(CommonResponse.success(AuthSuccessCode.TOKEN_REFRESH_SUCCESS, response));
     }
 } 
