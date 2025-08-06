@@ -31,11 +31,12 @@ public class SecurityConfig {
             .sessionManagement(session -> 
                 session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
             .authorizeHttpRequests(auth -> auth
-                .requestMatchers("/api/auth/**").permitAll()      // 로그인 API
+                .requestMatchers("/api/auth/**").permitAll()    // 로그인 API
                 .requestMatchers("/actuator/**").permitAll()      // 헬스체크
                 .requestMatchers("/swagger-ui/**").permitAll()    // Swagger UI
                 .requestMatchers("/v3/api-docs/**").permitAll()   // API 문서
                 .requestMatchers("/").permitAll()                 // 루트 경로
+                .requestMatchers("/api/test/**").permitAll()
                 .anyRequest().authenticated()
             )
             .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);

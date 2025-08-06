@@ -170,6 +170,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
                path.startsWith("/actuator/") ||           // Spring Boot Actuator
                path.startsWith("/swagger-ui/") ||         // Swagger UI
                path.startsWith("/v3/api-docs") ||         // OpenAPI 문서
+               path.startsWith("/api/test/") ||           // 테스트 API
                path.equals("/") ||                        // 루트 경로
                path.equals("/health") ||                  // 헬스체크
                path.equals("/favicon.ico");               // 파비콘
