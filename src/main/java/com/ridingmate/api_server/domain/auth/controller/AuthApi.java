@@ -55,13 +55,13 @@ public interface AuthApi {
             description = """
             Kakao ID 토큰을 통해 사용자 인증을 수행합니다.
             
-            - idToken: Kakao에서 발급받은 ID 토큰
+            - accessToken: Kakao에서 발급받은 Access Token
             - 응답: JWT 액세스 토큰, 리프레시 토큰, 사용자 정보
             """
     )
     @ApiResponses({
             @ApiResponse(responseCode = "200", description = "성공: Kakao 로그인 완료"),
-            @ApiResponse(responseCode = "401", description = "인증 실패 - 유효하지 않은 ID 토큰"),
+            @ApiResponse(responseCode = "401", description = "인증 실패 - 유효하지 않은 Access Token"),
             @ApiResponse(responseCode = "400", description = "잘못된 요청 - 필수 파라미터 누락")
     })
     ResponseEntity<CommonResponse<LoginResponse>> kakaoLogin(@Valid @RequestBody KakaoLoginRequest request);

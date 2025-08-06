@@ -7,7 +7,7 @@ import jakarta.validation.constraints.NotBlank;
  * Kakao 로그인 요청 DTO
  */
 public record KakaoLoginRequest(
-    @Schema(description = "Kakao ID 토큰", example = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...")
-    @NotBlank(message = "ID 토큰은 필수입니다.")
-    String idToken
+    @Schema(description = "Kakao Access Token", example = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...")
+    @NotBlank(message = "Access Token은 필수입니다.")
+    String accessToken
 ) {} 

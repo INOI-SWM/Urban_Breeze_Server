@@ -73,7 +73,7 @@ public class AuthFacade {
      */
     public LoginResponse kakaoLogin(KakaoLoginRequest request) {
         // 1. Kakao Access Token 검증
-        KakaoUserInfo kakaoUserInfo = tokenService.verifyKakaoToken(request.idToken());
+        KakaoUserInfo kakaoUserInfo = tokenService.verifyKakaoToken(request.accessToken());
         
         // 2. 사용자 조회 또는 생성
         User user = userService.findOrCreateUser(kakaoUserInfo);
