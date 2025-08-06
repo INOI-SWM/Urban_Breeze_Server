@@ -1,4 +1,4 @@
-package com.ridingmate.api_server.global.security.enums;
+package com.ridingmate.api_server.domain.auth.enums;
 
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;

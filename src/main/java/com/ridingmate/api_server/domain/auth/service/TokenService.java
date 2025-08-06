@@ -1,12 +1,12 @@
 package com.ridingmate.api_server.domain.auth.service;
 
+import com.ridingmate.api_server.domain.auth.dto.*;
 import com.ridingmate.api_server.domain.auth.entity.RefreshToken;
 import com.ridingmate.api_server.domain.user.entity.User;
-import com.ridingmate.api_server.global.security.dto.*;
-import com.ridingmate.api_server.global.security.provider.AppleIdTokenValidator;
-import com.ridingmate.api_server.global.security.provider.GoogleIdTokenValidator;
-import com.ridingmate.api_server.global.security.provider.KakaoIdTokenValidator;
-import com.ridingmate.api_server.global.security.provider.JwtTokenProvider;
+import com.ridingmate.api_server.domain.auth.validator.AppleIdTokenValidator;
+import com.ridingmate.api_server.domain.auth.validator.GoogleIdTokenValidator;
+import com.ridingmate.api_server.domain.auth.validator.KakaoIdTokenValidator;
+import com.ridingmate.api_server.domain.auth.jwt.JwtTokenProvider;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;

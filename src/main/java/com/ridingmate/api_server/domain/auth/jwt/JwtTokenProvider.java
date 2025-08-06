@@ -1,9 +1,9 @@
-package com.ridingmate.api_server.global.security.provider;
+package com.ridingmate.api_server.domain.auth.jwt;
 
-import com.ridingmate.api_server.global.security.config.JwtProperties;
-import com.ridingmate.api_server.global.security.dto.AuthUser;
-import com.ridingmate.api_server.global.security.dto.TokenInfo;
-import com.ridingmate.api_server.global.security.enums.SocialProvider;
+import com.ridingmate.api_server.domain.auth.config.JwtProperties;
+import com.ridingmate.api_server.domain.auth.dto.AuthUser;
+import com.ridingmate.api_server.domain.auth.dto.TokenInfo;
+import com.ridingmate.api_server.domain.auth.enums.SocialProvider;
 import io.jsonwebtoken.*;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;

@@ -1,7 +1,7 @@
 package com.ridingmate.api_server.domain.user.entity;
 
 import com.ridingmate.api_server.global.entity.BaseTimeEntity;
-import com.ridingmate.api_server.global.security.enums.SocialProvider;
+import com.ridingmate.api_server.domain.auth.enums.SocialProvider;
 import jakarta.persistence.*;
 import lombok.AccessLevel;
 import lombok.Builder;

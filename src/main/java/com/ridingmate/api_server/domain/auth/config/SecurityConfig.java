@@ -1,8 +1,7 @@
-package com.ridingmate.api_server.global.security.config;
+package com.ridingmate.api_server.domain.auth.config;
 
-import com.ridingmate.api_server.global.security.filter.JwtAuthenticationFilter;
+import com.ridingmate.api_server.domain.auth.jwt.JwtAuthenticationFilter;
 import lombok.RequiredArgsConstructor;
-import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;

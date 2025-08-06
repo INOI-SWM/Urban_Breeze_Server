@@ -1,6 +1,6 @@
-package com.ridingmate.api_server.global.security.dto;
+package com.ridingmate.api_server.domain.auth.dto;
 
-import com.ridingmate.api_server.global.security.enums.SocialProvider;
+import com.ridingmate.api_server.domain.auth.enums.SocialProvider;
 import lombok.Builder;
 import lombok.Getter;
 

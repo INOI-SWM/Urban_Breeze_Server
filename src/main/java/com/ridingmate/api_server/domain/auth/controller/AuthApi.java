@@ -6,7 +6,7 @@ import com.ridingmate.api_server.domain.auth.dto.request.KakaoLoginRequest;
 import com.ridingmate.api_server.domain.auth.dto.request.RefreshTokenRequest;
 import com.ridingmate.api_server.domain.auth.dto.response.LoginResponse;
 import com.ridingmate.api_server.global.exception.CommonResponse;
-import com.ridingmate.api_server.global.security.dto.TokenInfo;
+import com.ridingmate.api_server.domain.auth.dto.TokenInfo;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;

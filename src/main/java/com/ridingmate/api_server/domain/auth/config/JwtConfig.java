@@ -1,4 +1,4 @@
-package com.ridingmate.api_server.global.security.config;
+package com.ridingmate.api_server.domain.auth.config;
 
 import io.jsonwebtoken.io.Decoders;
 import io.jsonwebtoken.security.Keys;

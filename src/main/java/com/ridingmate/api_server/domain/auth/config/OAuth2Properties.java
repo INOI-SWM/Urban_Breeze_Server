@@ -1,4 +1,4 @@
-package com.ridingmate.api_server.global.security.config;
+package com.ridingmate.api_server.domain.auth.config;
 
 import lombok.Getter;
 import lombok.Setter;

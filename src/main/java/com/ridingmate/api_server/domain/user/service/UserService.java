@@ -2,7 +2,7 @@ package com.ridingmate.api_server.domain.user.service;
 
 import com.ridingmate.api_server.domain.user.entity.User;
 import com.ridingmate.api_server.domain.user.repository.UserRepository;
-import com.ridingmate.api_server.global.security.dto.SocialUserInfo;
+import com.ridingmate.api_server.domain.auth.dto.SocialUserInfo;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;

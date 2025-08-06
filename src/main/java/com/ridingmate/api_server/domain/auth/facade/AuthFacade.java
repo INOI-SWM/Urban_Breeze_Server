@@ -4,13 +4,14 @@ import com.ridingmate.api_server.domain.auth.dto.request.AppleLoginRequest;
 import com.ridingmate.api_server.domain.auth.dto.request.GoogleLoginRequest;
 import com.ridingmate.api_server.domain.auth.dto.request.KakaoLoginRequest;
 import com.ridingmate.api_server.domain.auth.dto.response.LoginResponse;
+import com.ridingmate.api_server.domain.auth.service.RefreshTokenService;
 import com.ridingmate.api_server.domain.auth.service.TokenService;
 import com.ridingmate.api_server.domain.user.entity.User;
 import com.ridingmate.api_server.domain.user.service.UserService;
-import com.ridingmate.api_server.global.security.dto.AppleUserInfo;
-import com.ridingmate.api_server.global.security.dto.GoogleUserInfo;
-import com.ridingmate.api_server.global.security.dto.KakaoUserInfo;
-import com.ridingmate.api_server.global.security.dto.TokenInfo;
+import com.ridingmate.api_server.domain.auth.dto.AppleUserInfo;
+import com.ridingmate.api_server.domain.auth.dto.GoogleUserInfo;
+import com.ridingmate.api_server.domain.auth.dto.KakaoUserInfo;
+import com.ridingmate.api_server.domain.auth.dto.TokenInfo;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
@@ -22,6 +23,7 @@ public class AuthFacade {
 
     private final TokenService tokenService;
     private final UserService userService;
+    private final RefreshTokenService refreshTokenService;
 
     /**
      * Google 로그인 처리
@@ -83,5 +85,9 @@ public class AuthFacade {
         return LoginResponse.of(tokenInfo, user.getId(), user.getEmail(),
                 user.getNickname(), user.getProfileImagePath()
         );
+    }
+
+    public TokenInfo refreshAccessToken(String refreshToken){
+        return refreshTokenService.refreshAccessToken(refreshToken);
     }
 }

@@ -1,7 +1,7 @@
 package com.ridingmate.api_server.domain.user.repository;
 
 import com.ridingmate.api_server.domain.user.entity.User;
-import com.ridingmate.api_server.global.security.enums.SocialProvider;
+import com.ridingmate.api_server.domain.auth.enums.SocialProvider;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;

@@ -1,6 +1,6 @@
 package com.ridingmate.api_server.domain.auth.dto.response;
 
-import com.ridingmate.api_server.global.security.dto.TokenInfo;
+import com.ridingmate.api_server.domain.auth.dto.TokenInfo;
 import io.swagger.v3.oas.annotations.media.Schema;
 
 /**

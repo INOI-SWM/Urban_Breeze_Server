@@ -1,4 +1,4 @@
-package com.ridingmate.api_server.global.security.dto;
+package com.ridingmate.api_server.domain.auth.dto;
 
 /**
  * JWT 토큰 정보 DTO

@@ -1,6 +1,6 @@
-package com.ridingmate.api_server.global.security.provider;
+package com.ridingmate.api_server.domain.auth.validator;
 
-import com.ridingmate.api_server.global.security.dto.AppleUserInfo;
+import com.ridingmate.api_server.domain.auth.dto.AppleUserInfo;
 import com.ridingmate.api_server.infra.apple.AppleProperty;
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jwts;

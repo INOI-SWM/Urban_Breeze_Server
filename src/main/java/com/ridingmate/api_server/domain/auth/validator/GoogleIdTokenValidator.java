@@ -1,11 +1,11 @@
-package com.ridingmate.api_server.global.security.provider;
+package com.ridingmate.api_server.domain.auth.validator;
 
 import com.google.api.client.googleapis.auth.oauth2.GoogleIdToken;
 import com.google.api.client.googleapis.auth.oauth2.GoogleIdTokenVerifier;
 import com.google.api.client.http.javanet.NetHttpTransport;
 import com.google.api.client.json.gson.GsonFactory;
-import com.ridingmate.api_server.global.security.config.OAuth2Properties;
-import com.ridingmate.api_server.global.security.dto.GoogleUserInfo;
+import com.ridingmate.api_server.domain.auth.config.OAuth2Properties;
+import com.ridingmate.api_server.domain.auth.dto.GoogleUserInfo;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 

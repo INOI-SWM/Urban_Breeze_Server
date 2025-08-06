@@ -1,10 +1,9 @@
-package com.ridingmate.api_server.global.security.filter;
+package com.ridingmate.api_server.domain.auth.jwt;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.ridingmate.api_server.global.exception.CommonResponse;
 import com.ridingmate.api_server.global.exception.ErrorResponse;
-import com.ridingmate.api_server.global.security.exception.AuthErrorCode;
-import com.ridingmate.api_server.global.security.provider.JwtTokenProvider;
+import com.ridingmate.api_server.domain.auth.exception.AuthErrorCode;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;

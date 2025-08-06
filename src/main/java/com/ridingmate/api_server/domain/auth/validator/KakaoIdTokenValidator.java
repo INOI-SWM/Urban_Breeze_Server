@@ -1,7 +1,6 @@
-package com.ridingmate.api_server.global.security.provider;
+package com.ridingmate.api_server.domain.auth.validator;
 
-import com.ridingmate.api_server.global.security.config.OAuth2Properties;
-import com.ridingmate.api_server.global.security.dto.KakaoUserInfo;
+import com.ridingmate.api_server.domain.auth.dto.KakaoUserInfo;
 import com.ridingmate.api_server.infra.kakao.KakaoClient;
 import com.ridingmate.api_server.infra.kakao.dto.response.KakaoUserInfoResponse;
 import lombok.RequiredArgsConstructor;
