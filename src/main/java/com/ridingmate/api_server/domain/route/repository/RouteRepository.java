@@ -1,6 +1,9 @@
 package com.ridingmate.api_server.domain.route.repository;
 
 import com.ridingmate.api_server.domain.route.entity.Route;
+import com.ridingmate.api_server.domain.route.enums.Difficulty;
+import com.ridingmate.api_server.domain.route.enums.RecommendationType;
+import com.ridingmate.api_server.domain.route.enums.Region;
 import com.ridingmate.api_server.domain.route.enums.RouteRelationType;
 import com.ridingmate.api_server.domain.user.entity.User;
 import org.springframework.data.domain.Page;
@@ -78,4 +81,29 @@ public interface RouteRepository extends JpaRepository<Route, Long> {
                                                   @Param("minElevationGain") Double minElevationGain,
                                                   @Param("maxElevationGain") Double maxElevationGain,
                                                   Pageable pageable);
+
+    /**
+     * 추천 코스 목록 조회 (필터링 포함)
+     */
+    @Query("""
+        SELECT r FROM Route r
+        JOIN r.recommendation rec
+        LEFT JOIN r.routeGeometry rg
+        WHERE (:recommendationTypes IS NULL OR rec.recommendationType IN :recommendationTypes)
+        AND (:regions IS NULL OR r.region IN :regions)
+        AND (:difficulties IS NULL OR r.difficulty IN :difficulties)
+        AND (:minDistance IS NULL OR r.distance >= :minDistance)
+        AND (:maxDistance IS NULL OR r.distance <= :maxDistance)
+        AND (:minElevationGain IS NULL OR r.elevationGain >= :minElevationGain)
+        AND (:maxElevationGain IS NULL OR r.elevationGain <= :maxElevationGain)
+        """)
+    Page<Route> findRecommendationRoutesWithFilters(
+            @Param("recommendationTypes") List<RecommendationType> recommendationTypes,
+            @Param("regions") List<Region> regions,
+            @Param("difficulties") List<Difficulty> difficulties,
+            @Param("minDistance") Double minDistance,
+            @Param("maxDistance") Double maxDistance,
+            @Param("minElevationGain") Double minElevationGain,
+            @Param("maxElevationGain") Double maxElevationGain,
+            Pageable pageable);
 }
