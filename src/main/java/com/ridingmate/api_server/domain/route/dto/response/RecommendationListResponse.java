@@ -2,14 +2,10 @@ package com.ridingmate.api_server.domain.route.dto.response;
 
 import com.ridingmate.api_server.domain.route.entity.Recommendation;
 import com.ridingmate.api_server.domain.route.entity.Route;
-import com.ridingmate.api_server.domain.route.enums.Difficulty;
-import com.ridingmate.api_server.domain.route.enums.LandscapeType;
 import com.ridingmate.api_server.domain.route.enums.RecommendationType;
-import com.ridingmate.api_server.domain.route.enums.Region;
 import com.ridingmate.api_server.global.dto.PaginationResponse;
 import io.swagger.v3.oas.annotations.media.Schema;
 
-import java.time.Duration;
 import java.util.List;
 
 @Schema(description = "추천 코스 목록 응답")
@@ -47,9 +43,6 @@ public record RecommendationListResponse(
         @Schema(description = "난이도")
         String difficulty,
         
-        @Schema(description = "자연 경관")
-        String landscapeType,
-        
         @Schema(description = "추천 타입")
         RecommendationType recommendationType,
         
@@ -63,7 +56,7 @@ public record RecommendationListResponse(
         Double startLat
     ) {
         
-        public static RecommendationItemResponse from(Route route, Recommendation recommendation, String thumbnailUrl) {
+        public static RecommendationItemResponse from(Route route, Recommendation recommendation) {
             // 출발 좌표 추출
             Double startLon = null;
             Double startLat = null;
@@ -82,9 +75,8 @@ public record RecommendationListResponse(
                 route.getRoundedElevationGain(),
                 route.getRegion().getDisplayName(),
                 route.getDifficulty().getDisplayName(),
-                route.getLandscapeType().getDisplayName(),
                 recommendation.getRecommendationType(),
-                thumbnailUrl,
+                route.getThumbnailImagePath(),
                 startLon,
                 startLat
             );

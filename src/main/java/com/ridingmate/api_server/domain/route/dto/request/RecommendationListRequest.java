@@ -1,7 +1,6 @@
 package com.ridingmate.api_server.domain.route.dto.request;
 
 import com.ridingmate.api_server.domain.route.enums.Difficulty;
-import com.ridingmate.api_server.domain.route.enums.LandscapeType;
 import com.ridingmate.api_server.domain.route.enums.RecommendationSortType;
 import com.ridingmate.api_server.domain.route.enums.RecommendationType;
 import com.ridingmate.api_server.domain.route.enums.Region;
@@ -51,8 +50,7 @@ public record RecommendationListRequest(
     
     @Parameter(
             description = "최소 거리 (km)",
-            example = "0.0" +
-                "",
+            example = "0.0",
             required = true
     )
     Double minDistanceKm,
@@ -83,12 +81,6 @@ public record RecommendationListRequest(
             example = "EASY,MEDIUM"
     )
     List<Difficulty> difficulties,
-    
-    @Parameter(
-            description = "자연 경관 필터 (여러 값 지정 가능, 미지정시 전체 선택)",
-            example = "COASTAL,MOUNTAIN,RIVERSIDE"
-    )
-    List<LandscapeType> landscapes,
     
     @Parameter(
             description = "사용자 현재 위치 경도 (가까운 순 정렬시 필요)",
