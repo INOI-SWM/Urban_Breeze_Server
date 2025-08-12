@@ -47,24 +47,10 @@ public record RecommendationListResponse(
         String recommendationType,
         
         @Schema(description = "썸네일 이미지 경로")
-        String thumbnailImagePath,
-
-        @Schema(description = "출발 경도")
-        Double startLon,
-        
-        @Schema(description = "출발 위도")
-        Double startLat
+        String thumbnailImagePath
     ) {
         
         public static RecommendationItemResponse from(Route route, Recommendation recommendation, String thumbnailUrl) {
-            // 출발 좌표 추출
-            Double startLon = null;
-            Double startLat = null;
-            if (route.getRouteGeometry() != null && route.getRouteGeometry().getStartCoordinate() != null) {
-                org.locationtech.jts.geom.Coordinate startCoord = route.getRouteGeometry().getStartCoordinate();
-                startLon = startCoord.x;
-                startLat = startCoord.y;
-            }
             
             return new RecommendationItemResponse(
                 route.getId(),
@@ -76,9 +62,7 @@ public record RecommendationListResponse(
                 route.getRegion().getDisplayName(),
                 route.getDifficulty().getDisplayName(),
                 recommendation.getRecommendationType().getDisplayName(),
-                thumbnailUrl,
-                startLon,
-                startLat
+                thumbnailUrl
             );
         }
 
