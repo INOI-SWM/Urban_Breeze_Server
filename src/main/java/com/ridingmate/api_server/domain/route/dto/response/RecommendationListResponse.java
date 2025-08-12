@@ -51,7 +51,6 @@ public record RecommendationListResponse(
     ) {
         
         public static RecommendationItemResponse from(Route route, Recommendation recommendation, String thumbnailUrl) {
-            
             return new RecommendationItemResponse(
                 route.getId(),
                 route.getTitle(),
