@@ -56,7 +56,7 @@ public record RecommendationListResponse(
         Double startLat
     ) {
         
-        public static RecommendationItemResponse from(Route route, Recommendation recommendation) {
+        public static RecommendationItemResponse from(Route route, Recommendation recommendation, String thumbnailUrl) {
             // 출발 좌표 추출
             Double startLon = null;
             Double startLat = null;
@@ -76,7 +76,7 @@ public record RecommendationListResponse(
                 route.getRegion().getDisplayName(),
                 route.getDifficulty().getDisplayName(),
                 recommendation.getRecommendationType(),
-                route.getThumbnailImagePath(),
+                thumbnailUrl,
                 startLon,
                 startLat
             );
