@@ -44,7 +44,7 @@ public record RecommendationListResponse(
         String difficulty,
         
         @Schema(description = "추천 타입")
-        RecommendationType recommendationType,
+        String recommendationType,
         
         @Schema(description = "썸네일 이미지 경로")
         String thumbnailImagePath,
@@ -75,7 +75,7 @@ public record RecommendationListResponse(
                 route.getRoundedElevationGain(),
                 route.getRegion().getDisplayName(),
                 route.getDifficulty().getDisplayName(),
-                recommendation.getRecommendationType(),
+                recommendation.getRecommendationType().getDisplayName(),
                 thumbnailUrl,
                 startLon,
                 startLat
