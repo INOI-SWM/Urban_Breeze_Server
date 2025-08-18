@@ -78,4 +78,55 @@ public class GeometryUtil {
                 .map(coord -> String.format("%.7f,%.7f", coord.x, coord.y)) // 소수점 7자리로 lon, lat
                 .collect(Collectors.joining(","));
     }
+
+    /**
+     * LineString에서 출발 좌표 반환
+     */
+    public static Coordinate getStartCoordinate(LineString lineString) {
+        if (lineString != null && !lineString.isEmpty()) {
+            return lineString.getCoordinateN(0);
+        }
+        return null;
+    }
+
+    /**
+     * LineString에서 도착 좌표 반환
+     */
+    public static Coordinate getEndCoordinate(LineString lineString) {
+        if (lineString != null && !lineString.isEmpty()) {
+            return lineString.getCoordinateN(lineString.getNumPoints() - 1);
+        }
+        return null;
+    }
+
+    /**
+     * LineString에서 모든 좌표 반환
+     */
+    public static List<Coordinate> getAllCoordinates(LineString lineString) {
+        if (lineString != null && !lineString.isEmpty()) {
+            return List.of(lineString.getCoordinates());
+        }
+        return List.of();
+    }
+
+    /**
+     * 두 좌표 간의 거리 계산 (Haversine 공식 사용, km 단위)
+     */
+    public static Double calculateDistance(Double lon1, Double lat1, Double lon2, Double lat2) {
+        if (lon1 == null || lat1 == null || lon2 == null || lat2 == null) {
+            return null;
+        }
+
+        final double R = 6371; // 지구 반지름 (km)
+        double latDistance = Math.toRadians(lat2 - lat1);
+        double lonDistance = Math.toRadians(lon2 - lon1);
+        double a = Math.sin(latDistance / 2) * Math.sin(latDistance / 2)
+                + Math.cos(Math.toRadians(lat1)) * Math.cos(Math.toRadians(lat2))
+                * Math.sin(lonDistance / 2) * Math.sin(lonDistance / 2);
+        double c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+        double distance = R * c;
+
+        // 소수점 2자리로 반올림
+        return Math.round(distance * 100.0) / 100.0;
+    }
 }

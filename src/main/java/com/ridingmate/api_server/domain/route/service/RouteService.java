@@ -1,8 +1,10 @@
 package com.ridingmate.api_server.domain.route.service;
 
 import com.ridingmate.api_server.domain.route.dto.request.CreateRouteRequest;
+import com.ridingmate.api_server.domain.route.dto.request.RecommendationListRequest;
 import com.ridingmate.api_server.domain.route.entity.Route;
 import com.ridingmate.api_server.domain.route.entity.UserRoute;
+import com.ridingmate.api_server.domain.route.enums.RecommendationSortType;
 import com.ridingmate.api_server.domain.route.enums.RouteRelationType;
 import com.ridingmate.api_server.domain.route.exception.RouteErrorCode;
 import com.ridingmate.api_server.domain.route.exception.RouteException;
@@ -11,15 +13,16 @@ import com.ridingmate.api_server.domain.route.repository.UserRouteRepository;
 import com.ridingmate.api_server.domain.user.entity.User;
 import com.ridingmate.api_server.domain.user.repository.UserRepository;
 import com.ridingmate.api_server.global.config.AppConfigProperties;
+import com.ridingmate.api_server.global.util.GeometryUtil;
 import lombok.RequiredArgsConstructor;
+import org.locationtech.jts.geom.Coordinate;
 import org.locationtech.jts.geom.LineString;
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.PageRequest;
-import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.*;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.Duration;
+import java.util.List;
 import java.util.UUID;
 import com.ridingmate.api_server.domain.route.dto.request.RouteListRequest;
 import com.ridingmate.api_server.domain.route.entity.RouteGeometry;
@@ -154,6 +157,73 @@ public class RouteService {
                     request.getMinDistanceInMeter(), request.getMaxDistanceInMeter(), 
                     request.minElevationGain(), request.maxElevationGain(), pageable);
         }
+    }
+
+    /**
+     * 추천 코스 목록을 정렬 타입과 필터에 따라 조회
+     * @param request 추천 코스 목록 조회 요청 정보
+     * @return 정렬된 추천 코스 페이지
+     */
+    public Page<Route> getRecommendationRoutes(RecommendationListRequest request) {
+        // NEAREST 정렬이 아닌 경우에만 데이터베이스 정렬 사용
+        Pageable pageable;
+        if (request.sortType() == RecommendationSortType.NEAREST) {
+            // NEAREST는 애플리케이션 레벨에서 정렬하므로 기본 정렬 사용
+            pageable = PageRequest.of(request.page(), request.size(), Sort.by("id").ascending());
+        } else {
+            pageable = PageRequest.of(request.page(), request.size(), request.sortType().getSort());
+        }
+
+        // 추천 코스만 조회 (Recommendation 엔티티가 있는 Route)
+        Page<Route> routePage = routeRepository.findRecommendationRoutesWithFilters(
+                request.recommendationTypes(),
+                request.regions(),
+                request.difficulties(),
+                request.getMinDistanceInMeter(), 
+                request.getMaxDistanceInMeter(), 
+                request.minElevationGain(), 
+                request.maxElevationGain(), 
+                pageable);
+
+        // NEAREST 정렬인 경우 거리 계산 후 정렬
+        if (request.sortType() == com.ridingmate.api_server.domain.route.enums.RecommendationSortType.NEAREST 
+            && request.userLon() != null && request.userLat() != null) {
+            
+            List<Route> sortedRoutes = routePage.getContent().stream()
+                .sorted((a, b) -> {
+                    Double distanceA = calculateDistanceFromUser(a, request.userLon(), request.userLat());
+                    Double distanceB = calculateDistanceFromUser(b, request.userLon(), request.userLat());
+                    
+                    // null 거리는 맨 뒤로
+                    if (distanceA == null && distanceB == null) return 0;
+                    if (distanceA == null) return 1;
+                    if (distanceB == null) return -1;
+                    
+                    return Double.compare(distanceA, distanceB);
+                })
+                .toList();
+
+            // 정렬된 결과로 새로운 Page 생성
+            return new PageImpl<>(
+                sortedRoutes, 
+                pageable, 
+                routePage.getTotalElements()
+            );
+        }
+
+        return routePage;
+    }
+
+    /**
+     * 사용자 위치로부터 Route의 출발점까지의 거리 계산 (km 단위)
+     */
+    private Double calculateDistanceFromUser(Route route, Double userLon, Double userLat) {
+        if (route.getRouteGeometry() != null && route.getRouteGeometry().getStartCoordinate() != null) {
+            Coordinate startCoord = route.getRouteGeometry().getStartCoordinate();
+            return GeometryUtil.calculateDistance(
+                userLon, userLat, startCoord.getX(), startCoord.getY());
+        }
+        return null;
     }
 
 }

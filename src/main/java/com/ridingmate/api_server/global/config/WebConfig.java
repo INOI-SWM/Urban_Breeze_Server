@@ -1,7 +1,12 @@
 package com.ridingmate.api_server.global.config;
 
+import com.ridingmate.api_server.global.config.converter.StringToDifficultyListConverter;
+import com.ridingmate.api_server.global.config.converter.StringToLandscapeTypeListConverter;
+import com.ridingmate.api_server.global.config.converter.StringToRecommendationTypeListConverter;
+import com.ridingmate.api_server.global.config.converter.StringToRegionListConverter;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.format.FormatterRegistry;
 import org.springframework.web.servlet.config.annotation.CorsRegistry;
 import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
 
@@ -22,5 +27,14 @@ public class WebConfig implements WebMvcConfigurer {
                 .allowedOrigins(serverUrl)
                 .allowedMethods("*")
                 .allowCredentials(true);
+    }
+
+    @Override
+    public void addFormatters(FormatterRegistry registry) {
+        // Enum List Converter 등록
+        registry.addConverter(new StringToLandscapeTypeListConverter());
+        registry.addConverter(new StringToRecommendationTypeListConverter());
+        registry.addConverter(new StringToRegionListConverter());
+        registry.addConverter(new StringToDifficultyListConverter());
     }
 }

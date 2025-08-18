@@ -1,11 +1,15 @@
 package com.ridingmate.api_server.domain.route.entity;
 
+import com.ridingmate.api_server.global.util.GeometryUtil;
 import jakarta.persistence.*;
 import lombok.AccessLevel;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
+import org.locationtech.jts.geom.Coordinate;
 import org.locationtech.jts.geom.LineString;
+
+import java.util.List;
 
 @Entity
 @Getter
@@ -49,5 +53,26 @@ public class RouteGeometry {
         this.minLat = minLat;
         this.minLon = minLon;
         this.routeLine = routeLine;
+    }
+
+    /**
+     * 출발 좌표 반환
+     */
+    public Coordinate getStartCoordinate() {
+        return GeometryUtil.getStartCoordinate(this.routeLine);
+    }
+
+    /**
+     * 도착 좌표 반환
+     */
+    public Coordinate getEndCoordinate() {
+        return GeometryUtil.getEndCoordinate(this.routeLine);
+    }
+
+    /**
+     * 모든 좌표 반환
+     */
+    public List<Coordinate> getAllCoordinates() {
+        return GeometryUtil.getAllCoordinates(this.routeLine);
     }
 } 

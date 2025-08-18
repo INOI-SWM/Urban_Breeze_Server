@@ -1,6 +1,7 @@
 package com.ridingmate.api_server.domain.route.entity;
 
 import com.ridingmate.api_server.domain.route.enums.Difficulty;
+import com.ridingmate.api_server.domain.route.enums.LandscapeType;
 import com.ridingmate.api_server.domain.route.enums.Region;
 import com.ridingmate.api_server.domain.user.entity.User;
 import com.ridingmate.api_server.global.entity.BaseTimeEntity;
@@ -61,6 +62,10 @@ public class Route extends BaseTimeEntity {
     @Column(name = "difficulty")
     private Difficulty difficulty;
 
+    @Enumerated(EnumType.STRING)
+    @Column(name = "landscape_type")
+    private LandscapeType landscapeType;
+
     @Column(name = "thumbnail_image_path")
     private String thumbnailImagePath;
 
@@ -73,7 +78,7 @@ public class Route extends BaseTimeEntity {
 
     @Builder
     private Route(User user, String title, String description, Double distance, Duration duration, Double elevationGain,
-                  String shareId) {
+                  String shareId, LandscapeType landscapeType) {
         this.user = user;
         this.title = title;
         this.description = description;
@@ -81,6 +86,7 @@ public class Route extends BaseTimeEntity {
         this.duration = duration;
         this.elevationGain = elevationGain;
         this.shareId = shareId;
+        this.landscapeType = landscapeType;
     }
 
     /**
