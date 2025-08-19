@@ -13,37 +13,34 @@ import java.util.List;
 @ParameterObject
 public record RecommendationListRequest(
     @Parameter(
-            description = "페이지 번호 (0부터 시작)",
+            description = "페이지 번호 (기본 값: 0)",
             example = "0",
-            schema = @Schema(defaultValue = "0"),
-            required = true
+            schema = @Schema(type = "integer", defaultValue = "0")
     )
     int page,
     
     @Parameter(
-            description = "페이지 크기",
+            description = "페이지 크기 (기본 값: 10)",
             example = "10",
-            schema = @Schema(defaultValue = "10"),
-            required = true
+            schema = @Schema(type = "integer", defaultValue = "10")
     )
     int size,
     
     @Parameter(
-            description = "정렬 타입",
+            description = "정렬 타입 (기본 값: 가까운 순)",
             example = "NEAREST",
-            schema = @Schema(defaultValue = "NEAREST"),
-            required = true
+            schema = @Schema(defaultValue = "NEAREST")
     )
     RecommendationSortType sortType,
     
     @Parameter(
-            description = "추천 타입 필터 (여러 값 지정 가능, 미지정시 전체 선택)",
+            description = "추천 타입 필터 (기본 값: 전체 선택 / 다중 선택 가능)",
             example = "CROSS_COUNTRY,COMPETITION,FAMOUS"
     )
     List<RecommendationType> recommendationTypes,
     
     @Parameter(
-            description = "지역 필터 (여러 값 지정 가능, 미지정시 전체 선택)",
+            description = "지역 필터 (기본 값: 전체 선택 / 다중 선택 가능)",
             example = "SEOUL,GANGWON"
     )
     List<Region> regions,
@@ -77,7 +74,7 @@ public record RecommendationListRequest(
     Double maxElevationGain,
     
     @Parameter(
-            description = "난이도 필터 (여러 값 지정 가능, 미지정시 전체 선택)",
+            description = "난이도 필터 (기본 값: 전체 선택 / 다중 선택 가능)",
             example = "EASY,MEDIUM"
     )
     List<Difficulty> difficulties,
