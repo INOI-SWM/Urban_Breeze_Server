@@ -21,8 +21,6 @@ import org.locationtech.jts.geom.LineString;
 import org.springframework.data.domain.Page;
 import org.springframework.stereotype.Component;
 
-import java.math.BigDecimal;
-import java.math.RoundingMode;
 import java.util.List;
 
 @Component
@@ -52,7 +50,10 @@ public class RouteFacade {
     }
 
     public ShareRouteResponse shareRoute(Long routeId) {
-        String shareLink = routeService.createShareLink(routeId);
+        //TODO 추후 변경 필요
+        Long userId = 1L;
+
+        String shareLink = routeService.createShareLink(routeId, userId);
         return new ShareRouteResponse(shareLink);
     }
 

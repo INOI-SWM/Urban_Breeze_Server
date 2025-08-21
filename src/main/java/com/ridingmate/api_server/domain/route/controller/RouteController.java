@@ -1,12 +1,18 @@
 package com.ridingmate.api_server.domain.route.controller;
 
+import com.ridingmate.api_server.domain.auth.exception.AuthErrorCode;
 import com.ridingmate.api_server.domain.route.dto.request.CreateRouteRequest;
 import com.ridingmate.api_server.domain.route.dto.request.RouteListRequest;
 import com.ridingmate.api_server.domain.route.dto.request.RouteSegmentRequest;
 import com.ridingmate.api_server.domain.route.dto.response.*;
+import com.ridingmate.api_server.domain.route.exception.code.RouteCommonErrorCode;
 import com.ridingmate.api_server.domain.route.exception.RouteSuccessCode;
+import com.ridingmate.api_server.domain.route.exception.code.RouteCreationErrorCode;
 import com.ridingmate.api_server.domain.route.facade.RouteFacade;
+import com.ridingmate.api_server.global.exception.ApiErrorCodeExample;
 import com.ridingmate.api_server.global.exception.CommonResponse;
+import com.ridingmate.api_server.infra.kakao.KakaoErrorCode;
+import com.ridingmate.api_server.infra.ors.OrsErrorCode;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
@@ -21,6 +27,8 @@ public class RouteController implements RouteApi{
 
     @Override
     @PostMapping("/segment")
+    @ApiErrorCodeExample(RouteCommonErrorCode.class)
+    @ApiErrorCodeExample(OrsErrorCode.class)
     public ResponseEntity<CommonResponse<RouteSegmentResponse>>previewRoute(@RequestBody RouteSegmentRequest request) {
         RouteSegmentResponse response = routeFacade.generateSegment(request);
         return ResponseEntity
@@ -30,6 +38,8 @@ public class RouteController implements RouteApi{
 
     @Override
     @PostMapping
+    @ApiErrorCodeExample(RouteCreationErrorCode.class)
+    @ApiErrorCodeExample(AuthErrorCode.class)
     public ResponseEntity<CommonResponse<CreateRouteResponse>> createRoute(@Valid @RequestBody CreateRouteRequest request) {
         CreateRouteResponse response = routeFacade.createRoute(request);
         return ResponseEntity.
@@ -39,6 +49,7 @@ public class RouteController implements RouteApi{
 
     @Override
     @GetMapping("/{routeId}/share")
+    @ApiErrorCodeExample(RouteCommonErrorCode.class)
     public ResponseEntity<CommonResponse<ShareRouteResponse>> shareRoute(@PathVariable Long routeId) {
         ShareRouteResponse  response = routeFacade.shareRoute(routeId);
         return ResponseEntity
@@ -62,6 +73,7 @@ public class RouteController implements RouteApi{
 
     @Override
     @GetMapping("/search")
+    @ApiErrorCodeExample(KakaoErrorCode.class)
     public ResponseEntity<CommonResponse<MapSearchResponse>> getMapSearch(
             @RequestParam String query,
             @RequestParam Double lon,
