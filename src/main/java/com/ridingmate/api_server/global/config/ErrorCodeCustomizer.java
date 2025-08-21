@@ -52,7 +52,7 @@ public class ErrorCodeCustomizer implements OperationCustomizer {
                         try {
                             return ExampleHolder.builder()
                                 .holder(
-                                    getSwaggerExxample(
+                                    getSwaggerExample(
                                         errorCode
                                     )
                                 )
@@ -67,7 +67,7 @@ public class ErrorCodeCustomizer implements OperationCustomizer {
         addExamplesToResponses(responses, statusWithExampleHolders);
     }
 
-    private Example getSwaggerExxample(ErrorCode errorCode) {
+    private Example getSwaggerExample(ErrorCode errorCode) {
         ErrorResponse errorResponse = ErrorResponse.of(errorCode);
         Example example = new Example();
         example.setValue(errorResponse);
