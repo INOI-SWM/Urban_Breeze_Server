@@ -2,8 +2,8 @@ package com.ridingmate.api_server.global.util;
 
 import com.ridingmate.api_server.domain.route.exception.RouteException;
 import com.ridingmate.api_server.domain.route.exception.code.RouteCreationErrorCode;
-import com.ridingmate.api_server.global.exception.BusinessException;
 import org.locationtech.jts.geom.*;
+import org.locationtech.jts.simplify.DouglasPeuckerSimplifier;
 
 import java.util.List;
 import java.util.stream.Collectors;
@@ -11,6 +11,8 @@ import java.util.stream.Collectors;
 public class GeometryUtil {
 
     private static final GeometryFactory geometryFactory = new GeometryFactory(new PrecisionModel(), 4326);
+
+    private static final double DISTANCE_TOLERANCE = 0.00000000001;
 
     /**
      * Encoded polyline을 LineString으로 변환 예시: LINESTRING (126.9706 37.5547, 127.0276 37.4979, ...)
@@ -73,12 +75,6 @@ public class GeometryUtil {
         return zoomLevel;
     }
 
-    public static int getZoomLevelFromPolyline(String polyline) {
-        LineString line = polylineToLineString(polyline);
-        Envelope bbox = getBoundingBox(line);
-        return getZoomLevel(bbox);
-    }
-
     /**
      * Coordinates 리스트를 Geoapify geometry 파라미터용 polyline 문자열로 변환
      * 예: polyline:127.0535,37.53560,127.05349,37.53559 ...
@@ -138,5 +134,15 @@ public class GeometryUtil {
 
         // 소수점 2자리로 반올림
         return Math.round(distance * 100.0) / 100.0;
+    }
+    public static List<Coordinate> simplifyRoute(Coordinate[] coordinates) {
+        LineString lineString = geometryFactory.createLineString(coordinates);
+
+        DouglasPeuckerSimplifier simplifier = new DouglasPeuckerSimplifier(lineString);
+        simplifier.setDistanceTolerance(DISTANCE_TOLERANCE);
+
+        Coordinate[] simplifiedCoords = simplifier.getResultGeometry().getCoordinates();
+
+        return List.of(simplifiedCoords);
     }
 }

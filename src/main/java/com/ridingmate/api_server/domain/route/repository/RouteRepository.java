@@ -14,9 +14,18 @@ import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
 import java.util.List;
+import java.util.Optional;
 
 @Repository
 public interface RouteRepository extends JpaRepository<Route, Long> {
+
+    @Query("""
+        SELECT r
+        FROM Route r
+        JOIN FETCH r.user
+        WHERE r.id = :routeId
+        """)
+    Optional<Route> findRouteWithUser(@Param("routeId") Long routeId);
 
     /**
      * 사용자별 특정 관계 타입의 경로 조회 (거리 및 고도 필터링 포함)

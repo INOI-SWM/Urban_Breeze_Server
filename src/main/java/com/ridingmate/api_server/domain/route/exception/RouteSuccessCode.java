@@ -12,7 +12,8 @@ public enum RouteSuccessCode implements SuccessCode {
     ROUTE_CREATED(HttpStatus.CREATED, "경로가 생성되었습니다."),
     SHARE_LINK_FETCHED(HttpStatus.OK, "경로 공유 링크가 조회되었습니다."),
     ROUTE_LIST_FETCHED(HttpStatus.OK, "경로 목록이 조회되었습니다."),
-    MAP_SEARCH_FETCHED(HttpStatus.OK, "장소 검색 결과 목록이 조회되었습니다.")
+    MAP_SEARCH_FETCHED(HttpStatus.OK, "장소 검색 결과 목록이 조회되었습니다."),
+    ROUTE_DETAIL_FETCHED(HttpStatus.OK, "경로 세부 정보가 조회되었습니다."),
     ;
     private final HttpStatus status;
     private final String message;

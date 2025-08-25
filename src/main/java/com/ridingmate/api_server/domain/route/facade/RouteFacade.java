@@ -17,10 +17,12 @@ import com.ridingmate.api_server.infra.ors.OrsMapper;
 import com.ridingmate.api_server.infra.ors.dto.response.OrsRouteResponse;
 import com.ridingmate.api_server.global.util.GeometryUtil;
 import lombok.RequiredArgsConstructor;
+import org.locationtech.jts.geom.Coordinate;
 import org.locationtech.jts.geom.LineString;
 import org.springframework.data.domain.Page;
 import org.springframework.stereotype.Component;
 
+import java.util.Arrays;
 import java.util.List;
 
 @Component
@@ -77,6 +79,17 @@ public class RouteFacade {
             .toList();
 
         return RouteListResponse.of(routeItems, routePage);
+    }
+
+    public RouteDetailResponse getRouteDetail(Long routeId){
+        Coordinate[] coordinates = routeService.getRouteDetailList(routeId);
+        Route route = routeService.getRouteWithUser(routeId);
+//        List<Coordinate> simplifiedRouteGpsLogs = GeometryUtil.simplifyRoute(coordinates);
+        List<Coordinate> simplifiedRouteGpsLogs = Arrays.stream(coordinates).toList();
+        List<RouteGpsPoint> routeGpsLogs = simplifiedRouteGpsLogs.stream()
+            .map(RouteGpsPoint::from)
+            .toList();
+        return RouteDetailResponse.from(route, routeGpsLogs);
     }
 
     public MapSearchResponse getMapSearch(String query, Double lon, Double lat) {

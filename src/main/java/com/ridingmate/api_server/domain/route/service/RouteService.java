@@ -5,12 +5,15 @@ import com.ridingmate.api_server.domain.auth.exception.AuthException;
 import com.ridingmate.api_server.domain.route.dto.request.CreateRouteRequest;
 import com.ridingmate.api_server.domain.route.dto.request.RecommendationListRequest;
 import com.ridingmate.api_server.domain.route.entity.Route;
+import com.ridingmate.api_server.domain.route.entity.RouteGpsLog;
 import com.ridingmate.api_server.domain.route.entity.UserRoute;
 import com.ridingmate.api_server.domain.route.enums.RecommendationSortType;
 import com.ridingmate.api_server.domain.route.enums.RouteRelationType;
 import com.ridingmate.api_server.domain.route.exception.code.RouteCommonErrorCode;
 import com.ridingmate.api_server.domain.route.exception.RouteException;
+import com.ridingmate.api_server.domain.route.exception.code.RouteDetailErrorCode;
 import com.ridingmate.api_server.domain.route.exception.code.RouteShareErrorCode;
+import com.ridingmate.api_server.domain.route.repository.RouteGpsLogRepository;
 import com.ridingmate.api_server.domain.route.repository.RouteRepository;
 import com.ridingmate.api_server.domain.route.repository.UserRouteRepository;
 import com.ridingmate.api_server.domain.user.entity.User;
@@ -27,6 +30,8 @@ import org.springframework.transaction.annotation.Transactional;
 import java.time.Duration;
 import java.util.List;
 import java.util.UUID;
+import java.util.stream.Collectors;
+
 import com.ridingmate.api_server.domain.route.dto.request.RouteListRequest;
 import com.ridingmate.api_server.domain.route.entity.RouteGeometry;
 
@@ -39,6 +44,7 @@ public class RouteService {
     private final RouteRepository routeRepository;
     private final UserRouteRepository userRouteRepository;
     private final UserRepository userRepository;
+    private final RouteGpsLogRepository routeGpsLogRepository;
 
     @Transactional
     public Route createRoute(CreateRouteRequest request, LineString routeLine) {
@@ -83,6 +89,18 @@ public class RouteService {
     }
 
     @Transactional(readOnly = true)
+    public Coordinate[] getRouteDetailList(Long routeId) {
+        List<RouteGpsLog> routeGpsLogs = routeGpsLogRepository.findByRouteIdOrderByLogTimeAsc(routeId);
+        if (routeGpsLogs == null || routeGpsLogs.size() < 2) {
+            throw new RouteException(RouteDetailErrorCode.ROUTE_GPS_LOGS_INVALID);
+        }
+
+        return routeGpsLogs.stream()
+            .map(routeGpsLog -> new Coordinate(routeGpsLog.getLongitude(), routeGpsLog.getLongitude(), routeGpsLog.getElevation()))
+            .toArray(Coordinate[]::new);
+    }
+
+    @Transactional(readOnly = true)
     public String createShareLink(Long routeId, Long userId) {
         Route route = getUserRoute(userId, routeId);
         String shareId = getShareId(route);
@@ -121,6 +139,7 @@ public class RouteService {
      * @param request 경로 목록 조회 요청 정보
      * @return 정렬된 경로 페이지
      */
+    @Transactional(readOnly = true)
     public Page<Route> getRoutesByUser(Long userId, RouteListRequest request) {
         User user = userRepository.findById(userId)
             .orElseThrow(() -> new IllegalArgumentException("User not found"));
@@ -143,6 +162,12 @@ public class RouteService {
                 request.getMinDistanceInMeter(), request.getMaxDistanceInMeter(),
                 request.minElevationGain(), request.maxElevationGain(), pageable);
         }
+    }
+
+    @Transactional(readOnly = true)
+    public Route getRouteWithUser(Long routeId){
+        return routeRepository.findRouteWithUser(routeId)
+            .orElseThrow(() -> new RouteException(RouteCommonErrorCode.ROUTE_NOT_FOUND));
     }
 
     private Route getUserRoute(Long userId, Long routeId) {
