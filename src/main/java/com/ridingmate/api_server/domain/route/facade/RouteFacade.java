@@ -1,5 +1,7 @@
 package com.ridingmate.api_server.domain.route.facade;
 
+import com.ggalmazor.ltdownsampling.LTThreeBuckets;
+import com.ggalmazor.ltdownsampling.Point;
 import com.ridingmate.api_server.domain.route.dto.request.CreateRouteRequest;
 import com.ridingmate.api_server.domain.route.dto.request.RouteSegmentRequest;
 import com.ridingmate.api_server.domain.route.dto.request.RouteListRequest;
@@ -82,14 +84,17 @@ public class RouteFacade {
     }
 
     public RouteDetailResponse getRouteDetail(Long routeId){
-        Coordinate[] coordinates = routeService.getRouteDetailList(routeId);
         Route route = routeService.getRouteWithUser(routeId);
+
+        Coordinate[] coordinates = routeService.getRouteDetailList(routeId);
+
+        List<Point> elevationProfilePoints = GeometryUtil.convertCoordinatesToPoints(Arrays.stream(coordinates).toList());
+//
 //        List<Coordinate> simplifiedRouteGpsLogs = GeometryUtil.simplifyRoute(coordinates);
-        List<Coordinate> simplifiedRouteGpsLogs = Arrays.stream(coordinates).toList();
-        List<RouteGpsPoint> routeGpsLogs = simplifiedRouteGpsLogs.stream()
-            .map(RouteGpsPoint::from)
-            .toList();
-        return RouteDetailResponse.from(route, routeGpsLogs);
+
+        elevationProfilePoints = LTThreeBuckets.sorted(elevationProfilePoints, 300);
+
+        return RouteDetailResponse.from(route, elevationProfilePoints);
     }
 
     public MapSearchResponse getMapSearch(String query, Double lon, Double lat) {

@@ -1,6 +1,7 @@
 package com.ridingmate.api_server.domain.route.dto.response;
 
 import com.fasterxml.jackson.annotation.JsonFormat;
+import com.ggalmazor.ltdownsampling.Point;
 import com.ridingmate.api_server.domain.route.entity.Route;
 import io.swagger.v3.oas.annotations.media.Schema;
 
@@ -39,14 +40,10 @@ public record RouteDetailResponse(
 
     Integer trackPointsCount,
 
-    @Schema(
-        description = "샘플링된 경로의 주요 지점 목록",
-        example = "[{\"latitude\": 37.5519, \"longitude\": 126.9882, \"elevation\": 80.5}, {\"latitude\": 37.5525, \"longitude\": 126.9885, \"elevation\": 81.2}]"
-    )
-    List<RouteGpsPoint> trackPoints
+    List<Point> trackPoints
 ) {
 
-    public static RouteDetailResponse from(Route route, List<RouteGpsPoint> routeGpsPoints){
+    public static RouteDetailResponse from(Route route, List<Point> routeGpsPoints){
         return new RouteDetailResponse(
             route.getId(),
             route.getTitle(),

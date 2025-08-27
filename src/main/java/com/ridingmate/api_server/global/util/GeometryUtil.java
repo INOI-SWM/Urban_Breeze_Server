@@ -1,12 +1,17 @@
 package com.ridingmate.api_server.global.util;
 
+import com.ggalmazor.ltdownsampling.DoublePoint;
+import com.ggalmazor.ltdownsampling.LTThreeBuckets;
+import com.ggalmazor.ltdownsampling.Point;
 import com.ridingmate.api_server.domain.route.exception.RouteException;
 import com.ridingmate.api_server.domain.route.exception.code.RouteCreationErrorCode;
 import org.locationtech.jts.geom.*;
 import org.locationtech.jts.simplify.DouglasPeuckerSimplifier;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
+import java.util.stream.IntStream;
 
 public class GeometryUtil {
 
@@ -144,5 +149,21 @@ public class GeometryUtil {
         Coordinate[] simplifiedCoords = simplifier.getResultGeometry().getCoordinates();
 
         return List.of(simplifiedCoords);
+    }
+
+    public static List<Point> convertCoordinatesToPoints(List<Coordinate> coordinates){
+        if (coordinates == null || coordinates.isEmpty()) {
+            return new ArrayList<>();
+        }
+
+        return IntStream.range(0, coordinates.size())
+            .mapToObj(i -> {
+                Coordinate coordinate = coordinates.get(i);
+
+                double elevation = Double.isNaN(coordinate.getZ()) ? 0.0 : coordinate.getZ();
+
+                return new DoublePoint(i, elevation);
+            })
+            .collect(Collectors.toList());
     }
 }
