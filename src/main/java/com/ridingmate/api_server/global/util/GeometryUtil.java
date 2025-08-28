@@ -1,5 +1,8 @@
 package com.ridingmate.api_server.global.util;
 
+import com.ridingmate.api_server.domain.route.exception.RouteException;
+import com.ridingmate.api_server.domain.route.exception.code.RouteCreationErrorCode;
+import com.ridingmate.api_server.global.exception.BusinessException;
 import org.locationtech.jts.geom.*;
 
 import java.util.List;
@@ -7,14 +10,21 @@ import java.util.stream.Collectors;
 
 public class GeometryUtil {
 
-    private static final GeometryFactory factory = new GeometryFactory(new PrecisionModel(), 4326);
+    private static final GeometryFactory geometryFactory = new GeometryFactory(new PrecisionModel(), 4326);
 
     /**
      * Encoded polyline을 LineString으로 변환 예시: LINESTRING (126.9706 37.5547, 127.0276 37.4979, ...)
      */
     public static LineString polylineToLineString(String polyline) {
-        List<Coordinate> coordinates = PolylineDecoder.decode(polyline);
-        return factory.createLineString(coordinates.toArray(new Coordinate[0]));
+        try {
+            List<Coordinate> coordinates = PolylineDecoder.decode(polyline);
+            if (coordinates.size() < 2) {
+                throw new RouteException(RouteCreationErrorCode.ROUTE_NOT_ENOUGH_POINTS);
+            }
+            return geometryFactory.createLineString(coordinates.toArray(new Coordinate[0]));
+        } catch (Exception e) {
+            throw new RouteException(RouteCreationErrorCode.ROUTE_POLYLINE_INVALID);
+        }
     }
 
     /**

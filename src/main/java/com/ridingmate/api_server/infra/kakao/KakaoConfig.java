@@ -22,7 +22,14 @@ public class KakaoConfig {
     }
 
     @Bean
-    public KakaoClient kakaoClient(WebClient kakaoWebClient) {
-        return new KakaoClient(kakaoWebClient);
+    public WebClient kakaoApiWebClient() {
+        return WebClient.builder()
+                .baseUrl("https://kapi.kakao.com")
+                .build();
+    }
+
+    @Bean
+    public KakaoClient kakaoClient(WebClient kakaoWebClient, WebClient kakaoApiWebClient) {
+        return new KakaoClient(kakaoWebClient, kakaoApiWebClient);
     }
 } 

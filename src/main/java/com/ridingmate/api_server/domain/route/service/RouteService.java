@@ -1,13 +1,16 @@
 package com.ridingmate.api_server.domain.route.service;
 
+import com.ridingmate.api_server.domain.auth.exception.AuthErrorCode;
+import com.ridingmate.api_server.domain.auth.exception.AuthException;
 import com.ridingmate.api_server.domain.route.dto.request.CreateRouteRequest;
 import com.ridingmate.api_server.domain.route.dto.request.RecommendationListRequest;
 import com.ridingmate.api_server.domain.route.entity.Route;
 import com.ridingmate.api_server.domain.route.entity.UserRoute;
 import com.ridingmate.api_server.domain.route.enums.RecommendationSortType;
 import com.ridingmate.api_server.domain.route.enums.RouteRelationType;
-import com.ridingmate.api_server.domain.route.exception.RouteErrorCode;
+import com.ridingmate.api_server.domain.route.exception.code.RouteCommonErrorCode;
 import com.ridingmate.api_server.domain.route.exception.RouteException;
+import com.ridingmate.api_server.domain.route.exception.code.RouteShareErrorCode;
 import com.ridingmate.api_server.domain.route.repository.RouteRepository;
 import com.ridingmate.api_server.domain.route.repository.UserRouteRepository;
 import com.ridingmate.api_server.domain.user.entity.User;
@@ -39,12 +42,12 @@ public class RouteService {
 
     @Transactional
     public Route createRoute(CreateRouteRequest request, LineString routeLine) {
-        User mockUser = userRepository.findById(1L)
-                .orElseThrow(() -> new IllegalArgumentException("Mock user not found"));
+        User user = userRepository.findById(1L)
+                .orElseThrow(() -> new AuthException(AuthErrorCode.AUTHENTICATION_USER_NOT_FOUND));
 
         // Route 엔티티 생성
         Route route = Route.builder()
-                .user(mockUser)
+                .user(user)
                 .title(request.title())
                 .description(request.description())
                 .distance(request.distance())
@@ -74,26 +77,18 @@ public class RouteService {
         route.updateThumbnailImagePath(createThumbnailImagePath(route.getId()));
 
         // 생성자와 경로 간의 OWNER 관계 생성
-        createUserRouteRelation(mockUser, route, RouteRelationType.OWNER);
+        createUserRouteRelation(user, route, RouteRelationType.OWNER);
 
         return route;
     }
-    private String createThumbnailImagePath(Long routeId) {
-        String uuid = UUID.randomUUID().toString();
-        return String.format("ridingmate/route-thumbnails/%d/%s.png", routeId, uuid);
-    }
 
-    public String createShareLink(Long routeId) {
-        Route route = getRoute(routeId);
+    @Transactional(readOnly = true)
+    public String createShareLink(Long routeId, Long userId) {
+        Route route = getUserRoute(userId, routeId);
         String shareId = getShareId(route);
         String scheme = appConfigProperties.scheme();
 
         return String.format("%s/%s", scheme, shareId);
-    }
-
-    public Route getRoute(Long routeId) {
-        return routeRepository.findById(routeId)
-                .orElseThrow(() -> new RouteException(RouteErrorCode.ROUTE_NOT_FOUND));
     }
 
     /**
@@ -120,14 +115,6 @@ public class RouteService {
         userRouteRepository.save(userRoute);
     }
 
-    private String getShareId(Route route){
-        String shareId = route.getShareId();
-        if ( shareId == null || shareId.isBlank()) {
-            throw new RouteException(RouteErrorCode.SHARE_ID_NOT_FOUND);
-        }
-        return shareId;
-    }
-
     /**
      * 사용자별 경로 목록을 정렬 타입과 필터에 따라 조회
      * @param userId 사용자 ID
@@ -136,27 +123,52 @@ public class RouteService {
      */
     public Page<Route> getRoutesByUser(Long userId, RouteListRequest request) {
         User user = userRepository.findById(userId)
-                .orElseThrow(() -> new IllegalArgumentException("User not found"));
+            .orElseThrow(() -> new IllegalArgumentException("User not found"));
 
         Pageable pageable = PageRequest.of(request.page(), request.size(), request.sortType().getSort());
 
         if (request.relationTypes() == null || request.relationTypes().isEmpty()) {
             // 모든 관계 타입 조회
-
             return routeRepository.findByUserWithRelationsAndFilters(user,
-                    request.getMinDistanceInMeter(), request.getMaxDistanceInMeter(), 
-                    request.minElevationGain(), request.maxElevationGain(), pageable);
+                request.getMinDistanceInMeter(), request.getMaxDistanceInMeter(),
+                request.minElevationGain(), request.maxElevationGain(), pageable);
         } else if (request.relationTypes().size() == 1) {
             // 단일 관계 타입 조회
             return routeRepository.findByUserAndRelationTypeWithFilters(user, request.relationTypes().get(0),
-                    request.getMinDistanceInMeter(), request.getMaxDistanceInMeter(), 
-                    request.minElevationGain(), request.maxElevationGain(), pageable);
+                request.getMinDistanceInMeter(), request.getMaxDistanceInMeter(),
+                request.minElevationGain(), request.maxElevationGain(), pageable);
         } else {
             // 여러 관계 타입 조회
             return routeRepository.findByUserAndRelationTypesWithFilters(user, request.relationTypes(),
-                    request.getMinDistanceInMeter(), request.getMaxDistanceInMeter(), 
-                    request.minElevationGain(), request.maxElevationGain(), pageable);
+                request.getMinDistanceInMeter(), request.getMaxDistanceInMeter(),
+                request.minElevationGain(), request.maxElevationGain(), pageable);
         }
+    }
+
+    private Route getUserRoute(Long userId, Long routeId) {
+        Route route = getRoute(routeId);
+        if (!route.getUser().getId().equals(userId)) {
+            throw new RouteException(RouteCommonErrorCode.ROUTE_ACCESS_DENIED);
+        }
+        return route;
+    }
+
+    private Route getRoute(Long routeId) {
+        return routeRepository.findById(routeId)
+            .orElseThrow(() -> new RouteException(RouteCommonErrorCode.ROUTE_NOT_FOUND));
+    }
+
+    private String getShareId(Route route){
+        String shareId = route.getShareId();
+        if ( shareId == null || shareId.isBlank()) {
+            throw new RouteException(RouteShareErrorCode.SHARE_ID_NOT_FOUND);
+        }
+        return shareId;
+    }
+
+    private String createThumbnailImagePath(Long routeId) {
+        String uuid = UUID.randomUUID().toString();
+        return String.format("ridingmate/route-thumbnails/%d/%s.png", routeId, uuid);
     }
 
     /**

@@ -1,16 +1,20 @@
 package com.ridingmate.api_server.infra.geoapify;
 
+import com.ridingmate.api_server.global.exception.BusinessException;
 import com.ridingmate.api_server.global.util.GeometryUtil;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.locationtech.jts.geom.Coordinate;
 import org.locationtech.jts.geom.Envelope;
 import org.locationtech.jts.geom.LineString;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Component;
 import org.springframework.web.reactive.function.client.WebClient;
+import reactor.core.publisher.Mono;
 
 import java.util.List;
 
+@Slf4j
 @Component
 @RequiredArgsConstructor
 public class GeoapifyClient {
@@ -31,17 +35,31 @@ public class GeoapifyClient {
         String geometryParam = "polyline:" + polyline +";linecolor:%23ff0000;linewidth:3";
 
         return geoapifyWebClient.get()
-                .uri(uriBuilder -> uriBuilder
-                        .queryParam("style", "klokantech-basic")
-                        .queryParam("width", 600)
-                        .queryParam("height", 450)
-                        .queryParam("geometry", geometryParam)
-                        .queryParam("center", centerParam)
-                        .queryParam("zoom", zoom)
-                        .queryParam("apiKey", geoapifyProperty.apikey())
-                        .build())
-                .retrieve()
-                .bodyToMono(byte[].class)
-                .block();  // 동기 호출 (필요시 비동기로)
+            .uri(uriBuilder -> uriBuilder
+                .queryParam("style", "klokantech-basic")
+                .queryParam("width", 600)
+                .queryParam("height", 450)
+                .queryParam("geometry", geometryParam)
+                .queryParam("center", centerParam)
+                .queryParam("zoom", zoom)
+                .queryParam("apiKey", geoapifyProperty.apikey())
+                .build())
+            .retrieve()
+            .onStatus(
+                status -> status.is4xxClientError() || status.is5xxServerError(),
+                response -> response.bodyToMono(String.class)
+                    .flatMap(errorBody -> {
+                        if (response.statusCode().is4xxClientError()) {
+                            return Mono.error(new GeoapifyException(GeoapifyErrorCode.GEOAPIFY_REQUEST_FAILED));
+                        }
+                        return Mono.error(new GeoapifyException(GeoapifyErrorCode.GEOAPIFY_SERVER_ERROR));
+                    })
+            )
+            .bodyToMono(byte[].class)
+            .onErrorMap(
+                throwable -> !(throwable instanceof BusinessException),
+                throwable -> new GeoapifyException(GeoapifyErrorCode.GEOAPIFY_CONNECTION_FAILED)
+            )
+            .block();
     }
 }
