@@ -8,6 +8,8 @@ import io.swagger.v3.oas.annotations.media.Schema;
 import java.time.Duration;
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.stream.Collectors;
+import java.util.stream.IntStream;
 
 public record RouteDetailResponse(
     @Schema(description = "경로 ID", example = "1")
@@ -38,12 +40,26 @@ public record RouteDetailResponse(
     @Schema(description = "프로필 이미지 URL", example = "https://s3.amazonaws.com/bucket/profile-1.jpg")
     String profileImageUrl,
 
+    @Schema(description = "샘플링된 경로 좌표 갯수", example = "100")
     Integer trackPointsCount,
 
-    List<Point> trackPoints
+    @Schema(description = "샘플링된 경로의 고도 데이터 목록")
+    List<ElevationPoint> trackPoints
 ) {
 
+    @Schema(description = "경로 고도 데이터")
+    public record ElevationPoint(
+            @Schema(description = "데이터 포인트의 인덱스", example = "0")
+            long index,
+            @Schema(description = "해당 지점의 고도 (m)", example = "81.2")
+            double elevation
+    ) {}
+
     public static RouteDetailResponse from(Route route, List<Point> routeGpsPoints){
+        List<ElevationPoint> elevationPoints = IntStream.range(0, routeGpsPoints.size())
+                .mapToObj(i -> new ElevationPoint(i, routeGpsPoints.get(i).getY()))
+                .collect(Collectors.toList());
+
         return new RouteDetailResponse(
             route.getId(),
             route.getTitle(),
@@ -54,8 +70,8 @@ public record RouteDetailResponse(
             route.getUser().getId(),
             route.getUser().getNickname(),
             route.getUser().getProfileImagePath(),
-            routeGpsPoints.size(),
-            routeGpsPoints
+            elevationPoints.size(),
+            elevationPoints
         );
     }
 }
