@@ -19,7 +19,10 @@ public class TerraConfig {
     public WebClient terraWebClient() {
         return WebClient.builder()
             .baseUrl(terraProperty.baseUrl())
-            .defaultHeader("Authorization", terraProperty.apiKey())
+            .defaultHeaders(headers -> {
+                headers.add("x-api-key", terraProperty.apiKey());
+                headers.add("dev-id", terraProperty.developerId());
+            })
             .build();
     }
 
