@@ -13,6 +13,7 @@ import org.springframework.stereotype.Component;
 
 import javax.crypto.SecretKey;
 import java.util.Date;
+import java.util.UUID;
 
 @Slf4j
 @Component
@@ -33,6 +34,7 @@ public class JwtTokenProvider {
         
         return Jwts.builder()
                 .subject(String.valueOf(authUser.getUserId()))           // 사용자 ID
+                .claim("uuid", authUser.getUuid().toString())              // ★★★ UUID 클레임 추가 ★★★
                 .claim("email", authUser.getEmail())                     // 이메일
                 .claim("nickname", authUser.getNickname())               // 닉네임
                 .claim("profileImageUrl", authUser.getProfileImageUrl()) // 프로필 이미지
@@ -101,6 +103,7 @@ public class JwtTokenProvider {
         
         return AuthUser.builder()
                 .userId(Long.valueOf(claims.getSubject()))
+                .uuid(UUID.fromString(claims.get("uuid", String.class))) // ★★★ UUID 클레임 추출 ★★★
                 .email(claims.get("email", String.class))
                 .nickname(claims.get("nickname", String.class))
                 .profileImageUrl(claims.get("profileImageUrl", String.class))

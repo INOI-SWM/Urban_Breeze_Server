@@ -11,6 +11,7 @@ import org.springframework.security.core.authority.SimpleGrantedAuthority;
 
 import java.util.Collection;
 import java.util.List;
+import java.util.UUID;
 
 @Getter
 @Builder
@@ -19,6 +20,8 @@ import java.util.List;
 public class AuthUser {
 
     private Long userId;
+
+    private UUID uuid;
 
     private String email;
 

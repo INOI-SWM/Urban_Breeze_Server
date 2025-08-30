@@ -8,6 +8,8 @@ import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
+import java.util.UUID;
+
 
 @Entity
 @Table(name = "users")
@@ -18,6 +20,9 @@ public class User extends BaseTimeEntity {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
+
+    @Column(name = "uuid", nullable = false, unique = true, updatable = false)
+    private UUID uuid;
 
     @Enumerated(EnumType.STRING)
     @Column(name = "social_provider")
@@ -35,7 +40,7 @@ public class User extends BaseTimeEntity {
     @Column(name = "profile_image_path")
     private String profileImagePath;
 
-        @Builder
+    @Builder
     public User(SocialProvider socialProvider, String socialId, String email, 
                 String nickname, String profileImagePath) {
         this.socialProvider = socialProvider;
@@ -45,6 +50,12 @@ public class User extends BaseTimeEntity {
         this.profileImagePath = profileImagePath;
     }
 
+    @PrePersist
+    public void generateUuid() {
+        if (this.uuid == null) {
+            this.uuid = UUID.randomUUID();
+        }
+    }
 
         /**
      * 소셜 로그인 정보로 사용자 생성
