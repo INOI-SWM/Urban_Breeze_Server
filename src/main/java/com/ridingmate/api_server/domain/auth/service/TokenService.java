@@ -1,7 +1,6 @@
 package com.ridingmate.api_server.domain.auth.service;
 
 import com.ridingmate.api_server.domain.auth.dto.*;
-import com.ridingmate.api_server.domain.auth.entity.RefreshToken;
 import com.ridingmate.api_server.domain.user.entity.User;
 import com.ridingmate.api_server.domain.auth.validator.AppleIdTokenValidator;
 import com.ridingmate.api_server.domain.auth.validator.GoogleIdTokenValidator;
@@ -10,6 +9,7 @@ import com.ridingmate.api_server.domain.auth.jwt.JwtTokenProvider;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 /**
  * JWT 토큰 생성 및 검증 서비스
@@ -25,27 +25,13 @@ public class TokenService {
     private final AppleIdTokenValidator appleIdTokenValidator;
     private final RefreshTokenService refreshTokenService;
 
-    /**
-     * JWT 토큰 생성 (Access Token + Refresh Token)
-     *
-     * @param user 사용자 엔티티
-     * @return TokenInfo JWT 토큰 정보
-     */
+    @Transactional
     public TokenInfo generateToken(User user) {
-        log.debug("JWT 토큰 생성 - 사용자: {}", user.getId());
-        
-        // Access Token 생성
-        TokenInfo basicTokenInfo = jwtTokenProvider.generateTokenInfo(AuthUser.from(user));
-        
-        // Refresh Token 생성 및 저장
-        RefreshToken refreshToken = refreshTokenService.createRefreshToken(user, null, null);
-        
-        // 새로운 Refresh Token으로 TokenInfo 생성
-        return TokenInfo.bearer(
-                basicTokenInfo.accessToken(),
-                refreshToken.getToken(),
-                basicTokenInfo.expiresIn()
-        );
+        // AuthUserInfo DTO를 사용하여 토큰 생성
+        TokenInfo tokenInfo = jwtTokenProvider.generateTokenInfo(AuthUserInfo.from(user));
+        // 리프레시 토큰 저장
+        refreshTokenService.createRefreshToken(user, null, null);
+        return tokenInfo;
     }
 
     /**

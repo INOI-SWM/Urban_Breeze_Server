@@ -13,14 +13,14 @@ import java.util.UUID;
  * Spring Security가 Principal 객체로 사용할 커스텀 클래스.
  * 인증된 사용자의 id, uuid 등 추가 정보를 담는다.
  */
-public record CustomUserDetails(
+public record AuthUser(
     Long id,
     UUID uuid,
     String username
 ) implements UserDetails {
 
-    public static CustomUserDetails from(User user) {
-        return new CustomUserDetails(
+    public static AuthUser from(User user) {
+        return new AuthUser(
                 user.getId(),
                 user.getUuid(),
                 user.getEmail()
