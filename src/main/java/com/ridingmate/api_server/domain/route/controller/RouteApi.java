@@ -81,6 +81,22 @@ public interface RouteApi {
     ResponseEntity<CommonResponse<RouteListResponse>> getRouteList(@ModelAttribute RouteListRequest request);
 
     @Operation(
+            summary = "경로 상세 정보 조회",
+            description = """
+                    특정 경로(Route)의 상세 정보를 조회합니다.
+                                        
+                    - 경로의 기본 정보(이름, 설명, 거리, 고도 등)
+                    - 경로를 구성하는 모든 GPS 좌표 목록 (위도, 경도, 고도)
+                    """
+    )
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "성공: 경로 상세 정보 조회 완료"),
+            @ApiResponse(responseCode = "403", description = "접근 권한이 없는 경로입니다."),
+            @ApiResponse(responseCode = "404", description = "존재하지 않는 경로입니다."),
+    })
+    ResponseEntity<CommonResponse<RouteDetailResponse>> getRouteDetail(@Parameter(description = "경로 ID") @PathVariable Long routeId);
+
+    @Operation(
             summary = "지도 장소 검색",
             description = """
                     카카오 API를 통해 특정 위치 주변의 장소를 검색합니다.

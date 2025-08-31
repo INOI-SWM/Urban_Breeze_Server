@@ -72,6 +72,18 @@ public class RouteController implements RouteApi{
     }
 
     @Override
+    @GetMapping("/{routeId}")
+    @ApiErrorCodeExample(RouteCommonErrorCode.class)
+    public ResponseEntity<CommonResponse<RouteDetailResponse>> getRouteDetail(
+        @PathVariable Long routeId
+    ) {
+        RouteDetailResponse response = routeFacade.getRouteDetail(routeId);
+        return ResponseEntity
+            .status(RouteSuccessCode.ROUTE_DETAIL_FETCHED.getStatus())
+            .body(CommonResponse.success(RouteSuccessCode.ROUTE_DETAIL_FETCHED, response));
+    }
+
+    @Override
     @GetMapping("/search")
     @ApiErrorCodeExample(KakaoErrorCode.class)
     public ResponseEntity<CommonResponse<MapSearchResponse>> getMapSearch(

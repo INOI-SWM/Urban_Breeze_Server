@@ -1,5 +1,7 @@
 package com.ridingmate.api_server.domain.route.facade;
 
+import com.ggalmazor.ltdownsampling.LTThreeBuckets;
+import com.ggalmazor.ltdownsampling.Point;
 import com.ridingmate.api_server.domain.route.dto.request.CreateRouteRequest;
 import com.ridingmate.api_server.domain.route.dto.request.RouteSegmentRequest;
 import com.ridingmate.api_server.domain.route.dto.request.RouteListRequest;
@@ -17,10 +19,12 @@ import com.ridingmate.api_server.infra.ors.OrsMapper;
 import com.ridingmate.api_server.infra.ors.dto.response.OrsRouteResponse;
 import com.ridingmate.api_server.global.util.GeometryUtil;
 import lombok.RequiredArgsConstructor;
+import org.locationtech.jts.geom.Coordinate;
 import org.locationtech.jts.geom.LineString;
 import org.springframework.data.domain.Page;
 import org.springframework.stereotype.Component;
 
+import java.util.Arrays;
 import java.util.List;
 
 @Component
@@ -77,6 +81,20 @@ public class RouteFacade {
             .toList();
 
         return RouteListResponse.of(routeItems, routePage);
+    }
+
+    public RouteDetailResponse getRouteDetail(Long routeId){
+        Route route = routeService.getRouteWithUser(routeId);
+
+        Coordinate[] coordinates = routeService.getRouteDetailList(routeId);
+
+        List<Point> elevationProfilePoints = GeometryUtil.convertCoordinatesToPoints(Arrays.stream(coordinates).toList());
+//
+//        List<Coordinate> simplifiedRouteGpsLogs = GeometryUtil.simplifyRoute(coordinates);
+
+        elevationProfilePoints = LTThreeBuckets.sorted(elevationProfilePoints, 300);
+
+        return RouteDetailResponse.from(route, elevationProfilePoints);
     }
 
     public MapSearchResponse getMapSearch(String query, Double lon, Double lat) {
