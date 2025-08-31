@@ -64,8 +64,10 @@ dependencies {
 	testImplementation 'org.springframework.boot:spring-boot-starter-test'
 	testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
 
-	//s3
+	//aws
 	implementation 'software.amazon.awssdk:s3:2.25.64'
+
+	implementation 'io.awspring.cloud:spring-cloud-aws-starter-sqs:3.1.1'
 
 	//algorithms
 	implementation 'com.github.ggalmazor:lttb_downsampling:1.1.0'
