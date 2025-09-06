@@ -4,6 +4,7 @@ import com.ridingmate.api_server.domain.user.entity.User;
 import com.ridingmate.api_server.global.entity.BaseTimeEntity;
 import jakarta.persistence.*;
 import lombok.AccessLevel;
+import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
@@ -50,4 +51,19 @@ public class Activity extends BaseTimeEntity {
      */
     @Column(name = "elevation_gain", nullable = false)
     private Double elevationGain;
+
+    @Builder
+    private Activity(User user, String title, Double distance,
+                     Duration duration, Double elevationGain,
+                     LocalDateTime startedAt, LocalDateTime endedAt
+    ){
+        this.user = user;
+        this.title = title;
+        this.distance = distance;
+        this.duration = duration;
+        this.elevationGain = elevationGain;
+        this.startedAt = startedAt;
+        this.endedAt = endedAt;
+
+    }
 }

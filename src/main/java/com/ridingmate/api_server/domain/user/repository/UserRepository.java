@@ -8,6 +8,7 @@ import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
 import java.util.Optional;
+import java.util.UUID;
 
 @Repository
 public interface UserRepository extends JpaRepository<User, Long> {
@@ -21,6 +22,8 @@ public interface UserRepository extends JpaRepository<User, Long> {
      * 이메일로 사용자 조회
      */
     Optional<User> findByEmail(String email);
+
+    Optional<User> findByUuid(UUID uuid);
 
     /**
      * 소셜 provider와 social ID로 사용자 존재 여부 확인

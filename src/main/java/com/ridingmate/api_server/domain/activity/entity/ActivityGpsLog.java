@@ -1,7 +1,9 @@
 package com.ridingmate.api_server.domain.activity.entity;
 
 import jakarta.persistence.*;
+import jakarta.validation.constraints.NotBlank;
 import lombok.AccessLevel;
+import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
@@ -11,7 +13,9 @@ import java.time.LocalDateTime;
 @Entity
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
-@Table(name = "activity_gps_logs")
+@Table(name = "activity_gps_logs", indexes = {
+    @Index(name = "idx_activity_gps_logs_activity_id_log_time", columnList = "activity_id, log_time")
+})
 public class ActivityGpsLog {
 
     @Id
@@ -38,11 +42,27 @@ public class ActivityGpsLog {
     private Double speed;
 
     @Column(name = "distance")
-    private Duration distance;
+    private Double distance;
 
     @Column(name = "heart_rate")
     private Double heartRate;
 
     @Column(name = "cadence")
     private Double cadence;
+
+    @Builder
+    private ActivityGpsLog(Activity activity, LocalDateTime logTime,
+                           Double latitude, Double longitude, Double elevation,
+                           Double speed, Double distance, Double heartRate, Double cadence
+    ){
+        this.activity = activity;
+        this.logTime = logTime;
+        this.latitude = latitude;
+        this.longitude = longitude;
+        this.elevation = elevation;
+        this.speed = speed;
+        this.distance = distance;
+        this.heartRate = heartRate;
+        this.cadence = cadence;
+    }
 }
