@@ -1,4 +1,4 @@
-package com.ridingmate.api_server.domain.terra.enums;
+package com.ridingmate.api_server.infra.terra;
 
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;

@@ -16,6 +16,9 @@ public record TerraProperty(
     @NotBlank
     String baseUrl,
 
-    List<String> supportedProviders
+    List<String> supportedProviders,
+
+    @NotBlank
+    String appScheme
 ) {
 }

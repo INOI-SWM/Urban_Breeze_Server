@@ -1,4 +1,4 @@
-package com.ridingmate.api_server.domain.terra.dto;
+package com.ridingmate.api_server.infra.terra.dto.response;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 
