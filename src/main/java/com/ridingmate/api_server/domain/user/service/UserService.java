@@ -1,6 +1,8 @@
 package com.ridingmate.api_server.domain.user.service;
 
 import com.ridingmate.api_server.domain.user.entity.User;
+import com.ridingmate.api_server.domain.user.exception.UserErrorCode;
+import com.ridingmate.api_server.domain.user.exception.UserException;
 import com.ridingmate.api_server.domain.user.repository.UserRepository;
 import com.ridingmate.api_server.domain.auth.dto.SocialUserInfo;
 import lombok.RequiredArgsConstructor;
@@ -45,5 +47,10 @@ public class UserService {
             
             return savedUser;
         });
+    }
+
+    public User getUser(Long userId){
+        return userRepository.findById(userId)
+                .orElseThrow(() -> new UserException(UserErrorCode.USER_NOT_FOUND));
     }
 } 

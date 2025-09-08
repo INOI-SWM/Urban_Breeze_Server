@@ -54,4 +54,22 @@ public interface IntegrationApi {
             @AuthenticationPrincipal AuthUser authUser,
             @RequestParam TerraProvider terraProvider
             );
+
+    @Operation(
+            summary = "연동된 모든 서비스의 활동 기록 동기화 요청",
+            description = """
+                    현재 사용자와 연동된 모든 외부 서비스(Garmin, Fitbit 등)로부터 활동 기록을 가져오는 **비동기** 작업을 시작합니다.
+                    
+                    - API는 요청을 접수하면 즉시 **202 Accepted** 응답을 반환하며, 실제 데이터 동기화는 백그라운드에서 수행됩니다.
+                    - 동기화 시작 날짜는 서버가 계산합니다.
+                      - 사용자가 새로 연동한 서비스가 하나라도 있으면 **최근 30일**의 기록을 가져옵니다.
+                      - 모든 서비스가 기존에 동기화 이력이 있다면, **가장 오래된 마지막 동기화 시점**부터 현재까지의 기록을 가져옵니다.
+                    - 동기화 완료 여부는 별도의 상태 조회 API나 웹소켓 등을 통해 확인해야 합니다.
+                    """
+    )
+    @ApiResponses({
+            @ApiResponse(responseCode = "202", description = "성공: 동기화 작업이 성공적으로 접수됨"),
+            @ApiResponse(responseCode = "404", description = "실패: 사용자에게 연동된 서비스가 하나도 없음")
+    })
+    ResponseEntity<CommonResponse<Void>> getActivities(@AuthenticationPrincipal AuthUser authUser);
 }

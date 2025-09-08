@@ -1,5 +1,6 @@
 package com.ridingmate.api_server.domain.user.entity;
 
+import com.ridingmate.api_server.global.entity.BaseTimeEntity;
 import com.ridingmate.api_server.infra.terra.TerraProvider;
 import jakarta.persistence.*;
 import lombok.AccessLevel;
@@ -7,6 +8,7 @@ import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
+import java.time.LocalDateTime;
 import java.util.UUID;
 
 @Entity
@@ -15,7 +17,7 @@ import java.util.UUID;
 })
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
-public class TerraUser {
+public class TerraUser extends BaseTimeEntity {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -32,6 +34,9 @@ public class TerraUser {
     @Column(name = "provider", nullable = false)
     private TerraProvider provider;
 
+    @Column
+    private LocalDateTime lastSyncDate;
+
     @Column(nullable = false)
     private boolean isActive = false;
 
@@ -40,5 +45,9 @@ public class TerraUser {
         this.terraUserId = terraUserId;
         this.provider = provider;
         this.user = user;
+    }
+
+    public void updateLastSyncDates(){
+        lastSyncDate = LocalDateTime.now();
     }
 }

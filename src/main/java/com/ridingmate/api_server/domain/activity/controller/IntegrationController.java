@@ -49,4 +49,18 @@ public class IntegrationController implements IntegrationApi{
                 .status(IntegrationSuccessCode.INTEGRATION_AUTHENTICATION_SUCCESS.getStatus())
                 .body(CommonResponse.success(IntegrationSuccessCode.INTEGRATION_AUTHENTICATION_SUCCESS, response));
     }
+
+    @Override
+    @GetMapping("/activity")
+    @ApiErrorCodeExample(UserErrorCode.class)
+    @ApiErrorCodeExample(TerraErrorCode.class)
+    public ResponseEntity<CommonResponse<Void>> getActivities(
+            @AuthenticationPrincipal AuthUser authUser
+    ) {
+        integrationFacade.getActivities(authUser);
+
+        return ResponseEntity
+                .status(IntegrationSuccessCode.INTEGRATION_RETRIEVE_ACTIVITY_SUCCESS.getStatus())
+                .body(CommonResponse.success(IntegrationSuccessCode.INTEGRATION_RETRIEVE_ACTIVITY_SUCCESS));
+    }
 }

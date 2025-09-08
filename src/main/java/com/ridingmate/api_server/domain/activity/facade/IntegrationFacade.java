@@ -3,8 +3,10 @@ package com.ridingmate.api_server.domain.activity.facade;
 import com.ridingmate.api_server.domain.activity.dto.request.IntegrationProviderAuthRequest;
 import com.ridingmate.api_server.domain.activity.dto.response.IntegrationAuthenticateResponse;
 import com.ridingmate.api_server.domain.activity.dto.response.IntegrationProviderAuthResponse;
+import com.ridingmate.api_server.domain.activity.service.TerraService;
 import com.ridingmate.api_server.domain.auth.security.AuthUser;
 import com.ridingmate.api_server.domain.user.entity.TerraUser;
+import com.ridingmate.api_server.domain.user.entity.User;
 import com.ridingmate.api_server.domain.user.service.TerraUserService;
 import com.ridingmate.api_server.domain.user.service.UserService;
 import com.ridingmate.api_server.global.config.AppConfigProperties;
@@ -19,6 +21,9 @@ import com.ridingmate.api_server.infra.terra.dto.response.TerraProviderAuthRespo
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
+import java.time.LocalDate;
+import java.util.List;
+
 @Component
 @RequiredArgsConstructor
 public class IntegrationFacade {
@@ -27,6 +32,8 @@ public class IntegrationFacade {
     private final TerraProperty terraProperty;
     private final AppConfigProperties appConfigProperties;
     private final TerraUserService terraUserService;
+    private final UserService userService;
+    private final TerraService terraService;
 
     public IntegrationAuthenticateResponse authenticateTerra(AuthUser authUser){
         String providers = String.join(",", terraProperty.supportedProviders());
@@ -43,5 +50,16 @@ public class IntegrationFacade {
         terraUserService.createTerraUser(authUser.id(), terraResponse.userId() ,terraProvider);
 
         return TerraMapper.toIntegrationProviderAuthResponse(terraResponse);
+    }
+
+    public void getActivities(AuthUser authUser){
+        User user = userService.getUser(authUser.id());
+        List<TerraUser> terraUsers = terraService.getTerraUsers(user);
+
+        for (TerraUser terraUser : terraUsers){
+            LocalDate startDate = terraService.determineActivityStartDate(terraUser);
+            terraClient.retrieveActivity(terraUser.getTerraUserId(), startDate);
+            terraService.updateLastSyncDate(terraUser);
+        }
     }
 }
