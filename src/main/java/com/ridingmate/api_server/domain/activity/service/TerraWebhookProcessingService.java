@@ -6,6 +6,10 @@ import com.ridingmate.api_server.domain.activity.entity.Activity;
 import com.ridingmate.api_server.domain.activity.entity.ActivityGpsLog;
 import com.ridingmate.api_server.domain.activity.repository.ActivityGpsLogRepository;
 import com.ridingmate.api_server.domain.activity.repository.ActivityRepository;
+import com.ridingmate.api_server.domain.user.entity.TerraUser;
+import com.ridingmate.api_server.domain.user.exception.TerraUserErrorCode;
+import com.ridingmate.api_server.domain.user.exception.TerraUserException;
+import com.ridingmate.api_server.domain.user.repository.TerraUserRepository;
 import com.ridingmate.api_server.infra.terra.dto.response.TerraPayload;
 import com.ridingmate.api_server.infra.terra.TerraActivityType;
 import com.ridingmate.api_server.domain.user.entity.User;
@@ -30,23 +34,22 @@ public class TerraWebhookProcessingService {
     private final UserRepository userRepository;
     private final ActivityRepository activityRepository;
     private final ActivityGpsLogRepository activityGpsLogRepository;
+    private final TerraUserRepository terraUserRepository;
 
     @Transactional
     public void processAuthEvent(String payload) throws JsonProcessingException {
         TerraPayload terraPayload = objectMapper.readValue(payload, TerraPayload.class);
-        TerraPayload.User terraUser = terraPayload.user();
+        TerraPayload.User user = terraPayload.user();
 
-        if (terraUser == null || terraUser.referenceId() == null) {
+        if (user == null || user.referenceId() == null) {
             log.error("Auth 이벤트에 user 객체 또는 reference_id가 없습니다: {}", payload);
             return;
         }
 
-        User user = userRepository.findByUuid(UUID.fromString(terraUser.referenceId()))
-                .orElseThrow(() -> new RuntimeException("해당 reference_id를 가진 유저를 찾을 수 없습니다: " + terraUser.referenceId()));
+        TerraUser terraUser = terraUserRepository.findByTerraUserId(UUID.fromString(user.userId()))
+                .orElseThrow(() -> new TerraUserException(TerraUserErrorCode.TERRA_USER_NOT_FOUND));
 
-        // TODO: User 엔티티에 terraUserId 필드를 추가하고 아래 로직 활성화
-        // user.updateTerraUserId(terraUser.userId());
-        log.info("Terra 연동 완료: userId={}, terraUserId={}", user.getId(), terraUser.userId());
+        terraUser.setActive();
     }
 
     @Transactional

@@ -57,7 +57,7 @@ public class TerraSqsConsumer {
             switch (originalType) {
                 case "auth":
                     log.info("Auth 이벤트 처리 시작");
-                    //TODO Auth 이벤트 처리 로직
+                    terraWebhookProcessingService.processAuthEvent(finalPayload);
                     break;
                 case "activity":
                     log.info("Activity 이벤트 처리 시작");

@@ -50,4 +50,8 @@ public class TerraUser extends BaseTimeEntity {
     public void updateLastSyncDates(){
         lastSyncDate = LocalDateTime.now();
     }
+
+    public void setActive(){
+        isActive = true;
+    }
 }
