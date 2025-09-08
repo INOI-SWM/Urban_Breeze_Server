@@ -25,7 +25,7 @@ public class IntegrationController implements IntegrationApi{
     private final IntegrationFacade integrationFacade;
 
     @Override
-    @PostMapping("/authentication")
+    @PostMapping("/authentication/widget")
     public ResponseEntity<CommonResponse<IntegrationAuthenticateResponse>> generateTerraWidgetSession(
         @AuthenticationPrincipal AuthUser authUser
         ){
@@ -36,7 +36,7 @@ public class IntegrationController implements IntegrationApi{
     }
 
     @Override
-    @PostMapping("/integration")
+    @PostMapping("/authentication")
     @ApiErrorCodeExample(UserErrorCode.class)
     @ApiErrorCodeExample(TerraErrorCode.class)
     public ResponseEntity<CommonResponse<IntegrationProviderAuthResponse>> generateTerraAuthLink(
