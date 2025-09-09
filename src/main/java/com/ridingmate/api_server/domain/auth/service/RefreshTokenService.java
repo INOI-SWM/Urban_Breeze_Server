@@ -6,7 +6,7 @@ import com.ridingmate.api_server.domain.auth.repository.RefreshTokenRepository;
 import com.ridingmate.api_server.domain.user.entity.User;
 import com.ridingmate.api_server.global.exception.BusinessException;
 import com.ridingmate.api_server.domain.auth.config.JwtProperties;
-import com.ridingmate.api_server.domain.auth.dto.AuthUser;
+import com.ridingmate.api_server.domain.auth.dto.AuthUserInfo;
 import com.ridingmate.api_server.domain.auth.dto.TokenInfo;
 import com.ridingmate.api_server.domain.auth.jwt.JwtTokenProvider;
 import lombok.RequiredArgsConstructor;
@@ -86,7 +86,7 @@ public class RefreshTokenService {
         refreshToken.markAsUsed();
 
         // 4. 새로운 Access Token 생성
-        TokenInfo newTokenInfo = jwtTokenProvider.generateTokenInfo(AuthUser.from(refreshToken.getUser()));
+        TokenInfo newTokenInfo = jwtTokenProvider.generateTokenInfo(AuthUserInfo.from(refreshToken.getUser()));
 
         // 5. 새로운 Refresh Token 생성 (Token Rotation)
         RefreshToken newRefreshToken = createRefreshToken(

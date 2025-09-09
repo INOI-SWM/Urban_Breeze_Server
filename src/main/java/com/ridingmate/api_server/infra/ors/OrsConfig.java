@@ -1,6 +1,7 @@
 package com.ridingmate.api_server.infra.ors;
 
 import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -14,6 +15,7 @@ public class OrsConfig {
     private final OrsProperty orsProperty;
 
     @Bean
+    @Qualifier("orsWebClient")
     public WebClient orsWebClient() {
         return WebClient.builder()
                 .baseUrl(orsProperty.baseUrl())
@@ -22,7 +24,8 @@ public class OrsConfig {
     }
 
     @Bean
-    public OrsClient orsClient(WebClient orsWebClient) {
+    public OrsClient orsClient(
+        @Qualifier("orsWebClient") WebClient orsWebClient) {
         return new OrsClient(orsWebClient);
     }
 } 

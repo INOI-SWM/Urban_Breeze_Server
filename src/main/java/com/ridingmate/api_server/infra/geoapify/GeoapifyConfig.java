@@ -1,6 +1,7 @@
 package com.ridingmate.api_server.infra.geoapify;
 
 import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -15,6 +16,7 @@ public class GeoapifyConfig {
     private final GeoapifyProperty geoapifyProperty;
 
     @Bean
+    @Qualifier("geoapifyWebClient")
     public WebClient geoapifyWebClient() {
         DefaultUriBuilderFactory factory = new DefaultUriBuilderFactory(geoapifyProperty.baseUrl());
         factory.setEncodingMode(DefaultUriBuilderFactory.EncodingMode.NONE);
@@ -25,7 +27,8 @@ public class GeoapifyConfig {
     }
 
     @Bean
-    public GeoapifyClient geoapifyClient(WebClient geoapifyWebClient) {
+    public GeoapifyClient geoapifyClient(
+        @Qualifier("geoapifyWebClient") WebClient geoapifyWebClient) {
         return new GeoapifyClient(geoapifyProperty, geoapifyWebClient);
     }
 }

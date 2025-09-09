@@ -1,6 +1,7 @@
 package com.ridingmate.api_server.infra.kakao;
 
 import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -14,6 +15,7 @@ public class KakaoConfig {
     private final KakaoProperty kakaoProperty;
 
     @Bean
+    @Qualifier("kakaoWebClient")
     public WebClient kakaoWebClient() {
         return WebClient.builder()
                 .baseUrl(kakaoProperty.baseUrl())
@@ -22,6 +24,7 @@ public class KakaoConfig {
     }
 
     @Bean
+    @Qualifier("kakaoApiWebClient")
     public WebClient kakaoApiWebClient() {
         return WebClient.builder()
                 .baseUrl("https://kapi.kakao.com")
@@ -29,7 +32,9 @@ public class KakaoConfig {
     }
 
     @Bean
-    public KakaoClient kakaoClient(WebClient kakaoWebClient, WebClient kakaoApiWebClient) {
+    public KakaoClient kakaoClient(
+        @Qualifier("kakaoWebClient") WebClient kakaoWebClient,
+        @Qualifier("kakaoApiWebClient") WebClient kakaoApiWebClient) {
         return new KakaoClient(kakaoWebClient, kakaoApiWebClient);
     }
 } 

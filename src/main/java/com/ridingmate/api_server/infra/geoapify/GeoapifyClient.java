@@ -21,7 +21,6 @@ public class GeoapifyClient {
 
     private final GeoapifyProperty geoapifyProperty;
 
-    @Qualifier("geoapifyWebClient")
     private final WebClient geoapifyWebClient;
 
     public byte[] getStaticMap(LineString lineString) {
