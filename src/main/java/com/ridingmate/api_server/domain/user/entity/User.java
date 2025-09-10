@@ -1,6 +1,6 @@
 package com.ridingmate.api_server.domain.user.entity;
 
-import com.ridingmate.api_server.domain.user.Gender;
+import com.ridingmate.api_server.domain.user.enums.Gender;
 import com.ridingmate.api_server.global.entity.BaseTimeEntity;
 import com.ridingmate.api_server.domain.auth.enums.SocialProvider;
 import jakarta.persistence.*;
@@ -11,7 +11,6 @@ import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
-import java.time.LocalDateTime;
 import java.util.UUID;
 
 
@@ -85,6 +84,34 @@ public class User extends BaseTimeEntity {
                 .nickname(nickname)
                 .profileImagePath(profileImagePath)
                 .build();
+    }
+
+    /**
+     * 닉네임 업데이트
+     */
+    public void updateNickname(String nickname) {
+        this.nickname = nickname;
+    }
+
+    /**
+     * 한 줄 소개 업데이트
+     */
+    public void updateIntroduce(String introduce) {
+        this.introduce = introduce;
+    }
+
+    /**
+     * 성별 업데이트
+     */
+    public void updateGender(Gender gender) {
+        this.gender = gender;
+    }
+
+    /**
+     * 출생년도 업데이트
+     */
+    public void updateBirthYear(Integer birthYear) {
+        this.birthYear = birthYear;
     }
 
 }

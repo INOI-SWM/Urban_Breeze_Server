@@ -1,4 +1,4 @@
-package com.ridingmate.api_server.domain.user;
+package com.ridingmate.api_server.domain.user.enums;
 
 public enum Gender {
     MALE,
