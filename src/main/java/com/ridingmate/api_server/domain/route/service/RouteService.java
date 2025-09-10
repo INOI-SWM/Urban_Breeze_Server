@@ -23,11 +23,14 @@ import com.ridingmate.api_server.global.util.GeometryUtil;
 import lombok.RequiredArgsConstructor;
 import org.locationtech.jts.geom.Coordinate;
 import org.locationtech.jts.geom.LineString;
+import org.locationtech.jts.geom.Position;
 import org.springframework.data.domain.*;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.Duration;
+import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 import java.util.stream.Collectors;
@@ -62,6 +65,10 @@ public class RouteService {
                 .shareId(UUID.randomUUID().toString())
                 .build();
 
+        Coordinate[] geometry = request.geometry().stream()
+                .map(dto -> new Coordinate(dto.longitude(), dto.longitude(), dto.elevation()))
+                .toArray(Coordinate[]::new);
+        createRouteGpsLog(route, geometry);
         
         // RouteGeometry 엔티티 생성
         RouteGeometry routeGeometry = RouteGeometry.builder()
@@ -86,6 +93,29 @@ public class RouteService {
         createUserRouteRelation(user, route, RouteRelationType.OWNER);
 
         return route;
+    }
+
+    private void createRouteGpsLog(Route route, Coordinate[] geometry){
+        LocalDateTime baseTime = LocalDateTime.now();
+        int sequence = 0;
+
+        List<RouteGpsLog> routeGpsLogs = new ArrayList<>();
+        for (Coordinate coordinate: geometry){
+            LocalDateTime virtualLogTime = baseTime.plusSeconds(sequence);
+
+            RouteGpsLog routeGpsLog = RouteGpsLog.builder()
+                    .route(route)
+                    .longitude(coordinate.getX())
+                    .latitude(coordinate.getY())
+                    .elevation(coordinate.getZ())
+                    .logTime(virtualLogTime)
+                    .build();
+            routeGpsLogs.add(routeGpsLog);
+
+            sequence++;
+        }
+
+        routeGpsLogRepository.saveAll(routeGpsLogs);
     }
 
     @Transactional(readOnly = true)

@@ -48,6 +48,11 @@ public class RouteFacade {
         LineString routeLine = GeometryUtil.polylineToLineString(request.polyline());
         byte[] thumbnailBytes = geoapifyClient.getStaticMap(routeLine);
         Route route = routeService.createRoute(request, routeLine);
+
+        Coordinate[] geometry = request.geometry().stream()
+                .map(dto -> new Coordinate(dto.longitude(), dto.latitude(), dto.elevation()))
+                .toArray(Coordinate[]::new);
+
         s3Manager.uploadByteFiles(route.getThumbnailImagePath(), thumbnailBytes);
 
         return CreateRouteResponse.from(route);
