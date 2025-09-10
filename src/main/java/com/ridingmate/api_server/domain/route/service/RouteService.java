@@ -50,8 +50,8 @@ public class RouteService {
     private final RouteGpsLogRepository routeGpsLogRepository;
 
     @Transactional
-    public Route createRoute(CreateRouteRequest request, LineString routeLine) {
-        User user = userRepository.findById(1L)
+    public Route createRoute(Long userId, CreateRouteRequest request, LineString routeLine) {
+        User user = userRepository.findById(userId)
                 .orElseThrow(() -> new AuthException(AuthErrorCode.AUTHENTICATION_USER_NOT_FOUND));
 
         // Route 엔티티 생성

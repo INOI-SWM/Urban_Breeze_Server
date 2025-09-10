@@ -2,6 +2,7 @@ package com.ridingmate.api_server.domain.route.facade;
 
 import com.ggalmazor.ltdownsampling.LTThreeBuckets;
 import com.ggalmazor.ltdownsampling.Point;
+import com.ridingmate.api_server.domain.auth.security.AuthUser;
 import com.ridingmate.api_server.domain.route.dto.request.CreateRouteRequest;
 import com.ridingmate.api_server.domain.route.dto.request.RouteSegmentRequest;
 import com.ridingmate.api_server.domain.route.dto.request.RouteListRequest;
@@ -44,10 +45,10 @@ public class RouteFacade {
         return OrsMapper.toRouteSegmentResponse(orsResponse);
     }
 
-    public CreateRouteResponse createRoute(CreateRouteRequest request) {
+    public CreateRouteResponse createRoute(AuthUser authUser, CreateRouteRequest request) {
         LineString routeLine = GeometryUtil.polylineToLineString(request.polyline());
         byte[] thumbnailBytes = geoapifyClient.getStaticMap(routeLine);
-        Route route = routeService.createRoute(request, routeLine);
+        Route route = routeService.createRoute(authUser.id(), request, routeLine);
 
         Coordinate[] geometry = request.geometry().stream()
                 .map(dto -> new Coordinate(dto.longitude(), dto.latitude(), dto.elevation()))
@@ -58,11 +59,8 @@ public class RouteFacade {
         return CreateRouteResponse.from(route);
     }
 
-    public ShareRouteResponse shareRoute(Long routeId) {
-        //TODO 추후 변경 필요
-        Long userId = 1L;
-
-        String shareLink = routeService.createShareLink(routeId, userId);
+    public ShareRouteResponse shareRoute(AuthUser authUser, Long routeId) {
+        String shareLink = routeService.createShareLink(routeId, authUser.id());
         return new ShareRouteResponse(shareLink);
     }
 
@@ -72,9 +70,9 @@ public class RouteFacade {
      * @param request 경로 목록 조회 요청 정보
      * @return 정렬된 경로 목록 응답
      */
-    public RouteListResponse getRouteList(Long userId, RouteListRequest request) {
+    public RouteListResponse getRouteList(AuthUser authUser, RouteListRequest request) {
         // Service에서 경로 목록 조회
-        Page<Route> routePage = routeService.getRoutesByUser(userId, request);
+        Page<Route> routePage = routeService.getRoutesByUser(authUser.id(), request);
 
         // DTO 생성 시 썸네일 URL과 프로필 이미지 URL 추가
         List<RouteListItemResponse> routeItems = routePage.getContent().stream()

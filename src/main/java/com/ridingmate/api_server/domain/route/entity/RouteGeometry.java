@@ -44,7 +44,7 @@ public class RouteGeometry {
     private LineString routeLine;
 
     @Builder
-    public RouteGeometry(Long id, Route route, String gpxFilePath, double maxLat, double maxLon, double minLat, double minLon, LineString routeLine) {
+    private RouteGeometry(Long id, Route route, String gpxFilePath, double maxLat, double maxLon, double minLat, double minLon, LineString routeLine) {
         this.id = id;
         this.route = route;
         this.gpxFilePath = gpxFilePath;
