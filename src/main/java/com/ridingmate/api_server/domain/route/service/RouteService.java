@@ -23,7 +23,6 @@ import com.ridingmate.api_server.global.util.GeometryUtil;
 import lombok.RequiredArgsConstructor;
 import org.locationtech.jts.geom.Coordinate;
 import org.locationtech.jts.geom.LineString;
-import org.locationtech.jts.geom.Position;
 import org.springframework.data.domain.*;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -33,7 +32,6 @@ import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
-import java.util.stream.Collectors;
 
 import com.ridingmate.api_server.domain.route.dto.request.RouteListRequest;
 import com.ridingmate.api_server.domain.route.entity.RouteGeometry;
@@ -64,11 +62,6 @@ public class RouteService {
                 .elevationGain(request.elevationGain())
                 .shareId(UUID.randomUUID().toString())
                 .build();
-
-        Coordinate[] geometry = request.geometry().stream()
-                .map(dto -> new Coordinate(dto.longitude(), dto.longitude(), dto.elevation()))
-                .toArray(Coordinate[]::new);
-        createRouteGpsLog(route, geometry);
         
         // RouteGeometry 엔티티 생성
         RouteGeometry routeGeometry = RouteGeometry.builder()
@@ -91,6 +84,11 @@ public class RouteService {
 
         // 생성자와 경로 간의 OWNER 관계 생성
         createUserRouteRelation(user, route, RouteRelationType.OWNER);
+
+        Coordinate[] geometry = request.geometry().stream()
+                .map(dto -> new Coordinate(dto.longitude(), dto.longitude(), dto.elevation()))
+                .toArray(Coordinate[]::new);
+        createRouteGpsLog(route, geometry);
 
         return route;
     }
