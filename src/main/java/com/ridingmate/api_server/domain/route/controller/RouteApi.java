@@ -1,5 +1,6 @@
 package com.ridingmate.api_server.domain.route.controller;
 
+import com.ridingmate.api_server.domain.auth.security.AuthUser;
 import com.ridingmate.api_server.domain.route.dto.request.CreateRouteRequest;
 import com.ridingmate.api_server.domain.route.dto.request.RouteListRequest;
 import com.ridingmate.api_server.domain.route.dto.request.RouteSegmentRequest;
@@ -12,6 +13,7 @@ import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.ModelAttribute;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -24,7 +26,8 @@ public interface RouteApi {
     @ApiResponses({
             @ApiResponse(responseCode = "201", description = "성공: 세그먼트 생성 완료"),
     })
-    ResponseEntity<CommonResponse<RouteSegmentResponse>> previewRoute(@RequestBody RouteSegmentRequest request);
+    ResponseEntity<CommonResponse<RouteSegmentResponse>> previewRoute(
+            @RequestBody RouteSegmentRequest request);
 
     @Operation(
             summary = "경로 생성 및 저장",
@@ -41,7 +44,9 @@ public interface RouteApi {
     @ApiResponses({
             @ApiResponse(responseCode = "201", description = "성공: 경로 생성 완료"),
     })
-    ResponseEntity<CommonResponse<CreateRouteResponse>> createRoute(@Valid @RequestBody CreateRouteRequest request);
+    ResponseEntity<CommonResponse<CreateRouteResponse>> createRoute(
+            @AuthenticationPrincipal AuthUser authUser,
+            @Valid @RequestBody CreateRouteRequest request);
 
     @Operation(
             summary = "경로 공유 링크 조회",
@@ -53,7 +58,9 @@ public interface RouteApi {
     @ApiResponses({
             @ApiResponse(responseCode = "200", description = "성공: 공유 링크 조회 완료"),
     })
-    ResponseEntity<CommonResponse<ShareRouteResponse>> shareRoute(@PathVariable Long routeId);
+    ResponseEntity<CommonResponse<ShareRouteResponse>> shareRoute(
+            @AuthenticationPrincipal AuthUser authUser,
+            @PathVariable Long routeId);
 
     @Operation(
             summary = "내 경로 목록 조회",
@@ -78,7 +85,9 @@ public interface RouteApi {
     @ApiResponses({
             @ApiResponse(responseCode = "200", description = "성공: 경로 목록 조회 완료"),
     })
-    ResponseEntity<CommonResponse<RouteListResponse>> getRouteList(@ModelAttribute RouteListRequest request);
+    ResponseEntity<CommonResponse<RouteListResponse>> getRouteList(
+            @AuthenticationPrincipal AuthUser authUser,
+            @ModelAttribute RouteListRequest request);
 
     @Operation(
             summary = "경로 상세 정보 조회",
@@ -94,7 +103,9 @@ public interface RouteApi {
             @ApiResponse(responseCode = "403", description = "접근 권한이 없는 경로입니다."),
             @ApiResponse(responseCode = "404", description = "존재하지 않는 경로입니다."),
     })
-    ResponseEntity<CommonResponse<RouteDetailResponse>> getRouteDetail(@Parameter(description = "경로 ID") @PathVariable Long routeId);
+    ResponseEntity<CommonResponse<RouteDetailResponse>> getRouteDetail(
+            @Parameter(description = "경로 ID")
+            @PathVariable Long routeId);
 
     @Operation(
             summary = "지도 장소 검색",

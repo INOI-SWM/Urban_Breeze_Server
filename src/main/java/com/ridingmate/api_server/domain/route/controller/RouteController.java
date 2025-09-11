@@ -1,6 +1,7 @@
 package com.ridingmate.api_server.domain.route.controller;
 
 import com.ridingmate.api_server.domain.auth.exception.AuthErrorCode;
+import com.ridingmate.api_server.domain.auth.security.AuthUser;
 import com.ridingmate.api_server.domain.route.dto.request.CreateRouteRequest;
 import com.ridingmate.api_server.domain.route.dto.request.RouteListRequest;
 import com.ridingmate.api_server.domain.route.dto.request.RouteSegmentRequest;
@@ -16,6 +17,7 @@ import com.ridingmate.api_server.infra.ors.OrsErrorCode;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
@@ -40,8 +42,10 @@ public class RouteController implements RouteApi{
     @PostMapping
     @ApiErrorCodeExample(RouteCreationErrorCode.class)
     @ApiErrorCodeExample(AuthErrorCode.class)
-    public ResponseEntity<CommonResponse<CreateRouteResponse>> createRoute(@Valid @RequestBody CreateRouteRequest request) {
-        CreateRouteResponse response = routeFacade.createRoute(request);
+    public ResponseEntity<CommonResponse<CreateRouteResponse>> createRoute(
+            @AuthenticationPrincipal AuthUser authUser,
+            @Valid @RequestBody CreateRouteRequest request) {
+        CreateRouteResponse response = routeFacade.createRoute(authUser, request);
         return ResponseEntity.
                 status(RouteSuccessCode.ROUTE_CREATED.getStatus())
                 .body(CommonResponse.success(RouteSuccessCode.ROUTE_CREATED, response));
@@ -50,8 +54,10 @@ public class RouteController implements RouteApi{
     @Override
     @GetMapping("/{routeId}/share")
     @ApiErrorCodeExample(RouteCommonErrorCode.class)
-    public ResponseEntity<CommonResponse<ShareRouteResponse>> shareRoute(@PathVariable Long routeId) {
-        ShareRouteResponse  response = routeFacade.shareRoute(routeId);
+    public ResponseEntity<CommonResponse<ShareRouteResponse>> shareRoute(
+            @AuthenticationPrincipal AuthUser authUser,
+            @PathVariable Long routeId) {
+        ShareRouteResponse  response = routeFacade.shareRoute(authUser, routeId);
         return ResponseEntity
                 .status(RouteSuccessCode.SHARE_LINK_FETCHED.getStatus())
                 .body(CommonResponse.success(RouteSuccessCode.SHARE_LINK_FETCHED, response));
@@ -60,12 +66,10 @@ public class RouteController implements RouteApi{
     @Override
     @GetMapping
     public ResponseEntity<CommonResponse<RouteListResponse>> getRouteList(
+            @AuthenticationPrincipal AuthUser authUser,
             @ModelAttribute RouteListRequest request
     ) {
-        // TODO: 실제 사용자 인증 구현 후 수정 필요
-        Long userId = 1L; // 현재는 mockUser 사용
-        
-        RouteListResponse response = routeFacade.getRouteList(userId, request);
+        RouteListResponse response = routeFacade.getRouteList(authUser, request);
         return ResponseEntity
                 .status(RouteSuccessCode.ROUTE_LIST_FETCHED.getStatus())
                 .body(CommonResponse.success(RouteSuccessCode.ROUTE_LIST_FETCHED, response));
