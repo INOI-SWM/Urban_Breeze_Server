@@ -1,8 +1,11 @@
 package com.ridingmate.api_server.domain.user.entity;
 
+import com.ridingmate.api_server.domain.user.enums.Gender;
 import com.ridingmate.api_server.global.entity.BaseTimeEntity;
 import com.ridingmate.api_server.domain.auth.enums.SocialProvider;
 import jakarta.persistence.*;
+import jakarta.validation.constraints.Max;
+import jakarta.validation.constraints.Min;
 import lombok.AccessLevel;
 import lombok.Builder;
 import lombok.Getter;
@@ -40,8 +43,20 @@ public class User extends BaseTimeEntity {
     @Column(name = "profile_image_path")
     private String profileImagePath;
 
+    @Column(name = "introduce")
+    private String introduce;
+
+    @Min(1900)
+    @Max(2025)
+    @Column(name = "birth_year")
+    private Integer birthYear;
+
+    @Enumerated(EnumType.STRING)
+    @Column(name = "gender")
+    private Gender gender;
+
     @Builder
-    public User(SocialProvider socialProvider, String socialId, String email, 
+    public User(SocialProvider socialProvider, String socialId, String email,
                 String nickname, String profileImagePath) {
         this.socialProvider = socialProvider;
         this.socialId = socialId;
@@ -69,6 +84,34 @@ public class User extends BaseTimeEntity {
                 .nickname(nickname)
                 .profileImagePath(profileImagePath)
                 .build();
+    }
+
+    /**
+     * 닉네임 업데이트
+     */
+    public void updateNickname(String nickname) {
+        this.nickname = nickname;
+    }
+
+    /**
+     * 한 줄 소개 업데이트
+     */
+    public void updateIntroduce(String introduce) {
+        this.introduce = introduce;
+    }
+
+    /**
+     * 성별 업데이트
+     */
+    public void updateGender(Gender gender) {
+        this.gender = gender;
+    }
+
+    /**
+     * 출생년도 업데이트
+     */
+    public void updateBirthYear(Integer birthYear) {
+        this.birthYear = birthYear;
     }
 
 }
