@@ -11,7 +11,9 @@ import java.time.LocalDateTime;
 @Entity
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
-@Table(name = "route_gps_logs")
+@Table(name = "route_gps_logs", indexes = {
+        @Index(name = "idx_route_gps_logs_route_id_log_time", columnList = "route_id, log_time")
+})
 public class RouteGpsLog {
 
     @Id

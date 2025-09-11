@@ -35,6 +35,69 @@ public class GeometryUtil {
     }
 
     /**
+     * LineString을 Google Polyline으로 변환 (Google Polyline Algorithm 사용)
+     */
+    public static String lineStringToPolyline(LineString lineString) {
+        if (lineString == null || lineString.isEmpty()) {
+            return "";
+        }
+        
+        Coordinate[] coordinates = lineString.getCoordinates();
+        return encodePolyline(coordinates);
+    }
+
+    /**
+     * Coordinate 배열을 Google Polyline으로 인코딩
+     */
+    private static String encodePolyline(Coordinate[] coordinates) {
+        StringBuilder encoded = new StringBuilder();
+        
+        int prevLat = 0;
+        int prevLng = 0;
+        
+        for (Coordinate coordinate : coordinates) {
+            // 좌표를 1e5로 스케일링하고 정수로 변환
+            int lat = (int) Math.round(coordinate.y * 1e5);
+            int lng = (int) Math.round(coordinate.x * 1e5);
+            
+            // 이전 좌표와의 차이 계산
+            int deltaLat = lat - prevLat;
+            int deltaLng = lng - prevLng;
+            
+            // 차이값을 인코딩
+            encoded.append(encodeValue(deltaLat));
+            encoded.append(encodeValue(deltaLng));
+            
+            // 현재 좌표를 이전 좌표로 업데이트
+            prevLat = lat;
+            prevLng = lng;
+        }
+        
+        return encoded.toString();
+    }
+
+    /**
+     * 단일 값을 Google Polyline 형식으로 인코딩
+     */
+    private static String encodeValue(int value) {
+        // 1. 부호 비트를 LSB로 이동
+        value = value < 0 ? ~(value << 1) : (value << 1);
+        
+        StringBuilder encoded = new StringBuilder();
+        
+        // 2. 5비트씩 처리
+        while (value >= 0x20) {
+            encoded.append((char) ((0x20 | (value & 0x1F)) + 63));
+            value >>= 5;
+        }
+        
+        // 3. 마지막 청크
+        encoded.append((char) (value + 63));
+        
+        return encoded.toString();
+    }
+
+    /**
      * LineString의 BBOX(Envelope) 반환
      */
     public static Envelope getBoundingBox(LineString line) {

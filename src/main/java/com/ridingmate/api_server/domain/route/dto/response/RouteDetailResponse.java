@@ -3,7 +3,9 @@ package com.ridingmate.api_server.domain.route.dto.response;
 import com.fasterxml.jackson.annotation.JsonFormat;
 import com.ggalmazor.ltdownsampling.Point;
 import com.ridingmate.api_server.domain.route.entity.Route;
+import com.ridingmate.api_server.global.util.GeometryUtil;
 import io.swagger.v3.oas.annotations.media.Schema;
+import jakarta.validation.constraints.NotEmpty;
 
 import java.time.Duration;
 import java.time.LocalDateTime;
@@ -17,6 +19,9 @@ public record RouteDetailResponse(
 
     @Schema(description = "경로 제목", example = "한강 라이딩 경로")
     String title,
+
+    @Schema(description = "경로 Polyline", example = "o{~vFf`miWvCkGbAaJjGgQxBwF")
+    String polyline,
 
     @Schema(description = "경로 생성일", example = "2024-01-15T10:30:00")
     @JsonFormat(pattern = "yyyy-MM-dd'T'HH:mm:ss")
@@ -63,6 +68,7 @@ public record RouteDetailResponse(
         return new RouteDetailResponse(
             route.getId(),
             route.getTitle(),
+            GeometryUtil.lineStringToPolyline(route.getRouteGeometry().getRouteLine()),
             route.getCreatedAt(),
             route.getDuration(),
             route.getDistance(),

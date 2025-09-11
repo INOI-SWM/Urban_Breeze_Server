@@ -69,10 +69,10 @@ public class Route extends BaseTimeEntity {
     @Column(name = "thumbnail_image_path")
     private String thumbnailImagePath;
 
-    @OneToOne(mappedBy = "route", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
+    @OneToOne(mappedBy = "route", cascade = CascadeType.ALL)
     private RouteGeometry routeGeometry;
 
-    @OneToOne(mappedBy = "route", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
+    @OneToOne(mappedBy = "route", cascade = CascadeType.ALL)
     private Recommendation recommendation;
 
 
