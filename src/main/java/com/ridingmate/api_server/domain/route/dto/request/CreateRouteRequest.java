@@ -34,7 +34,7 @@ public record CreateRouteRequest(
         @NotNull
         Double elevationGain,
 
-        @Schema(description = "위도, 경도, 고도 정보 목록", example = "[[126.91331, 37,603735, 27.5], [126.913349, 37.603735, 27.5]")
+        @Schema(description = "위도, 경도, 고도 정보 목록")
         List<Position> geometry,
 
         @Schema(
@@ -44,13 +44,13 @@ public record CreateRouteRequest(
         List<Double> bbox
 ) {
         public record Position(
-                @Schema(description = "경도 정보")
+                @Schema(description = "경도 정보", example = "126.91331")
                 Double longitude,
 
-                @Schema(description = "위도 정보")
+                @Schema(description = "위도 정보", example = "37.603735")
                 Double latitude,
 
-                @Schema(description = "고도 정보")
+                @Schema(description = "고도 정보", example = "27.5")
                 Double elevation
         ){}
 }
