@@ -58,7 +58,7 @@ public class RouteService {
                 .title(request.title())
                 .description(request.description())
                 .distance(request.distance())
-                .duration(Duration.ofMinutes(request.duration()))
+                .duration(Duration.ofSeconds(request.duration()))
                 .elevationGain(request.elevationGain())
                 .shareId(UUID.randomUUID().toString())
                 .build();
@@ -86,7 +86,7 @@ public class RouteService {
         createUserRouteRelation(user, route, RouteRelationType.OWNER);
 
         Coordinate[] geometry = request.geometry().stream()
-                .map(dto -> new Coordinate(dto.longitude(), dto.longitude(), dto.elevation()))
+                .map(dto -> new Coordinate(dto.longitude(), dto.latitude(), dto.elevation()))
                 .toArray(Coordinate[]::new);
         createRouteGpsLog(route, geometry);
 
@@ -124,7 +124,7 @@ public class RouteService {
         }
 
         return routeGpsLogs.stream()
-            .map(routeGpsLog -> new Coordinate(routeGpsLog.getLongitude(), routeGpsLog.getLongitude(), routeGpsLog.getElevation()))
+            .map(routeGpsLog -> new Coordinate(routeGpsLog.getLongitude(), routeGpsLog.getLatitude(), routeGpsLog.getElevation()))
             .toArray(Coordinate[]::new);
     }
 
