@@ -68,7 +68,7 @@ public record RouteDetailResponse(
         return new RouteDetailResponse(
             route.getId(),
             route.getTitle(),
-            GeometryUtil.lineStringToPolyline(route.getRouteGeometry().getRouteLine()),
+            GeometryUtil.lineStringToPolyline(route.getRouteLine()),
             route.getCreatedAt(),
             route.getDuration().toMinutes(),
             route.getDistance(),

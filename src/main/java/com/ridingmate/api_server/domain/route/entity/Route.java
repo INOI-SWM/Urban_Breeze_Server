@@ -5,13 +5,17 @@ import com.ridingmate.api_server.domain.route.enums.LandscapeType;
 import com.ridingmate.api_server.domain.route.enums.Region;
 import com.ridingmate.api_server.domain.user.entity.User;
 import com.ridingmate.api_server.global.entity.BaseTimeEntity;
+import com.ridingmate.api_server.global.util.GeometryUtil;
 import jakarta.persistence.*;
 import lombok.AccessLevel;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
+import org.locationtech.jts.geom.Coordinate;
+import org.locationtech.jts.geom.LineString;
 
 import java.time.Duration;
+import java.util.List;
 
 @Entity
 @Getter
@@ -69,8 +73,23 @@ public class Route extends BaseTimeEntity {
     @Column(name = "thumbnail_image_path")
     private String thumbnailImagePath;
 
-    @OneToOne(mappedBy = "route", cascade = CascadeType.ALL)
-    private RouteGeometry routeGeometry;
+    @Column(name = "gpx_file_path")
+    private String gpxFilePath;
+
+    @Column(name = "max_lat", nullable = false)
+    private Double maxLat;
+
+    @Column(name = "max_lon", nullable = false)
+    private Double maxLon;
+
+    @Column(name = "min_lat", nullable = false)
+    private Double minLat;
+
+    @Column(name = "min_lon", nullable = false)
+    private Double minLon;
+
+    @Column(name = "route_line", nullable = false, columnDefinition = "geometry(LineString, 4326)")
+    private LineString routeLine;
 
     @OneToOne(mappedBy = "route", cascade = CascadeType.ALL)
     private Recommendation recommendation;
@@ -78,7 +97,8 @@ public class Route extends BaseTimeEntity {
 
     @Builder
     private Route(User user, String title, String description, Double distance, Duration duration, Double elevationGain,
-                  String shareId, LandscapeType landscapeType) {
+                  String shareId, LandscapeType landscapeType, String gpxFilePath, Double maxLat, Double maxLon, 
+                  Double minLat, Double minLon, LineString routeLine) {
         this.user = user;
         this.title = title;
         this.description = description;
@@ -87,6 +107,12 @@ public class Route extends BaseTimeEntity {
         this.elevationGain = elevationGain;
         this.shareId = shareId;
         this.landscapeType = landscapeType;
+        this.gpxFilePath = gpxFilePath;
+        this.maxLat = maxLat;
+        this.maxLon = maxLon;
+        this.minLat = minLat;
+        this.minLon = minLon;
+        this.routeLine = routeLine;
     }
 
     /**
@@ -111,7 +137,24 @@ public class Route extends BaseTimeEntity {
         this.thumbnailImagePath = thumbnailImagePath;
     }
 
-    public void setRouteGeometry(RouteGeometry routeGeometry) {
-        this.routeGeometry = routeGeometry;
+    /**
+     * 출발 좌표 반환
+     */
+    public Coordinate getStartCoordinate() {
+        return GeometryUtil.getStartCoordinate(this.routeLine);
+    }
+
+    /**
+     * 도착 좌표 반환
+     */
+    public Coordinate getEndCoordinate() {
+        return GeometryUtil.getEndCoordinate(this.routeLine);
+    }
+
+    /**
+     * 모든 좌표 반환
+     */
+    public List<Coordinate> getAllCoordinates() {
+        return GeometryUtil.getAllCoordinates(this.routeLine);
     }
 }
