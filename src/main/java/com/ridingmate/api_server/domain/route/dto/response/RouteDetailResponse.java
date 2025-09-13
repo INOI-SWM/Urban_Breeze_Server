@@ -49,7 +49,13 @@ public record RouteDetailResponse(
     Integer trackPointsCount,
 
     @Schema(description = "샘플링된 경로의 고도 데이터 목록")
-    List<ElevationPoint> trackPoints
+    List<ElevationPoint> trackPoints,
+
+    @Schema(
+            description = "경로 Bounding Box 좌표 [minLon, minLat, maxLon, maxLat]",
+            example = "[127.01, 37.50, 127.05, 37.55]"
+    )
+    List<Double> bbox
 ) {
 
     @Schema(description = "경로 고도 데이터")
@@ -77,7 +83,8 @@ public record RouteDetailResponse(
             route.getUser().getNickname(),
             route.getUser().getProfileImagePath(),
             elevationPoints.size(),
-            elevationPoints
+            elevationPoints,
+            List.of(route.getMinLon(), route.getMinLat(), route.getMaxLon(), route.getMaxLat())
         );
     }
 }
