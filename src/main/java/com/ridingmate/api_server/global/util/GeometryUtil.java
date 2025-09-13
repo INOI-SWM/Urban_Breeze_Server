@@ -229,4 +229,57 @@ public class GeometryUtil {
             })
             .collect(Collectors.toList());
     }
+
+    /**
+     * 자전거 경로 특성에 맞는 최적 샘플링 크기 계산
+     * @param distanceKm 경로 거리 (km)
+     * @param originalSize 원본 데이터 포인트 수
+     * @return 최적 샘플링 크기
+     */
+    public static int calculateOptimalSampleSize(Double distanceKm, int originalSize) {
+        // 기본값: 모바일 차트에 최적화된 크기
+        int baseSampleSize = 150;
+        
+        // 거리별 적응형 샘플링
+        if (distanceKm != null) {
+            if (distanceKm <= 5.0) {
+                baseSampleSize = 100;
+            } else if (distanceKm <= 15.0) {
+                baseSampleSize = 150;
+            } else if (distanceKm <= 50.0) {
+                baseSampleSize = 200;
+            } else {
+                baseSampleSize = 250;
+            }
+        }
+        
+        // 원본 데이터가 너무 적으면 샘플링하지 않음
+        return Math.min(baseSampleSize, originalSize);
+    }
+
+    /**
+     * 좌표 배열을 고도 프로필용으로 다운샘플링
+     * @param coordinates 원본 좌표 배열
+     * @param distanceKm 경로 거리 (km)
+     * @return 다운샘플링된 고도 포인트 목록
+     */
+    public static List<Point> downsampleElevationProfile(Coordinate[] coordinates, Double distanceKm) {
+        if (coordinates == null || coordinates.length == 0) {
+            return new ArrayList<>();
+        }
+
+        // 좌표를 Point로 변환
+        List<Point> elevationPoints = convertCoordinatesToPoints(List.of(coordinates));
+        
+        // 최적 샘플링 크기 계산
+        int targetSampleSize = calculateOptimalSampleSize(distanceKm, elevationPoints.size());
+        
+        // LTTB 다운샘플링: 입력 데이터가 충분할 때만 적용
+        if (elevationPoints.size() > targetSampleSize) {
+            return LTThreeBuckets.sorted(elevationPoints, targetSampleSize);
+        }
+        
+        // 입력 데이터가 적으면 원본 데이터를 그대로 사용
+        return elevationPoints;
+    }
 }
