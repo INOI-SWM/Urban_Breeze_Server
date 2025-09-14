@@ -18,7 +18,7 @@ public class AppleConfig {
     @Qualifier("appleWebClient")
     public WebClient appleWebClient() {
         return WebClient.builder()
-                .baseUrl(appleProperty.jwksUrl().substring(0, appleProperty.jwksUrl().lastIndexOf("/")))
+                .baseUrl(appleProperty.issuer())
                 .build();
     }
 
