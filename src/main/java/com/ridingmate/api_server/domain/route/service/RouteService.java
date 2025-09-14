@@ -34,7 +34,6 @@ import java.util.List;
 import java.util.UUID;
 
 import com.ridingmate.api_server.domain.route.dto.request.RouteListRequest;
-import com.ridingmate.api_server.domain.route.entity.RouteGeometry;
 
 @Service
 @RequiredArgsConstructor
@@ -52,20 +51,15 @@ public class RouteService {
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new AuthException(AuthErrorCode.AUTHENTICATION_USER_NOT_FOUND));
 
-        // Route 엔티티 생성
+        // Route 엔티티 생성 (Geometry 정보 포함)
         Route route = Route.builder()
                 .user(user)
                 .title(request.title())
                 .description(request.description())
                 .distance(request.distance())
-                .duration(Duration.ofMinutes(request.duration()))
+                .duration(Duration.ofSeconds(request.duration()))
                 .elevationGain(request.elevationGain())
                 .shareId(UUID.randomUUID().toString())
-                .build();
-        
-        // RouteGeometry 엔티티 생성
-        RouteGeometry routeGeometry = RouteGeometry.builder()
-                .route(route)
                 .routeLine(routeLine)
                 .minLon(request.bbox().get(0))
                 .minLat(request.bbox().get(1))
@@ -73,10 +67,7 @@ public class RouteService {
                 .maxLat(request.bbox().get(3))
                 .build();
 
-        // 연관관계 설정
-        route.setRouteGeometry(routeGeometry);
-
-        // Route 저장 (RouteGeometry는 cascade 옵션으로 자동 저장)
+        // Route 저장
         routeRepository.save(route);
 
         // ID가 생성된 후 썸네일 경로 업데이트
@@ -86,14 +77,14 @@ public class RouteService {
         createUserRouteRelation(user, route, RouteRelationType.OWNER);
 
         Coordinate[] geometry = request.geometry().stream()
-                .map(dto -> new Coordinate(dto.longitude(), dto.longitude(), dto.elevation()))
+                .map(dto -> new Coordinate(dto.longitude(), dto.latitude(), dto.elevation()))
                 .toArray(Coordinate[]::new);
         createRouteGpsLog(route, geometry);
 
         return route;
     }
 
-    private void createRouteGpsLog(Route route, Coordinate[] geometry){
+    private void createRouteGpsLog(Route route, Coordinate[] geometry) {
         LocalDateTime baseTime = LocalDateTime.now();
         int sequence = 0;
 
@@ -124,7 +115,7 @@ public class RouteService {
         }
 
         return routeGpsLogs.stream()
-            .map(routeGpsLog -> new Coordinate(routeGpsLog.getLongitude(), routeGpsLog.getLongitude(), routeGpsLog.getElevation()))
+            .map(routeGpsLog -> new Coordinate(routeGpsLog.getLongitude(), routeGpsLog.getLatitude(), routeGpsLog.getElevation()))
             .toArray(Coordinate[]::new);
     }
 
@@ -283,10 +274,12 @@ public class RouteService {
      * 사용자 위치로부터 Route의 출발점까지의 거리 계산 (km 단위)
      */
     private Double calculateDistanceFromUser(Route route, Double userLon, Double userLat) {
-        if (route.getRouteGeometry() != null && route.getRouteGeometry().getStartCoordinate() != null) {
-            Coordinate startCoord = route.getRouteGeometry().getStartCoordinate();
-            return GeometryUtil.calculateDistance(
-                userLon, userLat, startCoord.getX(), startCoord.getY());
+        if (route.getRouteLine() != null) {
+            Coordinate startCoord = route.getStartCoordinate();
+            if (startCoord != null) {
+                return GeometryUtil.calculateDistance(
+                    userLon, userLat, startCoord.getX(), startCoord.getY());
+            }
         }
         return null;
     }

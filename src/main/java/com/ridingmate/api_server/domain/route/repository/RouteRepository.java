@@ -97,7 +97,6 @@ public interface RouteRepository extends JpaRepository<Route, Long> {
     @Query("""
         SELECT r FROM Route r
         JOIN r.recommendation rec
-        LEFT JOIN r.routeGeometry rg
         WHERE (:recommendationTypes IS NULL OR rec.recommendationType IN :recommendationTypes)
         AND (:regions IS NULL OR r.region IN :regions)
         AND (:difficulties IS NULL OR r.difficulty IN :difficulties)

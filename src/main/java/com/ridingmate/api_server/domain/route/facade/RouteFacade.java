@@ -1,6 +1,5 @@
 package com.ridingmate.api_server.domain.route.facade;
 
-import com.ggalmazor.ltdownsampling.LTThreeBuckets;
 import com.ggalmazor.ltdownsampling.Point;
 import com.ridingmate.api_server.domain.auth.security.AuthUser;
 import com.ridingmate.api_server.domain.route.dto.request.CreateRouteRequest;
@@ -25,7 +24,6 @@ import org.locationtech.jts.geom.LineString;
 import org.springframework.data.domain.Page;
 import org.springframework.stereotype.Component;
 
-import java.util.Arrays;
 import java.util.List;
 
 @Component
@@ -66,7 +64,7 @@ public class RouteFacade {
 
     /**
      * 정렬 타입과 필터와 함께 사용자별 경로 목록 조회
-     * @param userId 사용자 ID
+     * @param authUser 사용자 ID
      * @param request 경로 목록 조회 요청 정보
      * @return 정렬된 경로 목록 응답
      */
@@ -88,14 +86,10 @@ public class RouteFacade {
 
     public RouteDetailResponse getRouteDetail(Long routeId){
         Route route = routeService.getRouteWithUser(routeId);
-
         Coordinate[] coordinates = routeService.getRouteDetailList(routeId);
 
-        List<Point> elevationProfilePoints = GeometryUtil.convertCoordinatesToPoints(Arrays.stream(coordinates).toList());
-//
-//        List<Coordinate> simplifiedRouteGpsLogs = GeometryUtil.simplifyRoute(coordinates);
-
-        elevationProfilePoints = LTThreeBuckets.sorted(elevationProfilePoints, 300);
+        // 고도 프로필 다운샘플링 (GeometryUtil에서 모든 로직 처리)
+        List<Point> elevationProfilePoints = GeometryUtil.downsampleElevationProfile(coordinates, route.getDistance());
 
         return RouteDetailResponse.from(route, elevationProfilePoints);
     }
