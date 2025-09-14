@@ -42,9 +42,7 @@ public class AuthFacade {
         TokenInfo tokenInfo = tokenService.generateToken(user);
         
         // 4. 응답 생성
-        return LoginResponse.of(tokenInfo, user.getId(), user.getEmail(),
-                user.getNickname(), user.getProfileImagePath()
-        );
+        return LoginResponse.of(tokenInfo, user);
     }
 
     /**
@@ -61,8 +59,7 @@ public class AuthFacade {
 
         TokenInfo tokenInfo = tokenService.generateToken(user);
 
-        return LoginResponse.of(tokenInfo, user.getId(), user.getEmail(),
-                user.getNickname(), user.getProfileImagePath());
+        return LoginResponse.of(tokenInfo, user);
     }
 
     /**
@@ -82,8 +79,7 @@ public class AuthFacade {
         TokenInfo tokenInfo = tokenService.generateToken(user);
         
         // 4. 응답 생성
-        return LoginResponse.of(tokenInfo, user.getId(), user.getEmail(),
-                user.getNickname(), user.getProfileImagePath()
+        return LoginResponse.of(tokenInfo, user
         );
     }
 
