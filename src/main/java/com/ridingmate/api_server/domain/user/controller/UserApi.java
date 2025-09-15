@@ -6,17 +6,22 @@ import com.ridingmate.api_server.domain.user.dto.request.BirthYearUpdateRequest;
 import com.ridingmate.api_server.domain.user.dto.request.GenderUpdateRequest;
 import com.ridingmate.api_server.domain.user.dto.request.IntroduceUpdateRequest;
 import com.ridingmate.api_server.domain.user.dto.request.NicknameUpdateRequest;
+import com.ridingmate.api_server.domain.user.dto.request.ProfileImageUpdateRequest;
 import com.ridingmate.api_server.global.exception.CommonResponse;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestPart;
+import org.springframework.web.multipart.MultipartFile;
 
 @Tag(name = "User API", description = "사용자 관련 API")
 public interface UserApi {
@@ -58,6 +63,17 @@ public interface UserApi {
     ResponseEntity<CommonResponse<UserResponse>> updateBirthYear(
             @Parameter(hidden = true) @AuthenticationPrincipal AuthUser authUser,
             @Valid @RequestBody BirthYearUpdateRequest request
+    );
+
+    @Operation(
+            summary = "프로필 이미지 변경", 
+            description = "현재 로그인된 사용자의 프로필 이미지를 변경합니다."
+    )
+    @ApiResponse(responseCode = "200", description = "성공: 프로필 이미지 변경 완료")
+    @PutMapping(value = "/user/profile/image", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    ResponseEntity<CommonResponse<UserResponse>> updateProfileImage(
+            @Parameter(hidden = true) @AuthenticationPrincipal AuthUser authUser,
+            @Valid @RequestPart("profileImage") MultipartFile profileImage
     );
 
 }

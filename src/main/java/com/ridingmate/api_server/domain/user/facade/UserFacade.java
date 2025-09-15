@@ -9,6 +9,7 @@ import com.ridingmate.api_server.domain.user.entity.User;
 import com.ridingmate.api_server.domain.user.service.UserService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
+import org.springframework.web.multipart.MultipartFile;
 
 @Service
 @RequiredArgsConstructor
@@ -38,6 +39,11 @@ public class UserFacade {
 
     public UserResponse updateBirthYear(Long userId, BirthYearUpdateRequest request) {
         User user = userService.updateBirthYear(userId, request);
+        return UserResponse.from(user);
+    }
+
+    public UserResponse updateProfileImage(Long userId, MultipartFile profileImage) {
+        User user = userService.updateProfileImage(userId, profileImage);
         return UserResponse.from(user);
     }
 }
