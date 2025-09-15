@@ -91,7 +91,9 @@ public class RouteFacade {
         // 고도 프로필 다운샘플링 (GeometryUtil에서 모든 로직 처리)
         List<Point> elevationProfilePoints = GeometryUtil.downsampleElevationProfile(coordinates, route.getDistance());
 
-        return RouteDetailResponse.from(route, elevationProfilePoints);
+        String profileImageUrl = s3Manager.getPresignedUrl(route.getUser().getProfileImagePath());
+
+        return RouteDetailResponse.from(route, elevationProfilePoints, profileImageUrl);
     }
 
     public MapSearchResponse getMapSearch(String query, Double lon, Double lat) {

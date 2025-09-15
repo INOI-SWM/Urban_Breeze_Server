@@ -66,7 +66,7 @@ public record RouteDetailResponse(
             double elevation
     ) {}
 
-    public static RouteDetailResponse from(Route route, List<Point> routeGpsPoints){
+    public static RouteDetailResponse from(Route route, List<Point> routeGpsPoints, String profileImageUrl){
         List<ElevationPoint> elevationPoints = IntStream.range(0, routeGpsPoints.size())
                 .mapToObj(i -> new ElevationPoint(i, routeGpsPoints.get(i).getY()))
                 .collect(Collectors.toList());
@@ -81,7 +81,7 @@ public record RouteDetailResponse(
             route.getElevationGain(),
             route.getUser().getId(),
             route.getUser().getNickname(),
-            route.getUser().getProfileImagePath(),
+            profileImageUrl,
             elevationPoints.size(),
             elevationPoints,
             List.of(route.getMinLon(), route.getMinLat(), route.getMaxLon(), route.getMaxLat())
