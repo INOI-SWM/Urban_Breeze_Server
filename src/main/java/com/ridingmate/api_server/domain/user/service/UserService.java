@@ -40,8 +40,7 @@ public class UserService {
                     socialUserInfo.getProvider(),
                     socialUserInfo.getSocialId(),
                     socialUserInfo.getEmail(),
-                    socialUserInfo.getNickname(),
-                    socialUserInfo.getProfileImageUrl()
+                    socialUserInfo.getNickname()
             );
 
             User savedUser = userRepository.save(newUser);
