@@ -49,8 +49,8 @@ public record RecommendationListResponse(
         @Schema(description = "추천 타입")
         String recommendationType,
         
-        @Schema(description = "썸네일 이미지 경로")
-        String thumbnailImagePath
+        @Schema(description = "썸네일 이미지 URL")
+        String thumbnailImageUrl
     ) {
         
         public static RecommendationItemResponse from(Route route, Recommendation recommendation, String thumbnailUrl) {
