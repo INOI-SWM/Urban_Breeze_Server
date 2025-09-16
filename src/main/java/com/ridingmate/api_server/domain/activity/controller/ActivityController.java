@@ -1,8 +1,10 @@
 package com.ridingmate.api_server.domain.activity.controller;
 
 import com.ridingmate.api_server.domain.activity.dto.request.ActivityListRequest;
+import com.ridingmate.api_server.domain.activity.dto.request.ActivityStatsRequest;
 import com.ridingmate.api_server.domain.activity.dto.response.ActivityDetailResponse;
 import com.ridingmate.api_server.domain.activity.dto.response.ActivityListResponse;
+import com.ridingmate.api_server.domain.activity.dto.response.ActivityStatsResponse;
 import com.ridingmate.api_server.domain.activity.exception.ActivitySuccessCode;
 import com.ridingmate.api_server.domain.activity.facade.ActivityFacade;
 import com.ridingmate.api_server.domain.auth.security.AuthUser;
@@ -41,5 +43,17 @@ public class ActivityController implements ActivityApi {
         return ResponseEntity
                 .status(ActivitySuccessCode.ACTIVITY_DETAIL_FETCHED.getStatus())
                 .body(CommonResponse.success(ActivitySuccessCode.ACTIVITY_DETAIL_FETCHED, response));
+    }
+
+    @GetMapping("/stats")
+    @Override
+    public ResponseEntity<CommonResponse<ActivityStatsResponse>> getActivityStats(
+            @AuthenticationPrincipal AuthUser authUser,
+            @ModelAttribute ActivityStatsRequest request
+    ) {
+        ActivityStatsResponse response = activityFacade.getActivityStats(authUser, request);
+        return ResponseEntity
+                .status(ActivitySuccessCode.ACTIVITY_STATS_FETCHED.getStatus())
+                .body(CommonResponse.success(ActivitySuccessCode.ACTIVITY_STATS_FETCHED, response));
     }
 }

@@ -1,8 +1,10 @@
 package com.ridingmate.api_server.domain.activity.controller;
 
 import com.ridingmate.api_server.domain.activity.dto.request.ActivityListRequest;
+import com.ridingmate.api_server.domain.activity.dto.request.ActivityStatsRequest;
 import com.ridingmate.api_server.domain.activity.dto.response.ActivityDetailResponse;
 import com.ridingmate.api_server.domain.activity.dto.response.ActivityListResponse;
+import com.ridingmate.api_server.domain.activity.dto.response.ActivityStatsResponse;
 import com.ridingmate.api_server.domain.auth.security.AuthUser;
 import com.ridingmate.api_server.global.exception.CommonResponse;
 import io.swagger.v3.oas.annotations.Operation;
@@ -50,5 +52,21 @@ public interface ActivityApi {
     ResponseEntity<CommonResponse<ActivityDetailResponse>> getActivityDetail(
             @Parameter(description = "조회할 활동 ID", example = "1")
             @PathVariable Long activityId
+    );
+
+    @Operation(
+            summary = "활동 통계 조회",
+            description = "사용자의 활동 통계를 기간별(주간/월간/연간)로 조회합니다. 첫 번째 활동부터 현재까지의 통계를 제공합니다."
+    )
+    @ApiResponses(value = {
+            @ApiResponse(
+                    responseCode = "200",
+                    description = "활동 통계 조회 성공",
+                    content = @Content(schema = @Schema(implementation = ActivityStatsResponse.class))
+            ),
+    })
+    ResponseEntity<CommonResponse<ActivityStatsResponse>> getActivityStats(
+            @AuthenticationPrincipal AuthUser authUser,
+            @ModelAttribute ActivityStatsRequest request
     );
 }

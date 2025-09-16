@@ -1,9 +1,11 @@
 package com.ridingmate.api_server.domain.activity.facade;
 
 import com.ridingmate.api_server.domain.activity.dto.request.ActivityListRequest;
+import com.ridingmate.api_server.domain.activity.dto.request.ActivityStatsRequest;
 import com.ridingmate.api_server.domain.activity.dto.response.ActivityDetailResponse;
 import com.ridingmate.api_server.domain.activity.dto.response.ActivityListItemResponse;
 import com.ridingmate.api_server.domain.activity.dto.response.ActivityListResponse;
+import com.ridingmate.api_server.domain.activity.dto.response.ActivityStatsResponse;
 import com.ridingmate.api_server.domain.activity.entity.Activity;
 import com.ridingmate.api_server.domain.activity.entity.ActivityImage;
 import com.ridingmate.api_server.domain.activity.service.ActivityService;
@@ -159,5 +161,15 @@ public class ActivityFacade {
                 imageResponses,
                 bbox
         );
+    }
+
+    /**
+     * 사용자의 활동 통계 조회
+     * @param authUser 인증된 사용자
+     * @param request 통계 요청
+     * @return 활동 통계 응답
+     */
+    public ActivityStatsResponse getActivityStats(AuthUser authUser, ActivityStatsRequest request) {
+        return activityService.getActivityStats(authUser.id(), request);
     }
 }
