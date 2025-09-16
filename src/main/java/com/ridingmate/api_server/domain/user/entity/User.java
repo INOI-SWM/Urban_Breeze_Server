@@ -20,6 +20,8 @@ import java.util.UUID;
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 public class User extends BaseTimeEntity {
 
+    public static final String DEFAULT_PROFILE_IMAGE_PATH = "profile/default.png";
+
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
@@ -40,8 +42,8 @@ public class User extends BaseTimeEntity {
     @Column(name = "nickname")
     private String nickname;
 
-    @Column(name = "profile_image_path")
-    private String profileImagePath;
+    @Column(name = "profile_image_path", columnDefinition = "VARCHAR(255) DEFAULT 'profile/default.png'")
+    private String profileImagePath = DEFAULT_PROFILE_IMAGE_PATH;
 
     @Column(name = "introduce")
     private String introduce;
@@ -76,13 +78,13 @@ public class User extends BaseTimeEntity {
      * 소셜 로그인 정보로 사용자 생성
      */
     public static User createFromSocialLogin(SocialProvider provider, String socialId, 
-                                           String email, String nickname, String profileImagePath) {
+                                           String email, String nickname) {
         return User.builder()
                 .socialProvider(provider)
                 .socialId(socialId)
                 .email(email)
                 .nickname(nickname)
-                .profileImagePath(profileImagePath)
+                .profileImagePath(DEFAULT_PROFILE_IMAGE_PATH)
                 .build();
     }
 
@@ -112,6 +114,13 @@ public class User extends BaseTimeEntity {
      */
     public void updateBirthYear(Integer birthYear) {
         this.birthYear = birthYear;
+    }
+
+    /**
+     * 프로필 이미지 경로 업데이트
+     */
+    public void updateProfileImagePath(String profileImagePath) {
+        this.profileImagePath = profileImagePath;
     }
 
 }

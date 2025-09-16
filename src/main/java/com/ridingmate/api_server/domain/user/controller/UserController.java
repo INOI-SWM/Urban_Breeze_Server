@@ -6,6 +6,7 @@ import com.ridingmate.api_server.domain.user.dto.request.BirthYearUpdateRequest;
 import com.ridingmate.api_server.domain.user.dto.request.GenderUpdateRequest;
 import com.ridingmate.api_server.domain.user.dto.request.IntroduceUpdateRequest;
 import com.ridingmate.api_server.domain.user.dto.request.NicknameUpdateRequest;
+import com.ridingmate.api_server.domain.user.dto.request.ProfileImageUpdateRequest;
 import com.ridingmate.api_server.domain.user.exception.UserSuccessCode;
 import com.ridingmate.api_server.domain.user.facade.UserFacade;
 import com.ridingmate.api_server.global.exception.CommonResponse;
@@ -15,6 +16,7 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.multipart.MultipartFile;
 
 @RestController
 @RequiredArgsConstructor
@@ -66,5 +68,14 @@ public class UserController implements UserApi {
         return ResponseEntity
                 .status(UserSuccessCode.UPDATE_BIRTH_YEAR_SUCCESS.getStatus())
                 .body(CommonResponse.success(UserSuccessCode.UPDATE_BIRTH_YEAR_SUCCESS, response));
+    }
+
+    @Override
+    @PutMapping(value = "/user/profile/image", consumes = "multipart/form-data")
+    public ResponseEntity<CommonResponse<UserResponse>> updateProfileImage(AuthUser authUser, MultipartFile profileImage) {
+        UserResponse response = userFacade.updateProfileImage(authUser.id(), profileImage);
+        return ResponseEntity
+                .status(UserSuccessCode.UPDATE_PROFILE_IMAGE_SUCCESS.getStatus())
+                .body(CommonResponse.success(UserSuccessCode.UPDATE_PROFILE_IMAGE_SUCCESS, response));
     }
 }

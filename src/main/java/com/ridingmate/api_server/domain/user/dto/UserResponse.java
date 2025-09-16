@@ -18,7 +18,7 @@ public record UserResponse(
         String email,
 
         @Schema(description = "프로필 이미지 URL", example = "https://example.com/images/profile.jpg")
-        String profileImagePath,
+        String profileImageUrl,
 
         @Schema(description = "자기소개", example = "한강 라이딩을 즐겨요!")
         String introduce,
@@ -29,12 +29,30 @@ public record UserResponse(
         @Schema(description = "성별", example = "MALE")
         Gender gender
 ) {
+    /**
+     * User 엔티티와 프로필 이미지 URL로부터 UserResponse 생성
+     */
+    public static UserResponse of(User user, String profileImageUrl) {
+        return new UserResponse(
+                user.getUuid(),
+                user.getNickname(),
+                user.getEmail(),
+                profileImageUrl,
+                user.getIntroduce(),
+                user.getBirthYear(),
+                user.getGender()
+        );
+    }
+
+    /**
+     * User 엔티티로부터 UserResponse 생성 (path 그대로 - 하위 호환용)
+     */
     public static UserResponse from(User user) {
         return new UserResponse(
                 user.getUuid(),
                 user.getNickname(),
                 user.getEmail(),
-                user.getProfileImagePath(),
+                user.getProfileImagePath(), // path 그대로
                 user.getIntroduce(),
                 user.getBirthYear(),
                 user.getGender()

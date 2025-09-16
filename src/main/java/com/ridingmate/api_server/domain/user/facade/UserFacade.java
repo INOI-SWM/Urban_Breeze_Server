@@ -7,37 +7,51 @@ import com.ridingmate.api_server.domain.user.dto.request.IntroduceUpdateRequest;
 import com.ridingmate.api_server.domain.user.dto.request.NicknameUpdateRequest;
 import com.ridingmate.api_server.domain.user.entity.User;
 import com.ridingmate.api_server.domain.user.service.UserService;
+import com.ridingmate.api_server.infra.aws.s3.S3Manager;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
+import org.springframework.web.multipart.MultipartFile;
 
 @Service
 @RequiredArgsConstructor
 public class UserFacade {
 
     private final UserService userService;
+    private final S3Manager s3Manager;
 
     public UserResponse getMyInfo(Long userId) {
         User user = userService.getMyInfo(userId);
-        return UserResponse.from(user);
+        String profileImageUrl = s3Manager.getPresignedUrl(user.getProfileImagePath());
+        return UserResponse.of(user, profileImageUrl);
     }
 
     public UserResponse updateNickname(Long userId, NicknameUpdateRequest request) {
         User user = userService.updateNickname(userId, request);
-        return UserResponse.from(user);
+        String profileImageUrl = s3Manager.getPresignedUrl(user.getProfileImagePath());
+        return UserResponse.of(user, profileImageUrl);
     }
 
     public UserResponse updateIntroduce(Long userId, IntroduceUpdateRequest request) {
         User user = userService.updateIntroduce(userId, request);
-        return UserResponse.from(user);
+        String profileImageUrl = s3Manager.getPresignedUrl(user.getProfileImagePath());
+        return UserResponse.of(user, profileImageUrl);
     }
 
     public UserResponse updateGender(Long userId, GenderUpdateRequest request) {
         User user = userService.updateGender(userId, request);
-        return UserResponse.from(user);
+        String profileImageUrl = s3Manager.getPresignedUrl(user.getProfileImagePath());
+        return UserResponse.of(user, profileImageUrl);
     }
 
     public UserResponse updateBirthYear(Long userId, BirthYearUpdateRequest request) {
         User user = userService.updateBirthYear(userId, request);
-        return UserResponse.from(user);
+        String profileImageUrl = s3Manager.getPresignedUrl(user.getProfileImagePath());
+        return UserResponse.of(user, profileImageUrl);
+    }
+
+    public UserResponse updateProfileImage(Long userId, MultipartFile profileImage) {
+        User user = userService.updateProfileImage(userId, profileImage);
+        String profileImageUrl = s3Manager.getPresignedUrl(user.getProfileImagePath());
+        return UserResponse.of(user, profileImageUrl);
     }
 }
