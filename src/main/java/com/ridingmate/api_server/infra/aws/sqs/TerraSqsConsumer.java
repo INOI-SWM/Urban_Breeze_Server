@@ -4,11 +4,15 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.ridingmate.api_server.domain.activity.service.TerraWebhookProcessingService;
+import com.ridingmate.api_server.infra.terra.TerraErrorCode;
+import com.ridingmate.api_server.infra.terra.TerraException;
 import io.awspring.cloud.sqs.annotation.SqsListener;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.web.reactive.function.client.WebClient;
+import org.springframework.web.reactive.function.client.WebClientResponseException;
 
 import java.net.URI;
 
@@ -37,20 +41,46 @@ public class TerraSqsConsumer {
                 String downloadUrl = rootNode.path("url").asText();
                 log.info("S3 페이로드 감지, URL에서 데이터 다운로드 시작: {}", downloadUrl);
 
-                finalPayload = webClient.get()
-                        .uri(URI.create(downloadUrl))
-                        .retrieve()
-                        .bodyToMono(String.class)
-                        .block();
+                try {
+                    finalPayload = webClient.get()
+                            .uri(URI.create(downloadUrl))
+                            .retrieve()
+                            .bodyToMono(String.class)
+                            .block();
 
-                if (finalPayload == null || finalPayload.isEmpty()) {
-                    log.error("S3에서 페이로드를 다운로드하지 못했습니다. URL: {}", downloadUrl);
-                    throw new RuntimeException("S3 payload download failed for url: " + downloadUrl);
+                    if (finalPayload == null || finalPayload.isEmpty()) {
+                        log.error("S3에서 페이로드를 다운로드하지 못했습니다. URL: {}", downloadUrl);
+                        throw new TerraException(TerraErrorCode.TERRA_PAYLOAD_DOWNLOAD_FAILED);
+                    }
+
+                    log.info("S3 페이로드 다운로드 완료");
+                    log.debug("다운로드한 S3 페이로드: {}", finalPayload);
+                    originalType = objectMapper.readTree(finalPayload).path("type").asText();
+                    
+                } catch (WebClientResponseException e) {
+                    if (e.getStatusCode() == HttpStatus.FORBIDDEN) {
+                        log.warn("Terra S3 URL 만료로 인한 403 Forbidden 에러 (메시지 무시): URL={}, error={}", 
+                                downloadUrl, e.getMessage());
+                        log.info("만료된 Terra 요청을 건너뜀 - 새로운 요청을 기다립니다.");
+                        return; // 메시지 처리를 중단하고 정상적으로 종료
+                    } else if (e.getStatusCode().is4xxClientError()) {
+                        log.error("Terra S3 URL 클라이언트 에러 (4xx): URL={}, status={}, error={}", 
+                                downloadUrl, e.getStatusCode(), e.getMessage());
+                        throw new TerraException(TerraErrorCode.TERRA_S3_URL_CLIENT_ERROR);
+                    } else if (e.getStatusCode().is5xxServerError()) {
+                        log.error("Terra S3 URL 서버 에러 (5xx): URL={}, status={}, error={}", 
+                                downloadUrl, e.getStatusCode(), e.getMessage());
+                        throw new TerraException(TerraErrorCode.TERRA_S3_URL_SERVER_ERROR);
+                    } else {
+                        log.error("Terra S3 URL 기타 HTTP 에러: URL={}, status={}, error={}", 
+                                downloadUrl, e.getStatusCode(), e.getMessage());
+                        throw new TerraException(TerraErrorCode.TERRA_PAYLOAD_DOWNLOAD_FAILED);
+                    }
+                } catch (Exception e) {
+                    log.error("Terra S3 URL 다운로드 중 예상치 못한 에러: URL={}, error={}", 
+                            downloadUrl, e.getMessage(), e);
+                    throw new TerraException(TerraErrorCode.TERRA_PAYLOAD_DOWNLOAD_FAILED);
                 }
-
-                log.info("S3 페이로드 다운로드 완료");
-                log.info("다운로드한 S3 페이로드: {}", finalPayload);
-                originalType = objectMapper.readTree(finalPayload).path("type").asText();
             }
 
             // 타입에 따라 적절한 서비스 메소드 호출
