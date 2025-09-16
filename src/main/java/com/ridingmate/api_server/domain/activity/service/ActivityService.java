@@ -4,12 +4,15 @@ import com.ridingmate.api_server.domain.activity.dto.projection.ActivityDateRang
 import com.ridingmate.api_server.domain.activity.dto.projection.ActivityStatsProjection;
 import com.ridingmate.api_server.domain.activity.dto.request.ActivityListRequest;
 import com.ridingmate.api_server.domain.activity.dto.request.ActivityStatsRequest;
+import com.ridingmate.api_server.domain.activity.dto.request.ManageActivityImagesRequest;
 import com.ridingmate.api_server.domain.activity.dto.response.ActivityStatsResponse;
+import com.ridingmate.api_server.domain.activity.dto.response.ManageActivityImagesResponse;
 import com.ridingmate.api_server.domain.activity.entity.Activity;
 import com.ridingmate.api_server.domain.activity.entity.ActivityImage;
 import com.ridingmate.api_server.domain.activity.enums.ActivityStatsPeriod;
 import com.ridingmate.api_server.domain.activity.exception.ActivityException;
 import com.ridingmate.api_server.domain.activity.exception.code.ActivityCommonErrorCode;
+import com.ridingmate.api_server.domain.activity.exception.code.ActivityImageErrorCode;
 import com.ridingmate.api_server.domain.activity.repository.ActivityGpsLogRepository;
 import com.ridingmate.api_server.domain.activity.repository.ActivityImageRepository;
 import com.ridingmate.api_server.domain.activity.repository.ActivityRepository;
@@ -17,14 +20,17 @@ import com.ridingmate.api_server.domain.auth.exception.AuthErrorCode;
 import com.ridingmate.api_server.domain.auth.exception.AuthException;
 import com.ridingmate.api_server.domain.user.entity.User;
 import com.ridingmate.api_server.domain.user.repository.UserRepository;
+import com.ridingmate.api_server.infra.aws.s3.S3Manager;
 import com.ridingmate.api_server.infra.terra.dto.response.TerraPayload;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.locationtech.jts.geom.Coordinate;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.time.Duration;
 import java.time.LocalDate;
@@ -34,8 +40,12 @@ import java.time.temporal.WeekFields;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
+import java.util.Map;
+import java.util.UUID;
+import java.util.stream.Collectors;
 
 @Service
+@Slf4j
 @RequiredArgsConstructor
 public class ActivityService {
 
@@ -43,6 +53,7 @@ public class ActivityService {
     private final ActivityGpsLogRepository activityGpsLogRepository;
     private final ActivityImageRepository activityImageRepository;
     private final UserRepository userRepository;
+    private final S3Manager s3Manager;
 
     /**
      * Terra 웹훅 데이터로부터 Activity 생성 (순수 도메인 로직)
@@ -395,6 +406,179 @@ public class ActivityService {
             case MONTH -> current.plusMonths(1);
             case YEAR -> current.plusYears(1);
         };
+    }
+
+
+    /**
+     * 이미지 파일 유효성 검사
+     */
+    private void validateImageFile(MultipartFile imageFile) {
+        if (imageFile.isEmpty()) {
+            throw new ActivityException(ActivityImageErrorCode.ACTIVITY_IMAGE_FILE_EMPTY);
+        }
+
+        // 파일 크기 확인 (10MB 제한)
+        long maxSize = 10 * 1024 * 1024; // 10MB
+        if (imageFile.getSize() > maxSize) {
+            throw new ActivityException(ActivityImageErrorCode.ACTIVITY_IMAGE_FILE_TOO_LARGE);
+        }
+
+        // 파일 타입 확인
+        String contentType = imageFile.getContentType();
+        if (contentType == null || !contentType.startsWith("image/")) {
+            throw new ActivityException(ActivityImageErrorCode.ACTIVITY_IMAGE_INVALID_FORMAT);
+        }
+    }
+
+    /**
+     * 이미지 파일명 생성
+     */
+    private String generateImageFileName(Long activityId, MultipartFile imageFile) {
+        String originalFilename = imageFile.getOriginalFilename();
+        String extension = originalFilename != null && originalFilename.contains(".")
+                ? originalFilename.substring(originalFilename.lastIndexOf("."))
+                : ".jpg";
+        
+        return String.format("activity_%d_%s%s", activityId, UUID.randomUUID(), extension);
+    }
+
+    /**
+     * Activity 이미지 전체 관리 (추가/삭제/순서변경)
+     * @param userId 사용자 ID
+     * @param requestDto 이미지 관리 요청 DTO
+     * @param imageFiles 업로드할 이미지 파일들
+     * @return 이미지 관리 결과
+     */
+    @Transactional
+    public ManageActivityImagesResponse manageActivityImages(Long userId, ManageActivityImagesRequest requestDto, List<MultipartFile> imageFiles) {
+        // Activity 존재 및 소유권 확인
+        Activity activity = getActivityWithUser(requestDto.activityId());
+        if (!activity.getUser().getId().equals(userId)) {
+            throw new ActivityException(ActivityCommonErrorCode.ACTIVITY_ACCESS_DENIED);
+        }
+
+        // 유효한 이미지들만 필터링 (삭제되지 않은 이미지들)
+        List<ManageActivityImagesRequest.ImageMetaInfo> validImages = requestDto.images().stream()
+                .filter(imageInfo -> !imageInfo.isDeleted())
+                .collect(Collectors.toList());
+
+        // 최대 이미지 개수 확인 (30장)
+        if (validImages.size() > 30) {
+            throw new ActivityException(ActivityImageErrorCode.MAX_IMAGE_COUNT_EXCEEDED);
+        }
+
+        // 파일명으로 MultipartFile 매핑
+        Map<String, MultipartFile> fileMap = imageFiles.stream()
+                .collect(Collectors.toMap(MultipartFile::getOriginalFilename, file -> file));
+
+        // 처리 결과 추적
+        List<ManageActivityImagesResponse.ImageResult> results = new ArrayList<>();
+        int addedCount = 0;
+        int deletedCount = 0;
+        int reorderedCount = 0;
+
+        // 모든 이미지 처리 (단일 반복문)
+        for (ManageActivityImagesRequest.ImageMetaInfo imageInfo : requestDto.images()) {
+            if (imageInfo.isImageToDelete()) {
+                // 삭제 처리
+                deleteActivityImage(imageInfo.imageId());
+                deletedCount++;
+            } else if (imageInfo.isExistingImage()) {
+                // 기존 이미지 순서 업데이트
+                ActivityImage existingImage = activityImageRepository.findById(imageInfo.imageId())
+                        .orElseThrow(() -> new ActivityException(ActivityCommonErrorCode.ACTIVITY_IMAGE_NOT_FOUND));
+                
+                // 순서가 변경된 경우
+                if (!existingImage.getDisplayOrder().equals(imageInfo.displayOrder())) {
+                    existingImage.updateDisplayOrder(imageInfo.displayOrder());
+                    activityImageRepository.save(existingImage);
+                    reorderedCount++;
+                }
+                
+                results.add(new ManageActivityImagesResponse.ImageResult(
+                        existingImage.getId(),
+                        existingImage.getImageUrl(),
+                        existingImage.getDisplayOrder(),
+                        ManageActivityImagesResponse.ProcessStatus.KEPT
+                ));
+            } else if (imageInfo.imageId() == null && imageInfo.fileName() != null && !imageInfo.isDeleted()) {
+                // 새 이미지 추가 (isNewImage() 메서드 제거로 직접 조건 확인)
+                MultipartFile imageFile = fileMap.get(imageInfo.fileName());
+                if (imageFile == null) {
+                    throw new ActivityException(ActivityImageErrorCode.ACTIVITY_IMAGE_FILE_NOT_FOUND);
+                }
+
+                // 이미지 파일 유효성 검사
+                validateImageFile(imageFile);
+
+                // S3에 이미지 업로드
+                String filePath = "activity-image/" + generateImageFileName(requestDto.activityId(), imageFile);
+                s3Manager.uploadFile(filePath, imageFile);
+
+                // ActivityImage 엔티티 생성 및 저장
+                ActivityImage newImage = ActivityImage.builder()
+                        .activity(activity)
+                        .imagePath(filePath)
+                        .displayOrder(imageInfo.displayOrder())
+                        .build();
+
+                ActivityImage savedImage = activityImageRepository.save(newImage);
+                addedCount++;
+
+                results.add(new ManageActivityImagesResponse.ImageResult(
+                        savedImage.getId(),
+                        savedImage.getImageUrl(),
+                        savedImage.getDisplayOrder(),
+                        ManageActivityImagesResponse.ProcessStatus.ADDED
+                ));
+            }
+        }
+
+        // 결과를 displayOrder 순으로 정렬
+        results.sort((a, b) -> Integer.compare(a.displayOrder(), b.displayOrder()));
+
+        // 처리 결과 요약
+        ManageActivityImagesResponse.ProcessSummary summary = new ManageActivityImagesResponse.ProcessSummary(
+                addedCount,
+                deletedCount,
+                reorderedCount,
+                results.size()
+        );
+
+        return ManageActivityImagesResponse.of(requestDto.activityId(), results, summary);
+    }
+
+    /**
+     * Activity 이미지 삭제
+     */
+    private void deleteActivityImage(Long imageId) {
+        ActivityImage image = activityImageRepository.findById(imageId)
+                .orElseThrow(() -> new ActivityException(ActivityCommonErrorCode.ACTIVITY_IMAGE_NOT_FOUND));
+        
+        // S3에서 이미지 삭제 (선택사항 - 비용 절약을 위해 보관할 수도 있음)
+        // s3Manager.deleteFile(image.getImagePath());
+        
+        // DB에서 이미지 삭제
+        activityImageRepository.delete(image);
+    }
+
+    /**
+     * 썸네일을 activity_images 테이블에 추가
+     * @param activity 활동 엔티티
+     * @param thumbnailPath 썸네일 이미지 경로
+     */
+    @Transactional
+    public void addThumbnailToActivityImages(Activity activity, String thumbnailPath) {
+        ActivityImage thumbnailImage = ActivityImage.builder()
+                .activity(activity)
+                .imagePath(thumbnailPath)
+                .displayOrder(0)
+                .build();
+        
+        activityImageRepository.save(thumbnailImage);
+        
+        log.info("[Activity] 썸네일을 activity_images에 추가: activityId={}, imageId={}, path={}",
+                activity.getId(), thumbnailImage.getId(), thumbnailPath);
     }
 
 }

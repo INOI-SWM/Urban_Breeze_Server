@@ -2,18 +2,24 @@ package com.ridingmate.api_server.domain.activity.controller;
 
 import com.ridingmate.api_server.domain.activity.dto.request.ActivityListRequest;
 import com.ridingmate.api_server.domain.activity.dto.request.ActivityStatsRequest;
+import com.ridingmate.api_server.domain.activity.dto.request.ManageActivityImagesRequest;
 import com.ridingmate.api_server.domain.activity.dto.response.ActivityDetailResponse;
 import com.ridingmate.api_server.domain.activity.dto.response.ActivityListResponse;
 import com.ridingmate.api_server.domain.activity.dto.response.ActivityStatsResponse;
+import com.ridingmate.api_server.domain.activity.dto.response.ManageActivityImagesResponse;
 import com.ridingmate.api_server.domain.activity.exception.ActivitySuccessCode;
 import com.ridingmate.api_server.domain.activity.facade.ActivityFacade;
 import com.ridingmate.api_server.domain.auth.security.AuthUser;
+import com.ridingmate.api_server.global.annotation.FormDataRequestBody;
 import com.ridingmate.api_server.global.exception.CommonResponse;
-import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
+
+import java.util.List;
 
 @RestController
 @RequestMapping("/api/v1/activities")
@@ -55,5 +61,21 @@ public class ActivityController implements ActivityApi {
         return ResponseEntity
                 .status(ActivitySuccessCode.ACTIVITY_STATS_FETCHED.getStatus())
                 .body(CommonResponse.success(ActivitySuccessCode.ACTIVITY_STATS_FETCHED, response));
+    }
+
+
+    @PutMapping(value = "/{activityId}/images", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    @FormDataRequestBody
+    @Override
+    public ResponseEntity<CommonResponse<ManageActivityImagesResponse>> manageActivityImages(
+            @AuthenticationPrincipal AuthUser authUser,
+            @PathVariable Long activityId,
+            @RequestPart ManageActivityImagesRequest requestDto,
+            @RequestPart List<MultipartFile> imageFiles
+    ) {
+        ManageActivityImagesResponse response = activityFacade.manageActivityImages(authUser, requestDto, imageFiles);
+        return ResponseEntity
+                .status(ActivitySuccessCode.ACTIVITY_IMAGE_ADDED.getStatus())
+                .body(CommonResponse.success(ActivitySuccessCode.ACTIVITY_IMAGE_ADDED, response));
     }
 }

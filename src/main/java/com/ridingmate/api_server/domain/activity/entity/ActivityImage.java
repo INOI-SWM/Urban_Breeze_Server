@@ -33,4 +33,18 @@ public class ActivityImage extends BaseTimeEntity {
         this.imagePath = imagePath;
         this.displayOrder = displayOrder;
     }
+
+    /**
+     * 이미지 URL 반환 (imagePath와 동일)
+     */
+    public String getImageUrl() {
+        return this.imagePath;
+    }
+
+    /**
+     * 표시 순서 업데이트
+     */
+    public void updateDisplayOrder(Integer newDisplayOrder) {
+        this.displayOrder = newDisplayOrder;
+    }
 }

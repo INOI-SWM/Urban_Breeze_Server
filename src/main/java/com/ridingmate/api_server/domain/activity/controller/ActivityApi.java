@@ -2,9 +2,11 @@ package com.ridingmate.api_server.domain.activity.controller;
 
 import com.ridingmate.api_server.domain.activity.dto.request.ActivityListRequest;
 import com.ridingmate.api_server.domain.activity.dto.request.ActivityStatsRequest;
+import com.ridingmate.api_server.domain.activity.dto.request.ManageActivityImagesRequest;
 import com.ridingmate.api_server.domain.activity.dto.response.ActivityDetailResponse;
 import com.ridingmate.api_server.domain.activity.dto.response.ActivityListResponse;
 import com.ridingmate.api_server.domain.activity.dto.response.ActivityStatsResponse;
+import com.ridingmate.api_server.domain.activity.dto.response.ManageActivityImagesResponse;
 import com.ridingmate.api_server.domain.auth.security.AuthUser;
 import com.ridingmate.api_server.global.exception.CommonResponse;
 import io.swagger.v3.oas.annotations.Operation;
@@ -18,6 +20,10 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.ModelAttribute;
 import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.RequestPart;
+import org.springframework.web.multipart.MultipartFile;
+
+import java.util.List;
 
 @Tag(name = "Activity", description = "활동 관련 API")
 public interface ActivityApi {
@@ -68,5 +74,27 @@ public interface ActivityApi {
     ResponseEntity<CommonResponse<ActivityStatsResponse>> getActivityStats(
             @AuthenticationPrincipal AuthUser authUser,
             @ModelAttribute ActivityStatsRequest request
+    );
+
+
+    @Operation(
+            summary = "활동 이미지 전체 관리",
+            description = "활동의 모든 이미지를 한 번에 관리합니다. 추가/삭제/순서변경을 동시에 처리할 수 있습니다."
+    )
+    @ApiResponses(value = {
+            @ApiResponse(
+                    responseCode = "200",
+                    description = "이미지 관리 성공",
+                    content = @Content(schema = @Schema(implementation = ManageActivityImagesResponse.class))
+            ),
+    })
+    ResponseEntity<CommonResponse<ManageActivityImagesResponse>> manageActivityImages(
+            @AuthenticationPrincipal AuthUser authUser,
+            @Parameter(description = "활동 ID", example = "1")
+            @PathVariable Long activityId,
+            @Parameter(description = "이미지 관리 요청 DTO (JSON 메타데이터)")
+            @RequestPart ManageActivityImagesRequest requestDto,
+            @Parameter(description = "업로드할 이미지 파일 목록")
+            @RequestPart List<MultipartFile> imageFiles
     );
 }

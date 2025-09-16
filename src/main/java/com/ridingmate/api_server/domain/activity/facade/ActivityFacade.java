@@ -2,10 +2,12 @@ package com.ridingmate.api_server.domain.activity.facade;
 
 import com.ridingmate.api_server.domain.activity.dto.request.ActivityListRequest;
 import com.ridingmate.api_server.domain.activity.dto.request.ActivityStatsRequest;
+import com.ridingmate.api_server.domain.activity.dto.request.ManageActivityImagesRequest;
 import com.ridingmate.api_server.domain.activity.dto.response.ActivityDetailResponse;
 import com.ridingmate.api_server.domain.activity.dto.response.ActivityListItemResponse;
 import com.ridingmate.api_server.domain.activity.dto.response.ActivityListResponse;
 import com.ridingmate.api_server.domain.activity.dto.response.ActivityStatsResponse;
+import com.ridingmate.api_server.domain.activity.dto.response.ManageActivityImagesResponse;
 import com.ridingmate.api_server.domain.activity.entity.Activity;
 import com.ridingmate.api_server.domain.activity.entity.ActivityImage;
 import com.ridingmate.api_server.domain.activity.service.ActivityService;
@@ -23,6 +25,7 @@ import org.locationtech.jts.geom.Envelope;
 import org.locationtech.jts.geom.LineString;
 import org.springframework.data.domain.Page;
 import org.springframework.stereotype.Component;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.util.List;
 import java.util.stream.Collectors;
@@ -62,6 +65,9 @@ public class ActivityFacade {
                 String thumbnailPath = createThumbnailImagePath(activity.getId());
                 activity.updateThumbnailImagePath(thumbnailPath);
                 s3Manager.uploadByteFiles(thumbnailPath, thumbnailBytes);
+                
+                // 썸네일을 activity_images 테이블에도 추가 (displayOrder = 0으로 설정하여 가장 앞에 표시)
+                activityService.addThumbnailToActivityImages(activity, thumbnailPath);
                 
                 log.info("[Activity] 썸네일 생성 성공: activityId={}, path={}, coordCount={}", 
                         activity.getId(), thumbnailPath, coordinates.length);
@@ -171,5 +177,17 @@ public class ActivityFacade {
      */
     public ActivityStatsResponse getActivityStats(AuthUser authUser, ActivityStatsRequest request) {
         return activityService.getActivityStats(authUser.id(), request);
+    }
+
+
+    /**
+     * Activity 이미지 전체 관리 (추가/삭제/순서변경)
+     * @param authUser 인증된 사용자
+     * @param requestDto 이미지 관리 요청 DTO
+     * @param imageFiles 업로드할 이미지 파일들
+     * @return 이미지 관리 결과
+     */
+    public ManageActivityImagesResponse manageActivityImages(AuthUser authUser, ManageActivityImagesRequest requestDto, List<MultipartFile> imageFiles) {
+        return activityService.manageActivityImages(authUser.id(), requestDto, imageFiles);
     }
 }
