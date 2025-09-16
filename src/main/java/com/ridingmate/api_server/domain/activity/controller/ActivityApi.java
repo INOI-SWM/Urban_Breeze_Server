@@ -3,10 +3,12 @@ package com.ridingmate.api_server.domain.activity.controller;
 import com.ridingmate.api_server.domain.activity.dto.request.ActivityListRequest;
 import com.ridingmate.api_server.domain.activity.dto.request.ActivityStatsRequest;
 import com.ridingmate.api_server.domain.activity.dto.request.ManageActivityImagesRequest;
+import com.ridingmate.api_server.domain.activity.dto.request.UpdateActivityTitleRequest;
 import com.ridingmate.api_server.domain.activity.dto.response.ActivityDetailResponse;
 import com.ridingmate.api_server.domain.activity.dto.response.ActivityListResponse;
 import com.ridingmate.api_server.domain.activity.dto.response.ActivityStatsResponse;
 import com.ridingmate.api_server.domain.activity.dto.response.ManageActivityImagesResponse;
+import com.ridingmate.api_server.domain.activity.dto.response.UpdateActivityTitleResponse;
 import com.ridingmate.api_server.domain.auth.security.AuthUser;
 import com.ridingmate.api_server.global.exception.CommonResponse;
 import io.swagger.v3.oas.annotations.Operation;
@@ -20,6 +22,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.ModelAttribute;
 import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestPart;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -96,5 +99,24 @@ public interface ActivityApi {
             @RequestPart ManageActivityImagesRequest requestDto,
             @Parameter(description = "업로드할 이미지 파일 목록")
             @RequestPart List<MultipartFile> imageFiles
+    );
+
+    @Operation(
+            summary = "활동 제목 변경",
+            description = "활동의 제목을 변경합니다."
+    )
+    @ApiResponses(value = {
+            @ApiResponse(
+                    responseCode = "200",
+                    description = "제목 변경 성공",
+                    content = @Content(schema = @Schema(implementation = UpdateActivityTitleResponse.class))
+            ),
+    })
+    ResponseEntity<CommonResponse<UpdateActivityTitleResponse>> updateActivityTitle(
+            @AuthenticationPrincipal AuthUser authUser,
+            @Parameter(description = "활동 ID", example = "1")
+            @PathVariable Long activityId,
+            @Parameter(description = "제목 변경 요청")
+            @RequestBody UpdateActivityTitleRequest request
     );
 }

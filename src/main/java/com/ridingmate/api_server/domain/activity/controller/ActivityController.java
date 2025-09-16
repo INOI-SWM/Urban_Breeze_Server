@@ -3,15 +3,18 @@ package com.ridingmate.api_server.domain.activity.controller;
 import com.ridingmate.api_server.domain.activity.dto.request.ActivityListRequest;
 import com.ridingmate.api_server.domain.activity.dto.request.ActivityStatsRequest;
 import com.ridingmate.api_server.domain.activity.dto.request.ManageActivityImagesRequest;
+import com.ridingmate.api_server.domain.activity.dto.request.UpdateActivityTitleRequest;
 import com.ridingmate.api_server.domain.activity.dto.response.ActivityDetailResponse;
 import com.ridingmate.api_server.domain.activity.dto.response.ActivityListResponse;
 import com.ridingmate.api_server.domain.activity.dto.response.ActivityStatsResponse;
 import com.ridingmate.api_server.domain.activity.dto.response.ManageActivityImagesResponse;
+import com.ridingmate.api_server.domain.activity.dto.response.UpdateActivityTitleResponse;
 import com.ridingmate.api_server.domain.activity.exception.ActivitySuccessCode;
 import com.ridingmate.api_server.domain.activity.facade.ActivityFacade;
 import com.ridingmate.api_server.domain.auth.security.AuthUser;
 import com.ridingmate.api_server.global.annotation.FormDataRequestBody;
 import com.ridingmate.api_server.global.exception.CommonResponse;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
@@ -77,5 +80,18 @@ public class ActivityController implements ActivityApi {
         return ResponseEntity
                 .status(ActivitySuccessCode.ACTIVITY_IMAGE_ADDED.getStatus())
                 .body(CommonResponse.success(ActivitySuccessCode.ACTIVITY_IMAGE_ADDED, response));
+    }
+
+    @PutMapping("/{activityId}/title")
+    @Override
+    public ResponseEntity<CommonResponse<UpdateActivityTitleResponse>> updateActivityTitle(
+            @AuthenticationPrincipal AuthUser authUser,
+            @PathVariable Long activityId,
+            @RequestBody @Valid UpdateActivityTitleRequest request
+    ) {
+        UpdateActivityTitleResponse response = activityFacade.updateActivityTitle(authUser, activityId, request);
+        return ResponseEntity
+                .status(ActivitySuccessCode.ACTIVITY_TITLE_UPDATED.getStatus())
+                .body(CommonResponse.success(ActivitySuccessCode.ACTIVITY_TITLE_UPDATED, response));
     }
 }

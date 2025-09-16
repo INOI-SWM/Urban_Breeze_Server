@@ -28,10 +28,10 @@ public class Activity extends BaseTimeEntity {
     @Column(name = "title", nullable = false)
     private String title;
 
-    @Column(name = "started_at", nullable = false)
+    @Column(name = "started_at", nullable = false, updatable = false)
     private LocalDateTime startedAt;
 
-    @Column(name = "ended_at", nullable = false)
+    @Column(name = "ended_at", nullable = false, updatable = false)
     private LocalDateTime endedAt;
 
     /**
@@ -116,5 +116,12 @@ public class Activity extends BaseTimeEntity {
      */
     public void updateThumbnailImagePath(String thumbnailImagePath) {
         this.thumbnailImagePath = thumbnailImagePath;
+    }
+
+    /**
+     * 활동 제목 업데이트
+     */
+    public void updateTitle(String title) {
+        this.title = title;
     }
 }

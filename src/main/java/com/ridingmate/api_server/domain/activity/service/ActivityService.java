@@ -581,4 +581,29 @@ public class ActivityService {
                 activity.getId(), thumbnailImage.getId(), thumbnailPath);
     }
 
+    /**
+     * 활동 제목 변경
+     * @param userId 사용자 ID
+     * @param activityId 활동 ID
+     * @param newTitle 새로운 제목
+     * @return 변경된 활동 정보
+     */
+    @Transactional
+    public Activity updateActivityTitle(Long userId, Long activityId, String newTitle) {
+        // Activity 존재 및 소유권 확인
+        Activity activity = getActivityWithUser(activityId);
+        if (!activity.getUser().getId().equals(userId)) {
+            throw new ActivityException(ActivityCommonErrorCode.ACTIVITY_ACCESS_DENIED);
+        }
+
+        // 제목 변경
+        activity.updateTitle(newTitle);
+        Activity savedActivity = activityRepository.save(activity);
+
+        log.info("[Activity] 활동 제목 변경: activityId={}, userId={}, oldTitle={}, newTitle={}",
+                activityId, userId, activity.getTitle(), newTitle);
+
+        return savedActivity;
+    }
+
 }

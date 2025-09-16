@@ -17,6 +17,7 @@ public enum ActivitySuccessCode implements SuccessCode {
     ACTIVITY_IMAGE_ADDED(HttpStatus.CREATED, "활동 이미지가 추가되었습니다."),
     ACTIVITY_IMAGE_UPLOADED(HttpStatus.CREATED, "활동 이미지가 업로드되었습니다."),
     ACTIVITY_IMAGE_DELETED(HttpStatus.OK, "활동 이미지가 삭제되었습니다."),
+    ACTIVITY_TITLE_UPDATED(HttpStatus.OK, "활동 제목이 변경되었습니다."),
     ;
 
     private final HttpStatus status;

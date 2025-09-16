@@ -3,11 +3,8 @@ package com.ridingmate.api_server.domain.activity.facade;
 import com.ridingmate.api_server.domain.activity.dto.request.ActivityListRequest;
 import com.ridingmate.api_server.domain.activity.dto.request.ActivityStatsRequest;
 import com.ridingmate.api_server.domain.activity.dto.request.ManageActivityImagesRequest;
-import com.ridingmate.api_server.domain.activity.dto.response.ActivityDetailResponse;
-import com.ridingmate.api_server.domain.activity.dto.response.ActivityListItemResponse;
-import com.ridingmate.api_server.domain.activity.dto.response.ActivityListResponse;
-import com.ridingmate.api_server.domain.activity.dto.response.ActivityStatsResponse;
-import com.ridingmate.api_server.domain.activity.dto.response.ManageActivityImagesResponse;
+import com.ridingmate.api_server.domain.activity.dto.request.UpdateActivityTitleRequest;
+import com.ridingmate.api_server.domain.activity.dto.response.*;
 import com.ridingmate.api_server.domain.activity.entity.Activity;
 import com.ridingmate.api_server.domain.activity.entity.ActivityImage;
 import com.ridingmate.api_server.domain.activity.service.ActivityService;
@@ -189,5 +186,17 @@ public class ActivityFacade {
      */
     public ManageActivityImagesResponse manageActivityImages(AuthUser authUser, ManageActivityImagesRequest requestDto, List<MultipartFile> imageFiles) {
         return activityService.manageActivityImages(authUser.id(), requestDto, imageFiles);
+    }
+
+    /**
+     * 활동 제목 변경
+     * @param authUser 인증된 사용자
+     * @param activityId 활동 ID
+     * @param request 제목 변경 요청
+     * @return 제목 변경 결과
+     */
+    public UpdateActivityTitleResponse updateActivityTitle(AuthUser authUser, Long activityId, UpdateActivityTitleRequest request) {
+        Activity updatedActivity = activityService.updateActivityTitle(authUser.id(), activityId, request.title());
+        return UpdateActivityTitleResponse.of(updatedActivity.getId(), updatedActivity.getTitle());
     }
 }
