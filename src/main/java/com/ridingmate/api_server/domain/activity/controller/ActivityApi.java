@@ -33,7 +33,12 @@ public interface ActivityApi {
 
     @Operation(
             summary = "활동 목록 조회",
-            description = "사용자의 활동 목록을 페이징하여 조회합니다. 정렬 옵션: LATEST(최신순), OLDEST(오래된순)"
+            description = "사용자의 활동 목록을 페이징하여 조회합니다.\n\n" +
+                    "정렬 옵션:\n" +
+                    "- STARTED_AT_DESC: 최신순\n" +
+                    "- STARTED_AT_ASC: 오래된순\n" +
+                    "- DISTANCE_ASC: 주행거리 오름차순\n" +
+                    "- DISTANCE_DESC: 주행거리 내림차순"
     )
     @ApiResponses(value = {
             @ApiResponse(

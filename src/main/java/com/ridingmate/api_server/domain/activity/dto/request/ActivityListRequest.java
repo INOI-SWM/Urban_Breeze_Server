@@ -23,13 +23,13 @@ public record ActivityListRequest(
 
         @Parameter(
                 description = "정렬 타입 (기본 값: 최신순)",
-                example = "CREATED_AT_DESC",
-                schema = @Schema(defaultValue = "CREATED_AT_DESC")
+                example = "STARTED_AT_DESC",
+                schema = @Schema(defaultValue = "STARTED_AT_DESC")
         )
         ActivitySortType sortType
 ) {
     public ActivityListRequest {
         // 기본값 설정 (primitive type이므로 null 체크 불필요)
-        if (sortType == null) sortType = ActivitySortType.CREATED_AT_DESC;
+        if (sortType == null) sortType = ActivitySortType.STARTED_AT_DESC;
     }
 }
