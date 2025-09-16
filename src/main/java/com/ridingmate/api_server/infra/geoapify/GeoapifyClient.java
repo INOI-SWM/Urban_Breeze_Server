@@ -24,14 +24,20 @@ public class GeoapifyClient {
     private final WebClient geoapifyWebClient;
 
     public byte[] getStaticMap(LineString lineString) {
-        Envelope bbox = GeometryUtil.getBoundingBox(lineString);
+        // 썸네일용으로 LineString 간소화 (URL 길이 제한 회피)
+        LineString simplifiedLineString = GeometryUtil.simplifyForThumbnail(lineString);
+        
+        Envelope bbox = GeometryUtil.getBoundingBox(simplifiedLineString);
         Coordinate center = GeometryUtil.getCenterCoordinate(bbox);
         String centerParam = String.format("lonlat:%.6f,%.6f", center.x, center.y);
         int zoom = GeometryUtil.getZoomLevel(bbox);
 
-        List<Coordinate> coordinates = List.of(lineString.getCoordinates());
+        List<Coordinate> coordinates = List.of(simplifiedLineString.getCoordinates());
         String polyline = GeometryUtil.toGeoapifyPolyline(coordinates);
         String geometryParam = "polyline:" + polyline +";linecolor:%23ff0000;linewidth:3";
+        
+        log.debug("[Geoapify] 썸네일 생성: 원본 좌표 {}개 → 간소화 후 {}개", 
+                lineString.getCoordinates().length, coordinates.size());
 
         return geoapifyWebClient.get()
             .uri(uriBuilder -> uriBuilder

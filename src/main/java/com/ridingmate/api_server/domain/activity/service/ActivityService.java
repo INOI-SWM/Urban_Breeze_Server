@@ -11,6 +11,7 @@ import com.ridingmate.api_server.domain.auth.exception.AuthErrorCode;
 import com.ridingmate.api_server.domain.auth.exception.AuthException;
 import com.ridingmate.api_server.domain.user.entity.User;
 import com.ridingmate.api_server.domain.user.repository.UserRepository;
+import com.ridingmate.api_server.infra.terra.dto.response.TerraPayload;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -18,6 +19,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.Duration;
 import java.util.List;
 
 @Service
@@ -27,6 +29,31 @@ public class ActivityService {
     private final ActivityRepository activityRepository;
     private final ActivityImageRepository activityImageRepository;
     private final UserRepository userRepository;
+
+    /**
+     * Terra 웹훅 데이터로부터 Activity 생성 (순수 도메인 로직)
+     * @param user 사용자
+     * @param activityData Terra 활동 데이터
+     * @return 생성된 Activity
+     */
+    @Transactional
+    public Activity createActivityFromTerraData(User user, TerraPayload.Data activityData) {
+        TerraPayload.Metadata metadata = activityData.metadata();
+        TerraPayload.DistanceData.Summary distanceSummary = activityData.distanceData().summary();
+
+        Activity activity = Activity.builder()
+                .user(user)
+                .title(metadata.name() != null ? metadata.name() : "Terra 연동 활동")
+                .startedAt(metadata.startTime().toLocalDateTime())
+                .endedAt(metadata.endTime().toLocalDateTime())
+                .distance(distanceSummary.distanceMeters())
+                .duration(Duration.ofSeconds((long) activityData.activeDurationsData().activitySeconds()))
+                .elevationGain(distanceSummary.elevation() != null ? distanceSummary.elevation().gainActualMeters() : 0.0)
+                .build();
+
+        // Activity 저장
+        return activityRepository.save(activity);
+    }
 
     /**
      * 사용자별 활동 목록을 페이징하여 조회
