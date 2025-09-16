@@ -5,6 +5,7 @@ import com.ridingmate.api_server.domain.activity.entity.Activity;
 import com.ridingmate.api_server.domain.activity.entity.ActivityImage;
 import com.ridingmate.api_server.domain.activity.exception.ActivityException;
 import com.ridingmate.api_server.domain.activity.exception.code.ActivityCommonErrorCode;
+import com.ridingmate.api_server.domain.activity.repository.ActivityGpsLogRepository;
 import com.ridingmate.api_server.domain.activity.repository.ActivityImageRepository;
 import com.ridingmate.api_server.domain.activity.repository.ActivityRepository;
 import com.ridingmate.api_server.domain.auth.exception.AuthErrorCode;
@@ -13,6 +14,7 @@ import com.ridingmate.api_server.domain.user.entity.User;
 import com.ridingmate.api_server.domain.user.repository.UserRepository;
 import com.ridingmate.api_server.infra.terra.dto.response.TerraPayload;
 import lombok.RequiredArgsConstructor;
+import org.locationtech.jts.geom.Coordinate;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
@@ -27,6 +29,7 @@ import java.util.List;
 public class ActivityService {
 
     private final ActivityRepository activityRepository;
+    private final ActivityGpsLogRepository activityGpsLogRepository;
     private final ActivityImageRepository activityImageRepository;
     private final UserRepository userRepository;
 
@@ -41,6 +44,22 @@ public class ActivityService {
         TerraPayload.Metadata metadata = activityData.metadata();
         TerraPayload.DistanceData.Summary distanceSummary = activityData.distanceData().summary();
 
+        // 평균값들 추출
+        Integer avgCadence = activityData.cadenceData() != null && activityData.cadenceData().avgCadenceRpm() != null 
+                ? activityData.cadenceData().avgCadenceRpm().intValue() : null;
+        
+        Integer avgHeartRate = activityData.heartRateData() != null && activityData.heartRateData().avgHeartRateBpm() != null 
+                ? activityData.heartRateData().avgHeartRateBpm().intValue() : null;
+        
+        Integer maxHeartRate = activityData.heartRateData() != null && activityData.heartRateData().maxHeartRateBpm() != null 
+                ? activityData.heartRateData().maxHeartRateBpm().intValue() : null;
+        
+        Integer avgPower = activityData.powerData() != null && activityData.powerData().avgPowerWatts() != null 
+                ? activityData.powerData().avgPowerWatts().intValue() : null;
+        
+        Integer maxPower = activityData.powerData() != null && activityData.powerData().maxPowerWatts() != null 
+                ? activityData.powerData().maxPowerWatts().intValue() : null;
+
         Activity activity = Activity.builder()
                 .user(user)
                 .title(metadata.name() != null ? metadata.name() : "Terra 연동 활동")
@@ -49,6 +68,11 @@ public class ActivityService {
                 .distance(distanceSummary.distanceMeters())
                 .duration(Duration.ofSeconds((long) activityData.activeDurationsData().activitySeconds()))
                 .elevationGain(distanceSummary.elevation() != null ? distanceSummary.elevation().gainActualMeters() : 0.0)
+                .cadence(avgCadence)
+                .averageHeartRate(avgHeartRate)
+                .maxHeartRate(maxHeartRate)
+                .averagePower(avgPower)
+                .maxPower(maxPower)
                 .build();
 
         // Activity 저장
@@ -94,5 +118,17 @@ public class ActivityService {
     @Transactional(readOnly = true)
     public List<ActivityImage> getActivityImages(Long activityId) {
         return activityImageRepository.findByActivityIdOrderByDisplayOrder(activityId);
+    }
+
+    /**
+     * 특정 활동의 GPS 좌표 목록을 조회
+     * @param activityId 활동 ID
+     * @return GPS 좌표 배열 (longitude, latitude, elevation)
+     */
+    @Transactional(readOnly = true)
+    public Coordinate[] getActivityGpsCoordinates(Long activityId) {
+        Activity activity = getActivityWithUser(activityId);
+        List<Coordinate> coordinateList = activityGpsLogRepository.findCoordinatesByActivity(activity);
+        return coordinateList.toArray(new Coordinate[0]);
     }
 }

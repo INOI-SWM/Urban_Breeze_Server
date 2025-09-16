@@ -22,7 +22,10 @@ public record TerraPayload(
             @JsonProperty("active_durations_data") ActiveDurationsData activeDurationsData,
             @JsonProperty("distance_data") DistanceData distanceData,
             @JsonProperty("position_data") PositionData positionData,
-            @JsonProperty("movement_data") MovementData movementData
+            @JsonProperty("movement_data") MovementData movementData,
+            @JsonProperty("cadence_data") CadenceData cadenceData,
+            @JsonProperty("heart_rate_data") HeartRateData heartRateData,
+            @JsonProperty("power_data") PowerData powerData
     ) {}
 
     public record Metadata(
@@ -82,6 +85,44 @@ public record TerraPayload(
 
     public record DistanceSample(
             @JsonProperty("distance_meters") Double distanceMeters,
+            OffsetDateTime timestamp,
+            @JsonProperty("timer_duration_seconds") Long timerDurationSeconds
+    ) {}
+
+    // 케이던스 데이터
+    public record CadenceData(
+            @JsonProperty("avg_cadence_rpm") Double avgCadenceRpm,
+            @JsonProperty("cadence_samples") List<CadenceSample> cadenceSamples
+    ) {}
+
+    public record CadenceSample(
+            @JsonProperty("cadence_rpm") Double cadenceRpm,
+            OffsetDateTime timestamp,
+            @JsonProperty("timer_duration_seconds") Long timerDurationSeconds
+    ) {}
+
+    // 심박수 데이터
+    public record HeartRateData(
+            @JsonProperty("avg_hr_bpm") Double avgHeartRateBpm,
+            @JsonProperty("max_hr_bpm") Double maxHeartRateBpm,
+            @JsonProperty("heart_rate_samples") List<HeartRateSample> heartRateSamples
+    ) {}
+
+    public record HeartRateSample(
+            @JsonProperty("hr_bpm") Double heartRateBpm,
+            OffsetDateTime timestamp,
+            @JsonProperty("timer_duration_seconds") Long timerDurationSeconds
+    ) {}
+
+    // 파워 데이터
+    public record PowerData(
+            @JsonProperty("avg_power_watts") Double avgPowerWatts,
+            @JsonProperty("max_power_watts") Double maxPowerWatts,
+            @JsonProperty("power_samples") List<PowerSample> powerSamples
+    ) {}
+
+    public record PowerSample(
+            @JsonProperty("power_watts") Double powerWatts,
             OffsetDateTime timestamp,
             @JsonProperty("timer_duration_seconds") Long timerDurationSeconds
     ) {}

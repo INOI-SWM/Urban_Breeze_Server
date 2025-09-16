@@ -50,10 +50,14 @@ public class ActivityGpsLog {
     @Column(name = "cadence")
     private Double cadence;
 
+    @Column(name = "power")
+    private Double power;
+
     @Builder
     private ActivityGpsLog(Activity activity, LocalDateTime logTime,
                            Double latitude, Double longitude, Double elevation,
-                           Double speed, Double distance, Double heartRate, Double cadence
+                           Double speed, Double distance, Double heartRate, 
+                           Double cadence, Double power
     ){
         this.activity = activity;
         this.logTime = logTime;
@@ -64,5 +68,6 @@ public class ActivityGpsLog {
         this.distance = distance;
         this.heartRate = heartRate;
         this.cadence = cadence;
+        this.power = power;
     }
 }

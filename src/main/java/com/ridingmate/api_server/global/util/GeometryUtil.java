@@ -155,6 +155,35 @@ public class GeometryUtil {
     }
 
     /**
+     * Envelope을 List<Double> 형태의 bounding box로 변환
+     * @param envelope JTS Envelope 객체
+     * @return [minLon, minLat, maxLon, maxLat] 형태의 리스트
+     */
+    public static List<Double> envelopeToList(Envelope envelope) {
+        return List.of(
+                envelope.getMinX(), // minLon
+                envelope.getMinY(), // minLat
+                envelope.getMaxX(), // maxLon
+                envelope.getMaxY()  // maxLat
+        );
+    }
+
+    /**
+     * 좌표 배열로부터 bounding box를 List<Double> 형태로 계산
+     * @param coordinates 좌표 배열
+     * @return [minLon, minLat, maxLon, maxLat] 형태의 리스트
+     */
+    public static List<Double> calculateBoundingBoxList(Coordinate[] coordinates) {
+        if (coordinates.length == 0) {
+            return List.of(0.0, 0.0, 0.0, 0.0);
+        }
+        
+        LineString lineString = createLineStringFromCoordinates(coordinates);
+        Envelope envelope = getBoundingBox(lineString);
+        return envelopeToList(envelope);
+    }
+
+    /**
      * BBOX로부터 줌레벨 추정
      */
     public static int getZoomLevel(Envelope bbox) {

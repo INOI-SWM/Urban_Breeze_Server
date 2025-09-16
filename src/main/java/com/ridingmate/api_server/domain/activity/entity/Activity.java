@@ -58,10 +58,43 @@ public class Activity extends BaseTimeEntity {
     @Column(name = "thumbnail_image_path")
     private String thumbnailImagePath;
 
+    /**
+     * 케이던스 (분당 페달 회전수)
+     */
+    @Column(name = "cadence")
+    private Integer cadence;
+
+    /**
+     * 평균 심박수 (bpm)
+     */
+    @Column(name = "average_heart_rate")
+    private Integer averageHeartRate;
+
+    /**
+     * 최대 심박수 (bpm)
+     */
+    @Column(name = "max_heart_rate")
+    private Integer maxHeartRate;
+
+    /**
+     * 평균 파워 (W)
+     */
+    @Column(name = "average_power")
+    private Integer averagePower;
+
+    /**
+     * 최고 파워 (W)
+     */
+    @Column(name = "max_power")
+    private Integer maxPower;
+
     @Builder
     private Activity(User user, String title, Double distance,
                      Duration duration, Double elevationGain,
-                     LocalDateTime startedAt, LocalDateTime endedAt
+                     LocalDateTime startedAt, LocalDateTime endedAt,
+                     String thumbnailImagePath, Integer cadence,
+                     Integer averageHeartRate, Integer maxHeartRate,
+                     Integer averagePower, Integer maxPower
     ){
         this.user = user;
         this.title = title;
@@ -70,6 +103,12 @@ public class Activity extends BaseTimeEntity {
         this.elevationGain = elevationGain;
         this.startedAt = startedAt;
         this.endedAt = endedAt;
+        this.thumbnailImagePath = thumbnailImagePath;
+        this.cadence = cadence;
+        this.averageHeartRate = averageHeartRate;
+        this.maxHeartRate = maxHeartRate;
+        this.averagePower = averagePower;
+        this.maxPower = maxPower;
     }
 
     /**

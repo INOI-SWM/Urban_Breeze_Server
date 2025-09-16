@@ -99,6 +99,9 @@ public class TerraWebhookProcessingService {
         List<TerraPayload.ElevationSample> elevationSamples = data.distanceData().detailed() != null ? data.distanceData().detailed().elevationSamples() : Collections.emptyList();
         List<TerraPayload.SpeedSample> speedSamples = data.movementData().speedSamples() != null ? data.movementData().speedSamples() : Collections.emptyList();
         List<TerraPayload.DistanceSample> distanceSamples = data.distanceData().detailed().distanceSamples() != null ? data.distanceData().detailed().distanceSamples() : Collections.emptyList();
+        List<TerraPayload.CadenceSample> cadenceSamples = data.cadenceData() != null && data.cadenceData().cadenceSamples() != null ? data.cadenceData().cadenceSamples() : Collections.emptyList();
+        List<TerraPayload.HeartRateSample> heartRateSamples = data.heartRateData() != null && data.heartRateData().heartRateSamples() != null ? data.heartRateData().heartRateSamples() : Collections.emptyList();
+        List<TerraPayload.PowerSample> powerSamples = data.powerData() != null && data.powerData().powerSamples() != null ? data.powerData().powerSamples() : Collections.emptyList();
 
         if (CollectionUtils.isEmpty(positionSamples)) {
             return Collections.emptyList();
@@ -128,6 +131,31 @@ public class TerraWebhookProcessingService {
                         TreeMap::new
                 ));
 
+        // 새로운 데이터들을 위한 Map 생성
+        NavigableMap<OffsetDateTime, Double> cadenceMap = cadenceSamples.stream()
+                .collect(Collectors.toMap(
+                        TerraPayload.CadenceSample::timestamp,
+                        TerraPayload.CadenceSample::cadenceRpm,
+                        (e1, e2) -> e1,
+                        TreeMap::new
+                ));
+
+        NavigableMap<OffsetDateTime, Double> heartRateMap = heartRateSamples.stream()
+                .collect(Collectors.toMap(
+                        TerraPayload.HeartRateSample::timestamp,
+                        TerraPayload.HeartRateSample::heartRateBpm,
+                        (e1, e2) -> e1,
+                        TreeMap::new
+                ));
+
+        NavigableMap<OffsetDateTime, Double> powerMap = powerSamples.stream()
+                .collect(Collectors.toMap(
+                        TerraPayload.PowerSample::timestamp,
+                        TerraPayload.PowerSample::powerWatts,
+                        (e1, e2) -> e1,
+                        TreeMap::new
+                ));
+
 
 
 
@@ -139,6 +167,11 @@ public class TerraWebhookProcessingService {
                     Double elevation = findClosestData(pos.timestamp(), elevationMap);
                     Double speed = findClosestData(pos.timestamp(), speedMap);
                     Double distance = findClosestData(pos.timestamp(), distanceMap);
+                    
+                    // 새로운 데이터들
+                    Double cadence = findClosestData(pos.timestamp(), cadenceMap);
+                    Double heartRate = findClosestData(pos.timestamp(), heartRateMap);
+                    Double power = findClosestData(pos.timestamp(), powerMap);
 
                     return ActivityGpsLog.builder()
                             .activity(activity)
@@ -148,6 +181,9 @@ public class TerraWebhookProcessingService {
                             .elevation(elevation)
                             .speed(speed)
                             .distance(distance)
+                            .heartRate(heartRate)
+                            .cadence(cadence)
+                            .power(power)
                             .build();
                 })
                 .filter(Objects::nonNull)

@@ -1,10 +1,12 @@
 package com.ridingmate.api_server.domain.activity.controller;
 
 import com.ridingmate.api_server.domain.activity.dto.request.ActivityListRequest;
+import com.ridingmate.api_server.domain.activity.dto.response.ActivityDetailResponse;
 import com.ridingmate.api_server.domain.activity.dto.response.ActivityListResponse;
 import com.ridingmate.api_server.domain.auth.security.AuthUser;
 import com.ridingmate.api_server.global.exception.CommonResponse;
 import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
@@ -13,6 +15,7 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.ModelAttribute;
+import org.springframework.web.bind.annotation.PathVariable;
 
 @Tag(name = "Activity", description = "활동 관련 API")
 public interface ActivityApi {
@@ -31,5 +34,21 @@ public interface ActivityApi {
     ResponseEntity<CommonResponse<ActivityListResponse>> getActivityList(
              @AuthenticationPrincipal AuthUser authUser,
              @ModelAttribute ActivityListRequest request
+    );
+
+    @Operation(
+            summary = "활동 상세 조회",
+            description = "특정 활동의 상세 정보를 조회합니다. GPS 좌표, 고도 프로필, 이미지 등 모든 정보를 포함합니다."
+    )
+    @ApiResponses(value = {
+            @ApiResponse(
+                    responseCode = "200",
+                    description = "활동 상세 조회 성공",
+                    content = @Content(schema = @Schema(implementation = ActivityDetailResponse.class))
+            ),
+    })
+    ResponseEntity<CommonResponse<ActivityDetailResponse>> getActivityDetail(
+            @Parameter(description = "조회할 활동 ID", example = "1")
+            @PathVariable Long activityId
     );
 }

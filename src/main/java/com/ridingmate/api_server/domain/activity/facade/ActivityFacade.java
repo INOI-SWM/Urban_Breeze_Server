@@ -1,9 +1,11 @@
 package com.ridingmate.api_server.domain.activity.facade;
 
 import com.ridingmate.api_server.domain.activity.dto.request.ActivityListRequest;
+import com.ridingmate.api_server.domain.activity.dto.response.ActivityDetailResponse;
 import com.ridingmate.api_server.domain.activity.dto.response.ActivityListItemResponse;
 import com.ridingmate.api_server.domain.activity.dto.response.ActivityListResponse;
 import com.ridingmate.api_server.domain.activity.entity.Activity;
+import com.ridingmate.api_server.domain.activity.entity.ActivityImage;
 import com.ridingmate.api_server.domain.activity.service.ActivityService;
 import com.ridingmate.api_server.domain.auth.security.AuthUser;
 import com.ridingmate.api_server.domain.user.entity.User;
@@ -15,12 +17,13 @@ import com.ridingmate.api_server.infra.terra.TerraMapper;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.locationtech.jts.geom.Coordinate;
+import org.locationtech.jts.geom.Envelope;
 import org.locationtech.jts.geom.LineString;
 import org.springframework.data.domain.Page;
 import org.springframework.stereotype.Component;
 
 import java.util.List;
-import java.util.Map;
+import java.util.stream.Collectors;
 
 @Slf4j
 @Component
@@ -110,5 +113,51 @@ public class ActivityFacade {
                 .toList();
 
         return ActivityListResponse.of(activityItems, activityPage);
+    }
+
+    /**
+     * 활동 상세 정보 조회
+     * @param activityId 활동 ID
+     * @return 활동 상세 응답
+     */
+    public ActivityDetailResponse getActivityDetail(Long activityId) {
+        // 1. Activity와 User 정보 조회
+        Activity activity = activityService.getActivityWithUser(activityId);
+        
+        // 2. GPS 좌표 조회 및 고도 프로필 생성
+        Coordinate[] coordinates = activityService.getActivityGpsCoordinates(activityId);
+        List<com.ggalmazor.ltdownsampling.Point> elevationPoints = 
+                GeometryUtil.downsampleElevationProfile(coordinates, activity.getDistance() / 1000.0);
+        
+        // 3. 활동 이미지 목록 조회
+        List<ActivityImage> activityImages = activityService.getActivityImages(activityId);
+        List<ActivityDetailResponse.ActivityImageResponse> imageResponses = activityImages.stream()
+                .map(image -> ActivityDetailResponse.ActivityImageResponse.from(
+                        image,
+                        s3Manager.getPresignedUrl(image.getImagePath())
+                ))
+                .collect(Collectors.toList());
+        
+        // 4. S3 URL 생성
+        String profileImageUrl = activity.getUser().getProfileImagePath() != null
+                ? s3Manager.getPresignedUrl(activity.getUser().getProfileImagePath())
+                : null;
+        
+        String thumbnailImageUrl = activity.getThumbnailImagePath() != null
+                ? s3Manager.getPresignedUrl(activity.getThumbnailImagePath())
+                : null;
+        
+        // 5. Bounding Box 계산
+        List<Double> bbox = GeometryUtil.calculateBoundingBoxList(coordinates);
+        
+        return ActivityDetailResponse.from(
+                activity,
+                elevationPoints,
+                coordinates, // 원본 좌표 배열 추가
+                profileImageUrl,
+                thumbnailImageUrl,
+                imageResponses,
+                bbox
+        );
     }
 }
