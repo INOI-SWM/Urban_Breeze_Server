@@ -1,5 +1,6 @@
 package com.ridingmate.api_server.domain.route.repository;
 
+import com.ridingmate.api_server.domain.route.dto.projection.RouteFilterRangeProjection;
 import com.ridingmate.api_server.domain.route.entity.Route;
 import com.ridingmate.api_server.domain.route.enums.Difficulty;
 import com.ridingmate.api_server.domain.route.enums.RecommendationType;
@@ -114,4 +115,34 @@ public interface RouteRepository extends JpaRepository<Route, Long> {
             @Param("minElevationGain") Double minElevationGain,
             @Param("maxElevationGain") Double maxElevationGain,
             Pageable pageable);
+
+        /**
+         * 사용자별 전체 경로의 최대/최소 거리와 고도 조회
+         */
+        @Query("""
+            SELECT 
+                MIN(r.distance) as minDistance,
+                MAX(r.distance) as maxDistance,
+                MIN(r.elevationGain) as minElevationGain,
+                MAX(r.elevationGain) as maxElevationGain
+            FROM Route r
+            JOIN UserRoute ur ON ur.route = r
+            WHERE ur.user = :user
+            AND ur.isDelete = false
+            """)
+        RouteFilterRangeProjection findMaxDistanceAndElevationByUser(@Param("user") User user);
+
+        /**
+         * 추천 코스의 전체 최대/최소 거리와 고도 조회
+         */
+        @Query("""
+            SELECT 
+                MIN(r.distance) as minDistance,
+                MAX(r.distance) as maxDistance,
+                MIN(r.elevationGain) as minElevationGain,
+                MAX(r.elevationGain) as maxElevationGain
+            FROM Route r
+            JOIN r.recommendation rec
+            """)
+        RouteFilterRangeProjection findMaxDistanceAndElevationForRecommendations();
 }
