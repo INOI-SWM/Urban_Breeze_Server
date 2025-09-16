@@ -3,13 +3,14 @@ package com.ridingmate.api_server.domain.activity.entity;
 import com.ridingmate.api_server.global.entity.BaseTimeEntity;
 import jakarta.persistence.*;
 import lombok.AccessLevel;
+import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
 @Entity
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
-@Table(name = "activityImages")
+@Table(name = "activity_images")
 public class ActivityImage extends BaseTimeEntity {
 
     @Id
@@ -21,9 +22,15 @@ public class ActivityImage extends BaseTimeEntity {
     private Activity activity;
 
     @Column(name = "image_path", nullable = false)
-    private String image_path;
+    private String imagePath;
 
     @Column(name = "display_order", nullable = false)
-    private String displayOrder;
+    private Integer displayOrder;
 
+    @Builder
+    private ActivityImage(Activity activity, String imagePath, Integer displayOrder) {
+        this.activity = activity;
+        this.imagePath = imagePath;
+        this.displayOrder = displayOrder;
+    }
 }

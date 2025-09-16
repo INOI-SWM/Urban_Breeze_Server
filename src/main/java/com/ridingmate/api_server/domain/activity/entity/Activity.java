@@ -52,6 +52,12 @@ public class Activity extends BaseTimeEntity {
     @Column(name = "elevation_gain", nullable = false)
     private Double elevationGain;
 
+    /**
+     * 썸네일 이미지 경로 (대표 이미지)
+     */
+    @Column(name = "thumbnail_image_path")
+    private String thumbnailImagePath;
+
     @Builder
     private Activity(User user, String title, Double distance,
                      Duration duration, Double elevationGain,
@@ -64,6 +70,12 @@ public class Activity extends BaseTimeEntity {
         this.elevationGain = elevationGain;
         this.startedAt = startedAt;
         this.endedAt = endedAt;
+    }
 
+    /**
+     * 썸네일 이미지 경로 업데이트
+     */
+    public void updateThumbnailImagePath(String thumbnailImagePath) {
+        this.thumbnailImagePath = thumbnailImagePath;
     }
 }
