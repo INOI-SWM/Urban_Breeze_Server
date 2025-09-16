@@ -26,8 +26,8 @@ public class GeoapifyClient {
     public byte[] getStaticMap(LineString lineString) {
         // 썸네일용으로 LineString 간소화 (URL 길이 제한 회피)
         LineString simplifiedLineString = GeometryUtil.simplifyForThumbnail(lineString);
-        
-        Envelope bbox = GeometryUtil.getBoundingBox(simplifiedLineString);
+
+        Envelope bbox = GeometryUtil.getBoundingBoxWithPadding(simplifiedLineString);
         Coordinate center = GeometryUtil.getCenterCoordinate(bbox);
         String centerParam = String.format("lonlat:%.6f,%.6f", center.x, center.y);
         int zoom = GeometryUtil.getZoomLevel(bbox);

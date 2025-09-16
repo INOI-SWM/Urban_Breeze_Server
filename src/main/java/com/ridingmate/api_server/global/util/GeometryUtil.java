@@ -115,6 +115,28 @@ public class GeometryUtil {
     }
 
     /**
+     * 썸네일용 여백이 포함된 BBOX 반환 (15% 여백 추가)
+     * 경로가 이미지에서 잘리지 않도록 여백을 추가
+     */
+    public static Envelope getBoundingBoxWithPadding(LineString lineString) {
+        Envelope originalBbox = lineString.getEnvelopeInternal();
+        
+        double padding = 0.15; // 15% 여백
+        double lonRange = originalBbox.getMaxX() - originalBbox.getMinX();
+        double latRange = originalBbox.getMaxY() - originalBbox.getMinY();
+        
+        double lonPadding = lonRange * padding;
+        double latPadding = latRange * padding;
+        
+        return new Envelope(
+            originalBbox.getMinX() - lonPadding,
+            originalBbox.getMaxX() + lonPadding,
+            originalBbox.getMinY() - latPadding,
+            originalBbox.getMaxY() + latPadding
+        );
+    }
+
+    /**
      * BBOX를 기반으로 중심 좌표 계산
      */
     public static Coordinate getCenterCoordinate(Envelope bbox) {
