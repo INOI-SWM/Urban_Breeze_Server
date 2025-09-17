@@ -2,12 +2,15 @@ package com.ridingmate.api_server.domain.route.facade;
 
 import com.ggalmazor.ltdownsampling.Point;
 import com.ridingmate.api_server.domain.auth.security.AuthUser;
+import com.ridingmate.api_server.domain.route.dto.FilterRangeInfo;
 import com.ridingmate.api_server.domain.route.dto.request.CreateRouteRequest;
 import com.ridingmate.api_server.domain.route.dto.request.RouteSegmentRequest;
 import com.ridingmate.api_server.domain.route.dto.request.RouteListRequest;
 import com.ridingmate.api_server.domain.route.dto.response.*;
 import com.ridingmate.api_server.domain.route.entity.Route;
 import com.ridingmate.api_server.domain.route.service.RouteService;
+import com.ridingmate.api_server.domain.user.entity.User;
+import com.ridingmate.api_server.domain.user.service.UserService;
 import com.ridingmate.api_server.infra.kakao.KakaoMapper;
 import com.ridingmate.api_server.infra.aws.s3.S3Manager;
 import com.ridingmate.api_server.infra.geoapify.GeoapifyClient;
@@ -37,6 +40,7 @@ public class RouteFacade {
 
     private final RouteService routeService;
     private final S3Manager s3Manager;
+    private final UserService userService;
 
     public RouteSegmentResponse generateSegment(RouteSegmentRequest request) {
         OrsRouteResponse orsResponse = orsClient.getRoutePreview(request.toOrsRequest());
@@ -71,6 +75,7 @@ public class RouteFacade {
     public RouteListResponse getRouteList(AuthUser authUser, RouteListRequest request) {
         // Service에서 경로 목록 조회
         Page<Route> routePage = routeService.getRoutesByUser(authUser.id(), request);
+        User user = userService.getUser(authUser.id());
 
         // DTO 생성 시 썸네일 URL과 프로필 이미지 URL 추가
         List<RouteListItemResponse> routeItems = routePage.getContent().stream()
@@ -81,7 +86,10 @@ public class RouteFacade {
             })
             .toList();
 
-        return RouteListResponse.of(routeItems, routePage);
+        // 전체 데이터 기준의 최대값 조회 (페이지 데이터가 아닌 전체 데이터 기준)
+        FilterRangeInfo filterRangeInfo = routeService.getMaxDistanceAndElevationByUser(user);
+
+        return RouteListResponse.of(routeItems, routePage, filterRangeInfo);
     }
 
     public RouteDetailResponse getRouteDetail(Long routeId){

@@ -1,17 +1,15 @@
 package com.ridingmate.api_server.domain.route.facade;
 
 import com.ridingmate.api_server.domain.route.dto.request.RecommendationListRequest;
+import com.ridingmate.api_server.domain.route.dto.FilterRangeInfo;
 import com.ridingmate.api_server.domain.route.dto.response.RecommendationListResponse;
 import com.ridingmate.api_server.domain.route.entity.Recommendation;
 import com.ridingmate.api_server.domain.route.entity.Route;
-import com.ridingmate.api_server.domain.route.enums.RecommendationSortType;
 import com.ridingmate.api_server.domain.route.service.RouteService;
 import com.ridingmate.api_server.global.dto.PaginationResponse;
-import com.ridingmate.api_server.global.util.GeometryUtil;
 import com.ridingmate.api_server.infra.aws.s3.S3Manager;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.locationtech.jts.geom.Coordinate;
 import org.springframework.data.domain.Page;
 import org.springframework.stereotype.Component;
 
@@ -47,7 +45,10 @@ public class RecommendationFacade {
             })
             .toList();
 
-        return new RecommendationListResponse(recommendationItems, PaginationResponse.from(routePage));
+        // 전체 추천 코스 기준의 최대값 조회 (페이지 데이터가 아닌 전체 데이터 기준)
+        FilterRangeInfo filterRangeInfo = routeService.getMaxDistanceAndElevationForRecommendations();
+
+        return new RecommendationListResponse(recommendationItems, PaginationResponse.from(routePage), filterRangeInfo);
     }
 
 

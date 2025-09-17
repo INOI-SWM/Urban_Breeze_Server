@@ -2,8 +2,10 @@ package com.ridingmate.api_server.domain.route.service;
 
 import com.ridingmate.api_server.domain.auth.exception.AuthErrorCode;
 import com.ridingmate.api_server.domain.auth.exception.AuthException;
+import com.ridingmate.api_server.domain.route.dto.projection.RouteFilterRangeProjection;
 import com.ridingmate.api_server.domain.route.dto.request.CreateRouteRequest;
 import com.ridingmate.api_server.domain.route.dto.request.RecommendationListRequest;
+import com.ridingmate.api_server.domain.route.dto.FilterRangeInfo;
 import com.ridingmate.api_server.domain.route.entity.Route;
 import com.ridingmate.api_server.domain.route.entity.RouteGpsLog;
 import com.ridingmate.api_server.domain.route.entity.UserRoute;
@@ -282,6 +284,44 @@ public class RouteService {
             }
         }
         return null;
+    }
+
+    /**
+     * 사용자별 전체 경로의 최대 거리와 고도 조회
+     */
+    @Transactional(readOnly = true)
+    public FilterRangeInfo getMaxDistanceAndElevationByUser(User user) {
+        RouteFilterRangeProjection result = routeRepository.findMaxDistanceAndElevationByUser(user);
+        
+        if (result == null || result.maxDistance() == null || result.maxElevationGain() == null) {
+            return FilterRangeInfo.of(0.0, 0.0, 0.0, 0.0);
+        }
+        
+        return FilterRangeInfo.of(
+            result.getMinDistanceInKm(), 
+            result.getMaxDistanceInKm(), 
+            result.getRoundedMinElevationGain(), 
+            result.getRoundedMaxElevationGain()
+        );
+    }
+
+    /**
+     * 추천 코스의 전체 최대 거리와 고도 조회
+     */
+    @Transactional(readOnly = true)
+    public FilterRangeInfo getMaxDistanceAndElevationForRecommendations() {
+        RouteFilterRangeProjection result = routeRepository.findMaxDistanceAndElevationForRecommendations();
+        
+        if (result == null || result.maxDistance() == null || result.maxElevationGain() == null) {
+            return FilterRangeInfo.of(0.0, 0.0, 0.0, 0.0);
+        }
+        
+        return FilterRangeInfo.of(
+            result.getMinDistanceInKm(), 
+            result.getMaxDistanceInKm(), 
+            result.getRoundedMinElevationGain(), 
+            result.getRoundedMaxElevationGain()
+        );
     }
 
 }
