@@ -20,6 +20,16 @@ public class GeometryUtil {
     private static final double DISTANCE_TOLERANCE = 0.00000000001;
 
     /**
+     * Coordinate 배열을 LineString으로 변환
+     */
+    public static LineString createLineStringFromCoordinates(Coordinate[] coordinates) {
+        if (coordinates.length < 2) {
+            throw new IllegalArgumentException("LineString을 생성하려면 최소 2개의 좌표가 필요합니다.");
+        }
+        return geometryFactory.createLineString(coordinates);
+    }
+
+    /**
      * Encoded polyline을 LineString으로 변환 예시: LINESTRING (126.9706 37.5547, 127.0276 37.4979, ...)
      */
     public static LineString polylineToLineString(String polyline) {
@@ -105,6 +115,28 @@ public class GeometryUtil {
     }
 
     /**
+     * 썸네일용 여백이 포함된 BBOX 반환 (15% 여백 추가)
+     * 경로가 이미지에서 잘리지 않도록 여백을 추가
+     */
+    public static Envelope getBoundingBoxWithPadding(LineString lineString) {
+        Envelope originalBbox = lineString.getEnvelopeInternal();
+        
+        double padding = 0.15; // 15% 여백
+        double lonRange = originalBbox.getMaxX() - originalBbox.getMinX();
+        double latRange = originalBbox.getMaxY() - originalBbox.getMinY();
+        
+        double lonPadding = lonRange * padding;
+        double latPadding = latRange * padding;
+        
+        return new Envelope(
+            originalBbox.getMinX() - lonPadding,
+            originalBbox.getMaxX() + lonPadding,
+            originalBbox.getMinY() - latPadding,
+            originalBbox.getMaxY() + latPadding
+        );
+    }
+
+    /**
      * BBOX를 기반으로 중심 좌표 계산
      */
     public static Coordinate getCenterCoordinate(Envelope bbox) {
@@ -120,6 +152,35 @@ public class GeometryUtil {
         LineString line = polylineToLineString(polyline);
         Envelope bbox = getBoundingBox(line);
         return getCenterCoordinate(bbox);
+    }
+
+    /**
+     * Envelope을 List<Double> 형태의 bounding box로 변환
+     * @param envelope JTS Envelope 객체
+     * @return [minLon, minLat, maxLon, maxLat] 형태의 리스트
+     */
+    public static List<Double> envelopeToList(Envelope envelope) {
+        return List.of(
+                envelope.getMinX(), // minLon
+                envelope.getMinY(), // minLat
+                envelope.getMaxX(), // maxLon
+                envelope.getMaxY()  // maxLat
+        );
+    }
+
+    /**
+     * 좌표 배열로부터 bounding box를 List<Double> 형태로 계산
+     * @param coordinates 좌표 배열
+     * @return [minLon, minLat, maxLon, maxLat] 형태의 리스트
+     */
+    public static List<Double> calculateBoundingBoxList(Coordinate[] coordinates) {
+        if (coordinates.length == 0) {
+            return List.of(0.0, 0.0, 0.0, 0.0);
+        }
+        
+        LineString lineString = createLineStringFromCoordinates(coordinates);
+        Envelope envelope = getBoundingBox(lineString);
+        return envelopeToList(envelope);
     }
 
     /**
@@ -151,6 +212,58 @@ public class GeometryUtil {
         return coordinates.stream()
                 .map(coord -> String.format("%.7f,%.7f", coord.x, coord.y)) // 소수점 7자리로 lon, lat
                 .collect(Collectors.joining(","));
+    }
+
+    /**
+     * LineString을 썸네일용으로 간소화 (좌표 개수 제한)
+     * Geoapify URL 길이 제한을 피하기 위해 LTTB 알고리즘으로 다운샘플링
+     */
+    public static LineString simplifyForThumbnail(LineString lineString) {
+        if (lineString == null || lineString.isEmpty()) {
+            return lineString;
+        }
+
+        Coordinate[] coordinates = lineString.getCoordinates();
+        
+        // 원본의 약 10% 정도로 축소, 최소 20개, 최대 80개
+        int targetPoints = Math.min(80, Math.max(20, coordinates.length / 10));
+        
+        // 이미 목표 개수 이하면 그대로 사용
+        if (coordinates.length <= targetPoints) {
+            return lineString;
+        }
+
+        // LTTB 알고리즘으로 다운샘플링
+        List<Point> points = convertCoordinatesToPointsForThumbnail(List.of(coordinates));
+        List<Point> downsampledPoints = LTThreeBuckets.sorted(points, targetPoints);
+        
+        // Point를 다시 Coordinate로 변환
+        List<Coordinate> downsampledCoords = downsampledPoints.stream()
+                .map(point -> {
+                    int index = (int) point.getX();
+                    return coordinates[index];
+                })
+                .collect(Collectors.toList());
+        
+        return geometryFactory.createLineString(downsampledCoords.toArray(new Coordinate[0]));
+    }
+
+    /**
+     * 썸네일용 좌표를 Point로 변환 (인덱스 기반)
+     * LTTB 알고리즘에서 사용할 수 있도록 각 좌표에 인덱스를 부여
+     */
+    private static List<Point> convertCoordinatesToPointsForThumbnail(List<Coordinate> coordinates) {
+        if (coordinates == null || coordinates.isEmpty()) {
+            return new ArrayList<>();
+        }
+
+        return IntStream.range(0, coordinates.size())
+            .mapToObj(i -> {
+                Coordinate coordinate = coordinates.get(i);
+                // X축은 인덱스, Y축은 위도를 사용 (시각적 다운샘플링을 위해)
+                return new DoublePoint(i, coordinate.y);
+            })
+            .collect(Collectors.toList());
     }
 
     /**
