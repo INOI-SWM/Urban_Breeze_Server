@@ -3,7 +3,10 @@ package com.ridingmate.api_server.domain.activity.dto.response;
 import com.fasterxml.jackson.annotation.JsonFormat;
 import com.ggalmazor.ltdownsampling.Point;
 import com.ridingmate.api_server.domain.activity.entity.Activity;
+import com.ridingmate.api_server.domain.activity.entity.ActivityGpsLog;
+import com.ridingmate.api_server.domain.activity.dto.projection.GpsLogProjection;
 import io.swagger.v3.oas.annotations.media.Schema;
+import org.locationtech.jts.geom.Coordinate;
 
 import java.time.Duration;
 import java.time.LocalDateTime;
@@ -90,7 +93,11 @@ public record ActivityDetailResponse(
             @Schema(description = "위도", example = "37.5665")
             double latitude,
             @Schema(description = "경도", example = "126.9780")
-            double longitude
+            double longitude,
+            @Schema(description = "해당 지점의 속도 (km/h)", example = "25.5")
+            Double speed,
+            @Schema(description = "해당 지점의 심박수 (bpm)", example = "145")
+            Double heartRate
     ) {}
 
     @Schema(description = "사용자 정보")
@@ -132,7 +139,8 @@ public record ActivityDetailResponse(
     public static ActivityDetailResponse from(
             Activity activity,
             List<Point> gpsPoints,
-            org.locationtech.jts.geom.Coordinate[] originalCoordinates,
+            Coordinate[] originalCoordinates,
+            List<GpsLogProjection> gpsLogProjections,
             String profileImageUrl,
             String thumbnailImageUrl,
             List<ActivityImageResponse> activityImages,
@@ -144,11 +152,17 @@ public record ActivityDetailResponse(
                     int originalIndex = (int) point.getX(); // LTTB에서 X는 원본 인덱스
                     org.locationtech.jts.geom.Coordinate originalCoord = originalCoordinates[originalIndex];
                     
+                    // 원본 인덱스에 해당하는 GPS 로그 Projection에서 속도와 심박수 데이터 가져오기
+                    GpsLogProjection gpsLogProjection =
+                            originalIndex < gpsLogProjections.size() ? gpsLogProjections.get(originalIndex) : null;
+                    
                     return new TrackPoint(
                             i, // 다운샘플링된 인덱스
                             point.getY(), // 고도
                             originalCoord.y, // 위도
-                            originalCoord.x  // 경도
+                            originalCoord.x, // 경도
+                            gpsLogProjection != null ? gpsLogProjection.getSpeedInKmh() : null, // 속도 (km/h)
+                            gpsLogProjection != null ? gpsLogProjection.heartRate() : null // 심박수 (bpm)
                     );
                 })
                 .collect(Collectors.toList());

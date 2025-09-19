@@ -2,12 +2,14 @@ package com.ridingmate.api_server.domain.activity.service;
 
 import com.ridingmate.api_server.domain.activity.dto.projection.ActivityDateRangeProjection;
 import com.ridingmate.api_server.domain.activity.dto.projection.ActivityStatsProjection;
+import com.ridingmate.api_server.domain.activity.dto.projection.GpsLogProjection;
 import com.ridingmate.api_server.domain.activity.dto.request.ActivityListRequest;
 import com.ridingmate.api_server.domain.activity.dto.request.ActivityStatsRequest;
 import com.ridingmate.api_server.domain.activity.dto.request.ManageActivityImagesRequest;
 import com.ridingmate.api_server.domain.activity.dto.response.ActivityStatsResponse;
 import com.ridingmate.api_server.domain.activity.dto.response.ManageActivityImagesResponse;
 import com.ridingmate.api_server.domain.activity.entity.Activity;
+import com.ridingmate.api_server.domain.activity.entity.ActivityGpsLog;
 import com.ridingmate.api_server.domain.activity.entity.ActivityImage;
 import com.ridingmate.api_server.domain.activity.enums.ActivityStatsPeriod;
 import com.ridingmate.api_server.domain.activity.exception.ActivityException;
@@ -142,17 +144,39 @@ public class ActivityService {
         return activityImageRepository.findByActivityIdOrderByDisplayOrder(activityId);
     }
 
-    /**
-     * 특정 활동의 GPS 좌표 목록을 조회
-     * @param activityId 활동 ID
-     * @return GPS 좌표 배열 (longitude, latitude, elevation)
-     */
-    @Transactional(readOnly = true)
-    public Coordinate[] getActivityGpsCoordinates(Long activityId) {
-        Activity activity = getActivityWithUser(activityId);
-        List<Coordinate> coordinateList = activityGpsLogRepository.findCoordinatesByActivity(activity);
-        return coordinateList.toArray(new Coordinate[0]);
-    }
+        /**
+         * 특정 활동의 GPS 좌표 목록을 조회
+         * @param activityId 활동 ID
+         * @return GPS 좌표 배열 (longitude, latitude, elevation)
+         */
+        @Transactional(readOnly = true)
+        public Coordinate[] getActivityGpsCoordinates(Long activityId) {
+            Activity activity = getActivityWithUser(activityId);
+            List<Coordinate> coordinateList = activityGpsLogRepository.findCoordinatesByActivity(activity);
+            return coordinateList.toArray(new Coordinate[0]);
+        }
+
+        /**
+         * 특정 활동의 GPS 로그 목록을 조회
+         * @param activityId 활동 ID
+         * @return GPS 로그 리스트
+         */
+        @Transactional(readOnly = true)
+        public List<ActivityGpsLog> getActivityGpsLogs(Long activityId) {
+            Activity activity = getActivityWithUser(activityId);
+            return activityGpsLogRepository.findGpsLogsByActivity(activity);
+        }
+
+        /**
+         * 특정 활동의 GPS 좌표와 상세 정보를 한 번에 조회 (최적화된 방법)
+         * @param activityId 활동 ID
+         * @return GPS 로그 Projection 리스트
+         */
+        @Transactional(readOnly = true)
+        public List<GpsLogProjection> getActivityGpsLogProjections(Long activityId) {
+            Activity activity = getActivityWithUser(activityId);
+            return activityGpsLogRepository.findGpsLogProjectionsByActivity(activity);
+        }
 
     /**
      * 사용자의 활동 통계 조회
