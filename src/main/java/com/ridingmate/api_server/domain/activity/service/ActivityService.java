@@ -15,6 +15,7 @@ import com.ridingmate.api_server.domain.activity.enums.ActivityStatsPeriod;
 import com.ridingmate.api_server.domain.activity.exception.ActivityException;
 import com.ridingmate.api_server.domain.activity.exception.code.ActivityCommonErrorCode;
 import com.ridingmate.api_server.domain.activity.exception.code.ActivityImageErrorCode;
+import com.ridingmate.api_server.domain.activity.exception.code.ActivityValidationErrorCode;
 import com.ridingmate.api_server.domain.activity.repository.ActivityGpsLogRepository;
 import com.ridingmate.api_server.domain.activity.repository.ActivityImageRepository;
 import com.ridingmate.api_server.domain.activity.repository.ActivityRepository;
@@ -189,248 +190,186 @@ public class ActivityService {
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new AuthException(AuthErrorCode.AUTHENTICATION_USER_NOT_FOUND));
 
+        // 기간 유효성 검증
+        validatePeriod(request);
 
-        // 전체 통계 조회
-        ActivityStatsProjection overallStatsData = activityRepository.findOverallActivityStats(user.getId());
-        ActivityStatsResponse.OverallStats overallStats = createOverallStats(user, overallStatsData);
+        // 기간 정보 생성
+        ActivityStatsResponse.PeriodInfo periodInfo = createPeriodInfo(request);
 
-        if (overallStats.totalActivityCount() == 0) {
-            // 활동이 없는 경우 빈 통계 반환
-            return createEmptyStats(request.period(), request.targetDate());
-        }
-
-        // 선택된 기간의 통계
-        ActivityStatsResponse.CurrentPeriodStats currentPeriod = getCurrentPeriodStats(user, request.period(), request.targetDate());
-
-        // 차트 데이터 생성 (선택된 기간의 세부 통계)
-        List<ActivityStatsResponse.PeriodStats> chartData = generateDetailedChartData(user, request.period(), request.targetDate());
-
-        return new ActivityStatsResponse(
-                request.period(),
-                currentPeriod,
-                chartData,
-                overallStats
+        // 전체 기간 통계 조회
+        ActivityStatsProjection summaryStats = activityRepository.findActivityStatsByPeriod(
+                user.getId(), 
+                request.startDate().atStartOfDay(), 
+                request.endDate().plusDays(1).atStartOfDay()
         );
+
+        // 요약 정보 생성
+        ActivityStatsResponse.SummaryInfo summaryInfo = new ActivityStatsResponse.SummaryInfo(
+                summaryStats.getTotalDistanceInKm(),
+                summaryStats.totalElevation(),
+                summaryStats.getTotalDurationSeconds(),
+                summaryStats.count().intValue()
+        );
+
+        // 일별 상세 데이터 생성
+        List<ActivityStatsResponse.DetailInfo> details = generateDailyDetails(user, request);
+
+        return new ActivityStatsResponse(periodInfo, summaryInfo, details);
     }
 
-    private ActivityStatsResponse createEmptyStats(ActivityStatsPeriod period, LocalDate targetDate) {
-        return new ActivityStatsResponse(
-                period,
-                new ActivityStatsResponse.CurrentPeriodStats(
-                        getCurrentPeriodLabel(period, targetDate),
-                        0.0, 0.0, 0L, 0
-                ),
-                List.of(),
-                new ActivityStatsResponse.OverallStats(
-                        0.0, 0.0, 0L, 0, targetDate, targetDate
-                )
-        );
-    }
-
-    private ActivityStatsResponse.OverallStats createOverallStats(User user, ActivityStatsProjection statsData) {
-        ActivityDateRangeProjection dateRange = activityRepository.findFirstAndLastActivityDate(user);
+    /**
+     * 기간 유효성 검증
+     */
+    private void validatePeriod(ActivityStatsRequest request) {
+        LocalDate startDate = request.startDate();
+        LocalDate endDate = request.endDate();
         
-        return new ActivityStatsResponse.OverallStats(
-                statsData.getTotalDistanceInKm(), // 이미 킬로미터로 변환됨
-                statsData.totalElevation(),
-                statsData.getTotalDurationSeconds(), // 초 단위로 변경
-                statsData.count().intValue(),
-                dateRange.firstActivityDate() != null ? dateRange.firstActivityDate().toLocalDate() : LocalDate.now(),
-                dateRange.lastActivityDate() != null ? dateRange.lastActivityDate().toLocalDate() : LocalDate.now()
-        );
+        switch (request.period()) {
+            case MONTH -> {
+                // 월간 통계: 시작일은 1일, 종료일은 해당 월의 마지막일이어야 함
+                if (startDate.getDayOfMonth() != 1) {
+                    throw new ActivityException(ActivityValidationErrorCode.INVALID_MONTH_PERIOD);
+                }
+                if (!endDate.equals(startDate.withDayOfMonth(startDate.lengthOfMonth()))) {
+                    throw new ActivityException(ActivityValidationErrorCode.INVALID_MONTH_PERIOD);
+                }
+            }
+            case YEAR -> {
+                // 연간 통계: 시작일은 1월 1일, 종료일은 12월 31일이어야 함
+                if (startDate.getMonthValue() != 1 || startDate.getDayOfMonth() != 1) {
+                    throw new ActivityException(ActivityValidationErrorCode.INVALID_YEAR_PERIOD);
+                }
+                if (endDate.getMonthValue() != 12 || endDate.getDayOfMonth() != 31) {
+                    throw new ActivityException(ActivityValidationErrorCode.INVALID_YEAR_PERIOD);
+                }
+            }
+            case WEEK -> {
+                // 주간 통계는 유연하게 허용 (요청된 기간 그대로 사용)
+            }
+        }
     }
 
-    private ActivityStatsResponse.CurrentPeriodStats getCurrentPeriodStats(User user, ActivityStatsPeriod period, LocalDate targetDate) {
-        LocalDateTime[] periodRange = getPeriodRange(period, targetDate);
-        ActivityStatsProjection statsData = activityRepository.findActivityStatsByPeriod(user.getId(), periodRange[0], periodRange[1]);
-
-        return new ActivityStatsResponse.CurrentPeriodStats(
-                getCurrentPeriodLabel(period, targetDate),
-                statsData.getTotalDistanceInKm(), // 이미 킬로미터로 변환됨
-                statsData.totalElevation(),
-                statsData.getTotalDurationSeconds(), // 초 단위로 변경
-                statsData.count().intValue()
+    /**
+     * 기간 정보 생성
+     */
+    private ActivityStatsResponse.PeriodInfo createPeriodInfo(ActivityStatsRequest request) {
+        String type = request.period().name().toLowerCase();
+        String displayTitle = generateDisplayTitle(request.period(), request.startDate(), request.endDate());
+        
+        return new ActivityStatsResponse.PeriodInfo(
+                type,
+                request.startDate(),
+                request.endDate(),
+                displayTitle
         );
     }
 
     /**
-     * 선택된 기간의 세부 통계 생성
-     * WEEK: 해당 주의 일~토 요일별 통계
-     * MONTH: 해당 월의 1일~말일 일별 통계  
-     * YEAR: 해당 년의 1월~12월 월별 통계
+     * 표시 제목 생성
      */
-    private List<ActivityStatsResponse.PeriodStats> generateDetailedChartData(User user, ActivityStatsPeriod period, LocalDate targetDate) {
+    private String generateDisplayTitle(ActivityStatsPeriod period, LocalDate startDate, LocalDate endDate) {
         return switch (period) {
-            case WEEK -> generateWeeklyDetailData(user, targetDate);
-            case MONTH -> generateMonthlyDetailData(user, targetDate);
-            case YEAR -> generateYearlyDetailData(user, targetDate);
+            case WEEK -> String.format("%d년 %d월", startDate.getYear() % 100, startDate.getMonthValue());
+            case MONTH -> String.format("%d년 %d월", startDate.getYear() % 100, startDate.getMonthValue());
+            case YEAR -> String.format("%d년", startDate.getYear());
         };
     }
 
     /**
-     * 해당 주의 일~토 요일별 통계 생성
+     * 일별 상세 데이터 생성
      */
-    private List<ActivityStatsResponse.PeriodStats> generateWeeklyDetailData(User user, LocalDate targetDate) {
-        List<ActivityStatsResponse.PeriodStats> chartData = new ArrayList<>();
-        
-        // 일요일부터 시작하는 주 계산
-        WeekFields weekFields = WeekFields.of(Locale.getDefault());
-        LocalDate weekStart = targetDate.with(weekFields.dayOfWeek(), 1); // 일요일
-        
-        // 일~토 각 요일별 통계
-        for (int i = 0; i < 7; i++) {
-            LocalDate dayDate = weekStart.plusDays(i);
-            LocalDateTime dayStart = dayDate.atStartOfDay();
-            LocalDateTime dayEnd = dayDate.plusDays(1).atStartOfDay();
-            
-            ActivityStatsProjection statsData = activityRepository.findActivityStatsByPeriod(
-                user.getId(), dayStart, dayEnd);
-            
-            String dayLabel = getDayOfWeekLabel(dayDate.getDayOfWeek());
-            
-            chartData.add(new ActivityStatsResponse.PeriodStats(
-                    dayLabel,
-                    dayDate,
-                    dayDate,
-                    statsData.getTotalDistanceInKm(),
-                    statsData.totalElevation(),
-                    statsData.getTotalDurationSeconds(),
-                    statsData.count().intValue()
-            ));
-        }
-        
-        return chartData;
+    private List<ActivityStatsResponse.DetailInfo> generateDailyDetails(User user, ActivityStatsRequest request) {
+        return switch (request.period()) {
+            case WEEK, MONTH -> generateDailyDetailsForWeekOrMonth(user, request);
+            case YEAR -> generateMonthlyDetailsForYear(user, request);
+        };
     }
 
     /**
-     * 해당 월의 1일~말일 일별 통계 생성
+     * 주간/월간 일별 상세 데이터 생성
      */
-    private List<ActivityStatsResponse.PeriodStats> generateMonthlyDetailData(User user, LocalDate targetDate) {
-        List<ActivityStatsResponse.PeriodStats> chartData = new ArrayList<>();
+    private List<ActivityStatsResponse.DetailInfo> generateDailyDetailsForWeekOrMonth(User user, ActivityStatsRequest request) {
+        List<ActivityStatsResponse.DetailInfo> details = new ArrayList<>();
+        LocalDate current = request.startDate();
         
-        LocalDate monthStart = targetDate.with(TemporalAdjusters.firstDayOfMonth());
-        LocalDate monthEnd = targetDate.with(TemporalAdjusters.lastDayOfMonth());
-        
-        LocalDate current = monthStart;
-        while (!current.isAfter(monthEnd)) {
-            LocalDateTime dayStart = current.atStartOfDay();
-            LocalDateTime dayEnd = current.plusDays(1).atStartOfDay();
+        while (!current.isAfter(request.endDate())) {
+            // 해당 일의 통계 조회
+            ActivityStatsProjection dayStats = activityRepository.findActivityStatsByPeriod(
+                    user.getId(),
+                    current.atStartOfDay(),
+                    current.plusDays(1).atStartOfDay()
+            );
             
-            ActivityStatsProjection statsData = activityRepository.findActivityStatsByPeriod(
-                user.getId(), dayStart, dayEnd);
+            // 라벨 생성
+            String label = generateDayLabel(request.period(), current);
             
-            chartData.add(new ActivityStatsResponse.PeriodStats(
-                    String.valueOf(current.getDayOfMonth()),
-                    current,
-                    current,
-                    statsData.getTotalDistanceInKm(),
-                    statsData.totalElevation(),
-                    statsData.getTotalDurationSeconds(),
-                    statsData.count().intValue()
-            ));
+            // 상세 값 생성
+            ActivityStatsResponse.DetailValue value = new ActivityStatsResponse.DetailValue(
+                    dayStats.getTotalDistanceInKm(),
+                    dayStats.totalElevation(),
+                    dayStats.getTotalDurationSeconds()
+            );
             
+            details.add(new ActivityStatsResponse.DetailInfo(label, value));
             current = current.plusDays(1);
         }
         
-        return chartData;
+        return details;
     }
 
     /**
-     * 해당 년의 1월~12월 월별 통계 생성
+     * 연간 월별 상세 데이터 생성
      */
-    private List<ActivityStatsResponse.PeriodStats> generateYearlyDetailData(User user, LocalDate targetDate) {
-        List<ActivityStatsResponse.PeriodStats> chartData = new ArrayList<>();
+    private List<ActivityStatsResponse.DetailInfo> generateMonthlyDetailsForYear(User user, ActivityStatsRequest request) {
+        List<ActivityStatsResponse.DetailInfo> details = new ArrayList<>();
         
-        int year = targetDate.getYear();
+        // 시작 월부터 종료 월까지 반복
+        LocalDate current = request.startDate().withDayOfMonth(1);
+        LocalDate endMonth = request.endDate().withDayOfMonth(1);
         
-        for (int month = 1; month <= 12; month++) {
-            LocalDate monthStart = LocalDate.of(year, month, 1);
-            LocalDate monthEnd = monthStart.with(TemporalAdjusters.lastDayOfMonth());
+        while (!current.isAfter(endMonth)) {
+            // 해당 월의 시작일과 종료일 계산
+            LocalDate monthStart = current;
+            LocalDate monthEnd = current.withDayOfMonth(current.lengthOfMonth());
             
-            ActivityStatsProjection statsData = activityRepository.findActivityStatsByPeriod(
-                user.getId(), monthStart.atStartOfDay(), monthEnd.plusDays(1).atStartOfDay());
+            // 요청된 기간과 겹치는 부분만 계산
+            LocalDate actualStart = monthStart.isBefore(request.startDate()) ? request.startDate() : monthStart;
+            LocalDate actualEnd = monthEnd.isAfter(request.endDate()) ? request.endDate() : monthEnd;
             
-            chartData.add(new ActivityStatsResponse.PeriodStats(
-                    String.valueOf(month),
-                    monthStart,
-                    monthEnd,
-                    statsData.getTotalDistanceInKm(),
-                    statsData.totalElevation(),
-                    statsData.getTotalDurationSeconds(),
-                    statsData.count().intValue()
-            ));
+            // 해당 월의 통계 조회
+            ActivityStatsProjection monthStats = activityRepository.findActivityStatsByPeriod(
+                    user.getId(),
+                    actualStart.atStartOfDay(),
+                    actualEnd.plusDays(1).atStartOfDay()
+            );
+            
+            // 라벨 생성 (월)
+            String label = generateDayLabel(request.period(), current);
+            
+            // 상세 값 생성
+            ActivityStatsResponse.DetailValue value = new ActivityStatsResponse.DetailValue(
+                    monthStats.getTotalDistanceInKm(),
+                    monthStats.totalElevation(),
+                    monthStats.getTotalDurationSeconds()
+            );
+            
+            details.add(new ActivityStatsResponse.DetailInfo(label, value));
+            current = current.plusMonths(1);
         }
         
-        return chartData;
+        return details;
     }
 
     /**
-     * 요일 라벨 반환 (일~토 순서)
+     * 일별 라벨 생성
      */
-    private String getDayOfWeekLabel(java.time.DayOfWeek dayOfWeek) {
-        return switch (dayOfWeek) {
-            case SUNDAY -> "일";
-            case MONDAY -> "월";
-            case TUESDAY -> "화";
-            case WEDNESDAY -> "수";
-            case THURSDAY -> "목";
-            case FRIDAY -> "금";
-            case SATURDAY -> "토";
+    private String generateDayLabel(ActivityStatsPeriod period, LocalDate date) {
+        return switch (period) {
+            case WEEK, MONTH -> String.valueOf(date.getDayOfMonth());
+            case YEAR -> String.valueOf(date.getMonthValue());
         };
     }
 
-    private LocalDateTime[] getPeriodRange(ActivityStatsPeriod period, LocalDate date) {
-        return switch (period) {
-            case WEEK -> {
-                WeekFields weekFields = WeekFields.of(Locale.getDefault());
-                LocalDate weekStart = date.with(weekFields.dayOfWeek(), 1); // 일요일부터 시작
-                LocalDate weekEnd = weekStart.plusDays(7);
-                yield new LocalDateTime[]{weekStart.atStartOfDay(), weekEnd.atStartOfDay()};
-            }
-            case MONTH -> {
-                LocalDate monthStart = date.with(TemporalAdjusters.firstDayOfMonth());
-                LocalDate monthEnd = date.with(TemporalAdjusters.firstDayOfNextMonth());
-                yield new LocalDateTime[]{monthStart.atStartOfDay(), monthEnd.atStartOfDay()};
-            }
-            case YEAR -> {
-                LocalDate yearStart = date.with(TemporalAdjusters.firstDayOfYear());
-                LocalDate yearEnd = date.with(TemporalAdjusters.firstDayOfNextYear());
-                yield new LocalDateTime[]{yearStart.atStartOfDay(), yearEnd.atStartOfDay()};
-            }
-        };
-    }
-
-    private String getCurrentPeriodLabel(ActivityStatsPeriod period, LocalDate date) {
-        return switch (period) {
-            case WEEK -> {
-                WeekFields weekFields = WeekFields.of(Locale.getDefault());
-                int weekOfYear = date.get(weekFields.weekOfWeekBasedYear());
-                yield date.getYear() % 100 + "년 " + weekOfYear + "주";
-            }
-            case MONTH -> date.getYear() % 100 + "년 " + date.getMonthValue() + "월";
-            case YEAR -> date.getYear() + "년";
-        };
-    }
-
-    private String getPeriodLabel(ActivityStatsPeriod period, LocalDate date) {
-        return switch (period) {
-            case WEEK -> {
-                WeekFields weekFields = WeekFields.of(Locale.getDefault());
-                int weekOfYear = date.get(weekFields.weekOfWeekBasedYear());
-                yield String.valueOf(weekOfYear);
-            }
-            case MONTH -> String.valueOf(date.getMonthValue());
-            case YEAR -> String.valueOf(date.getYear());
-        };
-    }
-
-    private LocalDate getNextPeriodStart(ActivityStatsPeriod period, LocalDate current) {
-        return switch (period) {
-            case WEEK -> current.plusWeeks(1);
-            case MONTH -> current.plusMonths(1);
-            case YEAR -> current.plusYears(1);
-        };
-    }
 
 
     /**

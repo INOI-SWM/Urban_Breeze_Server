@@ -17,13 +17,20 @@ public record ActivityStatsRequest(
         ActivityStatsPeriod period,
         
         @Parameter(
-                description = "조회할 기준 날짜 (해당 날짜가 포함된 주/월/년의 통계를 조회). 미입력시 오늘 날짜 기준",
+                description = "조회 시작 날짜",
                 example = "2024-09-16"
         )
-        LocalDate targetDate
+        LocalDate startDate,
+        
+        @Parameter(
+                description = "조회 종료 날짜",
+                example = "2024-09-22"
+        )
+        LocalDate endDate
 ) {
     public ActivityStatsRequest {
         if (period == null) period = ActivityStatsPeriod.WEEK;
-        if (targetDate == null) targetDate = LocalDate.now();
+        if (startDate == null) startDate = LocalDate.now().minusDays(6);
+        if (endDate == null) endDate = LocalDate.now();
     }
 }
