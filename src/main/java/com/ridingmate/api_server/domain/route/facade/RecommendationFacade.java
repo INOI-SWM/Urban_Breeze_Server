@@ -48,7 +48,7 @@ public class RecommendationFacade {
         // 전체 추천 코스 기준의 최대값 조회 (페이지 데이터가 아닌 전체 데이터 기준)
         FilterRangeInfo filterRangeInfo = routeService.getMaxDistanceAndElevationForRecommendations();
 
-        return new RecommendationListResponse(recommendationItems, PaginationResponse.from(routePage), filterRangeInfo);
+        return new RecommendationListResponse(recommendationItems, PaginationResponse.from(routePage));
     }
 
 

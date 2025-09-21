@@ -2,17 +2,20 @@ package com.ridingmate.api_server.domain.activity.service;
 
 import com.ridingmate.api_server.domain.activity.dto.projection.ActivityDateRangeProjection;
 import com.ridingmate.api_server.domain.activity.dto.projection.ActivityStatsProjection;
+import com.ridingmate.api_server.domain.activity.dto.projection.GpsLogProjection;
 import com.ridingmate.api_server.domain.activity.dto.request.ActivityListRequest;
 import com.ridingmate.api_server.domain.activity.dto.request.ActivityStatsRequest;
-import com.ridingmate.api_server.domain.activity.dto.request.ManageActivityImagesRequest;
 import com.ridingmate.api_server.domain.activity.dto.response.ActivityStatsResponse;
-import com.ridingmate.api_server.domain.activity.dto.response.ManageActivityImagesResponse;
+import com.ridingmate.api_server.domain.activity.dto.response.DeleteActivityImageResponse;
+import com.ridingmate.api_server.domain.activity.dto.response.UploadActivityImagesResponse;
 import com.ridingmate.api_server.domain.activity.entity.Activity;
+import com.ridingmate.api_server.domain.activity.entity.ActivityGpsLog;
 import com.ridingmate.api_server.domain.activity.entity.ActivityImage;
 import com.ridingmate.api_server.domain.activity.enums.ActivityStatsPeriod;
 import com.ridingmate.api_server.domain.activity.exception.ActivityException;
 import com.ridingmate.api_server.domain.activity.exception.code.ActivityCommonErrorCode;
 import com.ridingmate.api_server.domain.activity.exception.code.ActivityImageErrorCode;
+import com.ridingmate.api_server.domain.activity.exception.code.ActivityValidationErrorCode;
 import com.ridingmate.api_server.domain.activity.repository.ActivityGpsLogRepository;
 import com.ridingmate.api_server.domain.activity.repository.ActivityImageRepository;
 import com.ridingmate.api_server.domain.activity.repository.ActivityRepository;
@@ -34,15 +37,9 @@ import org.springframework.web.multipart.MultipartFile;
 
 import java.time.Duration;
 import java.time.LocalDate;
-import java.time.LocalDateTime;
-import java.time.temporal.TemporalAdjusters;
-import java.time.temporal.WeekFields;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Locale;
-import java.util.Map;
 import java.util.UUID;
-import java.util.stream.Collectors;
 
 @Service
 @Slf4j
@@ -142,17 +139,39 @@ public class ActivityService {
         return activityImageRepository.findByActivityIdOrderByDisplayOrder(activityId);
     }
 
-    /**
-     * 특정 활동의 GPS 좌표 목록을 조회
-     * @param activityId 활동 ID
-     * @return GPS 좌표 배열 (longitude, latitude, elevation)
-     */
-    @Transactional(readOnly = true)
-    public Coordinate[] getActivityGpsCoordinates(Long activityId) {
-        Activity activity = getActivityWithUser(activityId);
-        List<Coordinate> coordinateList = activityGpsLogRepository.findCoordinatesByActivity(activity);
-        return coordinateList.toArray(new Coordinate[0]);
-    }
+        /**
+         * 특정 활동의 GPS 좌표 목록을 조회
+         * @param activityId 활동 ID
+         * @return GPS 좌표 배열 (longitude, latitude, elevation)
+         */
+        @Transactional(readOnly = true)
+        public Coordinate[] getActivityGpsCoordinates(Long activityId) {
+            Activity activity = getActivityWithUser(activityId);
+            List<Coordinate> coordinateList = activityGpsLogRepository.findCoordinatesByActivity(activity);
+            return coordinateList.toArray(new Coordinate[0]);
+        }
+
+        /**
+         * 특정 활동의 GPS 로그 목록을 조회
+         * @param activityId 활동 ID
+         * @return GPS 로그 리스트
+         */
+        @Transactional(readOnly = true)
+        public List<ActivityGpsLog> getActivityGpsLogs(Long activityId) {
+            Activity activity = getActivityWithUser(activityId);
+            return activityGpsLogRepository.findGpsLogsByActivity(activity);
+        }
+
+        /**
+         * 특정 활동의 GPS 좌표와 상세 정보를 한 번에 조회 (최적화된 방법)
+         * @param activityId 활동 ID
+         * @return GPS 로그 Projection 리스트
+         */
+        @Transactional(readOnly = true)
+        public List<GpsLogProjection> getActivityGpsLogProjections(Long activityId) {
+            Activity activity = getActivityWithUser(activityId);
+            return activityGpsLogRepository.findGpsLogProjectionsByActivity(activity);
+        }
 
     /**
      * 사용자의 활동 통계 조회
@@ -165,248 +184,186 @@ public class ActivityService {
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new AuthException(AuthErrorCode.AUTHENTICATION_USER_NOT_FOUND));
 
+        // 기간 유효성 검증
+        validatePeriod(request);
 
-        // 전체 통계 조회
-        ActivityStatsProjection overallStatsData = activityRepository.findOverallActivityStats(user.getId());
-        ActivityStatsResponse.OverallStats overallStats = createOverallStats(user, overallStatsData);
+        // 기간 정보 생성
+        ActivityStatsResponse.PeriodInfo periodInfo = createPeriodInfo(request);
 
-        if (overallStats.totalActivityCount() == 0) {
-            // 활동이 없는 경우 빈 통계 반환
-            return createEmptyStats(request.period(), request.targetDate());
-        }
-
-        // 선택된 기간의 통계
-        ActivityStatsResponse.CurrentPeriodStats currentPeriod = getCurrentPeriodStats(user, request.period(), request.targetDate());
-
-        // 차트 데이터 생성 (선택된 기간의 세부 통계)
-        List<ActivityStatsResponse.PeriodStats> chartData = generateDetailedChartData(user, request.period(), request.targetDate());
-
-        return new ActivityStatsResponse(
-                request.period(),
-                currentPeriod,
-                chartData,
-                overallStats
+        // 전체 기간 통계 조회
+        ActivityStatsProjection summaryStats = activityRepository.findActivityStatsByPeriod(
+                user.getId(), 
+                request.startDate().atStartOfDay(), 
+                request.endDate().plusDays(1).atStartOfDay()
         );
+
+        // 요약 정보 생성
+        ActivityStatsResponse.SummaryInfo summaryInfo = new ActivityStatsResponse.SummaryInfo(
+                summaryStats.getTotalDistanceInKm(),
+                summaryStats.totalElevation(),
+                summaryStats.getTotalDurationSeconds(),
+                summaryStats.count().intValue()
+        );
+
+        // 일별 상세 데이터 생성
+        List<ActivityStatsResponse.DetailInfo> details = generateDailyDetails(user, request);
+
+        return new ActivityStatsResponse(periodInfo, summaryInfo, details);
     }
 
-    private ActivityStatsResponse createEmptyStats(ActivityStatsPeriod period, LocalDate targetDate) {
-        return new ActivityStatsResponse(
-                period,
-                new ActivityStatsResponse.CurrentPeriodStats(
-                        getCurrentPeriodLabel(period, targetDate),
-                        0.0, 0.0, 0L, 0
-                ),
-                List.of(),
-                new ActivityStatsResponse.OverallStats(
-                        0.0, 0.0, 0L, 0, targetDate, targetDate
-                )
-        );
-    }
-
-    private ActivityStatsResponse.OverallStats createOverallStats(User user, ActivityStatsProjection statsData) {
-        ActivityDateRangeProjection dateRange = activityRepository.findFirstAndLastActivityDate(user);
+    /**
+     * 기간 유효성 검증
+     */
+    private void validatePeriod(ActivityStatsRequest request) {
+        LocalDate startDate = request.startDate();
+        LocalDate endDate = request.endDate();
         
-        return new ActivityStatsResponse.OverallStats(
-                statsData.getTotalDistanceInKm(), // 이미 킬로미터로 변환됨
-                statsData.totalElevation(),
-                statsData.getTotalDurationSeconds(), // 초 단위로 변경
-                statsData.count().intValue(),
-                dateRange.firstActivityDate() != null ? dateRange.firstActivityDate().toLocalDate() : LocalDate.now(),
-                dateRange.lastActivityDate() != null ? dateRange.lastActivityDate().toLocalDate() : LocalDate.now()
-        );
+        switch (request.period()) {
+            case MONTH -> {
+                // 월간 통계: 시작일은 1일, 종료일은 해당 월의 마지막일이어야 함
+                if (startDate.getDayOfMonth() != 1) {
+                    throw new ActivityException(ActivityValidationErrorCode.INVALID_MONTH_PERIOD);
+                }
+                if (!endDate.equals(startDate.withDayOfMonth(startDate.lengthOfMonth()))) {
+                    throw new ActivityException(ActivityValidationErrorCode.INVALID_MONTH_PERIOD);
+                }
+            }
+            case YEAR -> {
+                // 연간 통계: 시작일은 1월 1일, 종료일은 12월 31일이어야 함
+                if (startDate.getMonthValue() != 1 || startDate.getDayOfMonth() != 1) {
+                    throw new ActivityException(ActivityValidationErrorCode.INVALID_YEAR_PERIOD);
+                }
+                if (endDate.getMonthValue() != 12 || endDate.getDayOfMonth() != 31) {
+                    throw new ActivityException(ActivityValidationErrorCode.INVALID_YEAR_PERIOD);
+                }
+            }
+            case WEEK -> {
+                // 주간 통계는 유연하게 허용 (요청된 기간 그대로 사용)
+            }
+        }
     }
 
-    private ActivityStatsResponse.CurrentPeriodStats getCurrentPeriodStats(User user, ActivityStatsPeriod period, LocalDate targetDate) {
-        LocalDateTime[] periodRange = getPeriodRange(period, targetDate);
-        ActivityStatsProjection statsData = activityRepository.findActivityStatsByPeriod(user.getId(), periodRange[0], periodRange[1]);
-
-        return new ActivityStatsResponse.CurrentPeriodStats(
-                getCurrentPeriodLabel(period, targetDate),
-                statsData.getTotalDistanceInKm(), // 이미 킬로미터로 변환됨
-                statsData.totalElevation(),
-                statsData.getTotalDurationSeconds(), // 초 단위로 변경
-                statsData.count().intValue()
+    /**
+     * 기간 정보 생성
+     */
+    private ActivityStatsResponse.PeriodInfo createPeriodInfo(ActivityStatsRequest request) {
+        String type = request.period().name().toLowerCase();
+        String displayTitle = generateDisplayTitle(request.period(), request.startDate(), request.endDate());
+        
+        return new ActivityStatsResponse.PeriodInfo(
+                type,
+                request.startDate(),
+                request.endDate(),
+                displayTitle
         );
     }
 
     /**
-     * 선택된 기간의 세부 통계 생성
-     * WEEK: 해당 주의 일~토 요일별 통계
-     * MONTH: 해당 월의 1일~말일 일별 통계  
-     * YEAR: 해당 년의 1월~12월 월별 통계
+     * 표시 제목 생성
      */
-    private List<ActivityStatsResponse.PeriodStats> generateDetailedChartData(User user, ActivityStatsPeriod period, LocalDate targetDate) {
+    private String generateDisplayTitle(ActivityStatsPeriod period, LocalDate startDate, LocalDate endDate) {
         return switch (period) {
-            case WEEK -> generateWeeklyDetailData(user, targetDate);
-            case MONTH -> generateMonthlyDetailData(user, targetDate);
-            case YEAR -> generateYearlyDetailData(user, targetDate);
+            case WEEK -> String.format("%d년 %d월", startDate.getYear() % 100, startDate.getMonthValue());
+            case MONTH -> String.format("%d년 %d월", startDate.getYear() % 100, startDate.getMonthValue());
+            case YEAR -> String.format("%d년", startDate.getYear());
         };
     }
 
     /**
-     * 해당 주의 일~토 요일별 통계 생성
+     * 일별 상세 데이터 생성
      */
-    private List<ActivityStatsResponse.PeriodStats> generateWeeklyDetailData(User user, LocalDate targetDate) {
-        List<ActivityStatsResponse.PeriodStats> chartData = new ArrayList<>();
-        
-        // 일요일부터 시작하는 주 계산
-        WeekFields weekFields = WeekFields.of(Locale.getDefault());
-        LocalDate weekStart = targetDate.with(weekFields.dayOfWeek(), 1); // 일요일
-        
-        // 일~토 각 요일별 통계
-        for (int i = 0; i < 7; i++) {
-            LocalDate dayDate = weekStart.plusDays(i);
-            LocalDateTime dayStart = dayDate.atStartOfDay();
-            LocalDateTime dayEnd = dayDate.plusDays(1).atStartOfDay();
-            
-            ActivityStatsProjection statsData = activityRepository.findActivityStatsByPeriod(
-                user.getId(), dayStart, dayEnd);
-            
-            String dayLabel = getDayOfWeekLabel(dayDate.getDayOfWeek());
-            
-            chartData.add(new ActivityStatsResponse.PeriodStats(
-                    dayLabel,
-                    dayDate,
-                    dayDate,
-                    statsData.getTotalDistanceInKm(),
-                    statsData.totalElevation(),
-                    statsData.getTotalDurationSeconds(),
-                    statsData.count().intValue()
-            ));
-        }
-        
-        return chartData;
+    private List<ActivityStatsResponse.DetailInfo> generateDailyDetails(User user, ActivityStatsRequest request) {
+        return switch (request.period()) {
+            case WEEK, MONTH -> generateDailyDetailsForWeekOrMonth(user, request);
+            case YEAR -> generateMonthlyDetailsForYear(user, request);
+        };
     }
 
     /**
-     * 해당 월의 1일~말일 일별 통계 생성
+     * 주간/월간 일별 상세 데이터 생성
      */
-    private List<ActivityStatsResponse.PeriodStats> generateMonthlyDetailData(User user, LocalDate targetDate) {
-        List<ActivityStatsResponse.PeriodStats> chartData = new ArrayList<>();
+    private List<ActivityStatsResponse.DetailInfo> generateDailyDetailsForWeekOrMonth(User user, ActivityStatsRequest request) {
+        List<ActivityStatsResponse.DetailInfo> details = new ArrayList<>();
+        LocalDate current = request.startDate();
         
-        LocalDate monthStart = targetDate.with(TemporalAdjusters.firstDayOfMonth());
-        LocalDate monthEnd = targetDate.with(TemporalAdjusters.lastDayOfMonth());
-        
-        LocalDate current = monthStart;
-        while (!current.isAfter(monthEnd)) {
-            LocalDateTime dayStart = current.atStartOfDay();
-            LocalDateTime dayEnd = current.plusDays(1).atStartOfDay();
+        while (!current.isAfter(request.endDate())) {
+            // 해당 일의 통계 조회
+            ActivityStatsProjection dayStats = activityRepository.findActivityStatsByPeriod(
+                    user.getId(),
+                    current.atStartOfDay(),
+                    current.plusDays(1).atStartOfDay()
+            );
             
-            ActivityStatsProjection statsData = activityRepository.findActivityStatsByPeriod(
-                user.getId(), dayStart, dayEnd);
+            // 라벨 생성
+            String label = generateDayLabel(request.period(), current);
             
-            chartData.add(new ActivityStatsResponse.PeriodStats(
-                    String.valueOf(current.getDayOfMonth()),
-                    current,
-                    current,
-                    statsData.getTotalDistanceInKm(),
-                    statsData.totalElevation(),
-                    statsData.getTotalDurationSeconds(),
-                    statsData.count().intValue()
-            ));
+            // 상세 값 생성
+            ActivityStatsResponse.DetailValue value = new ActivityStatsResponse.DetailValue(
+                    dayStats.getTotalDistanceInKm(),
+                    dayStats.totalElevation(),
+                    dayStats.getTotalDurationSeconds()
+            );
             
+            details.add(new ActivityStatsResponse.DetailInfo(label, value));
             current = current.plusDays(1);
         }
         
-        return chartData;
+        return details;
     }
 
     /**
-     * 해당 년의 1월~12월 월별 통계 생성
+     * 연간 월별 상세 데이터 생성
      */
-    private List<ActivityStatsResponse.PeriodStats> generateYearlyDetailData(User user, LocalDate targetDate) {
-        List<ActivityStatsResponse.PeriodStats> chartData = new ArrayList<>();
+    private List<ActivityStatsResponse.DetailInfo> generateMonthlyDetailsForYear(User user, ActivityStatsRequest request) {
+        List<ActivityStatsResponse.DetailInfo> details = new ArrayList<>();
         
-        int year = targetDate.getYear();
+        // 시작 월부터 종료 월까지 반복
+        LocalDate current = request.startDate().withDayOfMonth(1);
+        LocalDate endMonth = request.endDate().withDayOfMonth(1);
         
-        for (int month = 1; month <= 12; month++) {
-            LocalDate monthStart = LocalDate.of(year, month, 1);
-            LocalDate monthEnd = monthStart.with(TemporalAdjusters.lastDayOfMonth());
+        while (!current.isAfter(endMonth)) {
+            // 해당 월의 시작일과 종료일 계산
+            LocalDate monthStart = current;
+            LocalDate monthEnd = current.withDayOfMonth(current.lengthOfMonth());
             
-            ActivityStatsProjection statsData = activityRepository.findActivityStatsByPeriod(
-                user.getId(), monthStart.atStartOfDay(), monthEnd.plusDays(1).atStartOfDay());
+            // 요청된 기간과 겹치는 부분만 계산
+            LocalDate actualStart = monthStart.isBefore(request.startDate()) ? request.startDate() : monthStart;
+            LocalDate actualEnd = monthEnd.isAfter(request.endDate()) ? request.endDate() : monthEnd;
             
-            chartData.add(new ActivityStatsResponse.PeriodStats(
-                    String.valueOf(month),
-                    monthStart,
-                    monthEnd,
-                    statsData.getTotalDistanceInKm(),
-                    statsData.totalElevation(),
-                    statsData.getTotalDurationSeconds(),
-                    statsData.count().intValue()
-            ));
+            // 해당 월의 통계 조회
+            ActivityStatsProjection monthStats = activityRepository.findActivityStatsByPeriod(
+                    user.getId(),
+                    actualStart.atStartOfDay(),
+                    actualEnd.plusDays(1).atStartOfDay()
+            );
+            
+            // 라벨 생성 (월)
+            String label = generateDayLabel(request.period(), current);
+            
+            // 상세 값 생성
+            ActivityStatsResponse.DetailValue value = new ActivityStatsResponse.DetailValue(
+                    monthStats.getTotalDistanceInKm(),
+                    monthStats.totalElevation(),
+                    monthStats.getTotalDurationSeconds()
+            );
+            
+            details.add(new ActivityStatsResponse.DetailInfo(label, value));
+            current = current.plusMonths(1);
         }
         
-        return chartData;
+        return details;
     }
 
     /**
-     * 요일 라벨 반환 (일~토 순서)
+     * 일별 라벨 생성
      */
-    private String getDayOfWeekLabel(java.time.DayOfWeek dayOfWeek) {
-        return switch (dayOfWeek) {
-            case SUNDAY -> "일";
-            case MONDAY -> "월";
-            case TUESDAY -> "화";
-            case WEDNESDAY -> "수";
-            case THURSDAY -> "목";
-            case FRIDAY -> "금";
-            case SATURDAY -> "토";
+    private String generateDayLabel(ActivityStatsPeriod period, LocalDate date) {
+        return switch (period) {
+            case WEEK, MONTH -> String.valueOf(date.getDayOfMonth());
+            case YEAR -> String.valueOf(date.getMonthValue());
         };
     }
 
-    private LocalDateTime[] getPeriodRange(ActivityStatsPeriod period, LocalDate date) {
-        return switch (period) {
-            case WEEK -> {
-                WeekFields weekFields = WeekFields.of(Locale.getDefault());
-                LocalDate weekStart = date.with(weekFields.dayOfWeek(), 1); // 일요일부터 시작
-                LocalDate weekEnd = weekStart.plusDays(7);
-                yield new LocalDateTime[]{weekStart.atStartOfDay(), weekEnd.atStartOfDay()};
-            }
-            case MONTH -> {
-                LocalDate monthStart = date.with(TemporalAdjusters.firstDayOfMonth());
-                LocalDate monthEnd = date.with(TemporalAdjusters.firstDayOfNextMonth());
-                yield new LocalDateTime[]{monthStart.atStartOfDay(), monthEnd.atStartOfDay()};
-            }
-            case YEAR -> {
-                LocalDate yearStart = date.with(TemporalAdjusters.firstDayOfYear());
-                LocalDate yearEnd = date.with(TemporalAdjusters.firstDayOfNextYear());
-                yield new LocalDateTime[]{yearStart.atStartOfDay(), yearEnd.atStartOfDay()};
-            }
-        };
-    }
-
-    private String getCurrentPeriodLabel(ActivityStatsPeriod period, LocalDate date) {
-        return switch (period) {
-            case WEEK -> {
-                WeekFields weekFields = WeekFields.of(Locale.getDefault());
-                int weekOfYear = date.get(weekFields.weekOfWeekBasedYear());
-                yield date.getYear() % 100 + "년 " + weekOfYear + "주";
-            }
-            case MONTH -> date.getYear() % 100 + "년 " + date.getMonthValue() + "월";
-            case YEAR -> date.getYear() + "년";
-        };
-    }
-
-    private String getPeriodLabel(ActivityStatsPeriod period, LocalDate date) {
-        return switch (period) {
-            case WEEK -> {
-                WeekFields weekFields = WeekFields.of(Locale.getDefault());
-                int weekOfYear = date.get(weekFields.weekOfWeekBasedYear());
-                yield String.valueOf(weekOfYear);
-            }
-            case MONTH -> String.valueOf(date.getMonthValue());
-            case YEAR -> String.valueOf(date.getYear());
-        };
-    }
-
-    private LocalDate getNextPeriodStart(ActivityStatsPeriod period, LocalDate current) {
-        return switch (period) {
-            case WEEK -> current.plusWeeks(1);
-            case MONTH -> current.plusMonths(1);
-            case YEAR -> current.plusYears(1);
-        };
-    }
 
 
     /**
@@ -433,133 +390,10 @@ public class ActivityService {
     /**
      * 이미지 파일명 생성
      */
-    private String generateImageFileName(Long activityId, MultipartFile imageFile) {
+    private static String generateImageFileName(MultipartFile imageFile) {
         String originalFilename = imageFile.getOriginalFilename();
-        String extension = originalFilename != null && originalFilename.contains(".")
-                ? originalFilename.substring(originalFilename.lastIndexOf("."))
-                : ".jpg";
         
-        return String.format("activity_%d_%s%s", activityId, UUID.randomUUID(), extension);
-    }
-
-    /**
-     * Activity 이미지 전체 관리 (추가/삭제/순서변경)
-     * @param userId 사용자 ID
-     * @param requestDto 이미지 관리 요청 DTO
-     * @param imageFiles 업로드할 이미지 파일들
-     * @return 이미지 관리 결과
-     */
-    @Transactional
-    public ManageActivityImagesResponse manageActivityImages(Long userId, ManageActivityImagesRequest requestDto, List<MultipartFile> imageFiles) {
-        // Activity 존재 및 소유권 확인
-        Activity activity = getActivityWithUser(requestDto.activityId());
-        if (!activity.getUser().getId().equals(userId)) {
-            throw new ActivityException(ActivityCommonErrorCode.ACTIVITY_ACCESS_DENIED);
-        }
-
-        // 유효한 이미지들만 필터링 (삭제되지 않은 이미지들)
-        List<ManageActivityImagesRequest.ImageMetaInfo> validImages = requestDto.images().stream()
-                .filter(imageInfo -> !imageInfo.isDeleted())
-                .collect(Collectors.toList());
-
-        // 최대 이미지 개수 확인 (30장)
-        if (validImages.size() > 30) {
-            throw new ActivityException(ActivityImageErrorCode.MAX_IMAGE_COUNT_EXCEEDED);
-        }
-
-        // 파일명으로 MultipartFile 매핑
-        Map<String, MultipartFile> fileMap = imageFiles.stream()
-                .collect(Collectors.toMap(MultipartFile::getOriginalFilename, file -> file));
-
-        // 처리 결과 추적
-        List<ManageActivityImagesResponse.ImageResult> results = new ArrayList<>();
-        int addedCount = 0;
-        int deletedCount = 0;
-        int reorderedCount = 0;
-
-        // 모든 이미지 처리 (단일 반복문)
-        for (ManageActivityImagesRequest.ImageMetaInfo imageInfo : requestDto.images()) {
-            if (imageInfo.isImageToDelete()) {
-                // 삭제 처리
-                deleteActivityImage(imageInfo.imageId());
-                deletedCount++;
-            } else if (imageInfo.isExistingImage()) {
-                // 기존 이미지 순서 업데이트
-                ActivityImage existingImage = activityImageRepository.findById(imageInfo.imageId())
-                        .orElseThrow(() -> new ActivityException(ActivityCommonErrorCode.ACTIVITY_IMAGE_NOT_FOUND));
-                
-                // 순서가 변경된 경우
-                if (!existingImage.getDisplayOrder().equals(imageInfo.displayOrder())) {
-                    existingImage.updateDisplayOrder(imageInfo.displayOrder());
-                    activityImageRepository.save(existingImage);
-                    reorderedCount++;
-                }
-                
-                results.add(new ManageActivityImagesResponse.ImageResult(
-                        existingImage.getId(),
-                        existingImage.getImageUrl(),
-                        existingImage.getDisplayOrder(),
-                        ManageActivityImagesResponse.ProcessStatus.KEPT
-                ));
-            } else if (imageInfo.imageId() == null && imageInfo.fileName() != null && !imageInfo.isDeleted()) {
-                // 새 이미지 추가 (isNewImage() 메서드 제거로 직접 조건 확인)
-                MultipartFile imageFile = fileMap.get(imageInfo.fileName());
-                if (imageFile == null) {
-                    throw new ActivityException(ActivityImageErrorCode.ACTIVITY_IMAGE_FILE_NOT_FOUND);
-                }
-
-                // 이미지 파일 유효성 검사
-                validateImageFile(imageFile);
-
-                // S3에 이미지 업로드
-                String filePath = "activity-image/" + generateImageFileName(requestDto.activityId(), imageFile);
-                s3Manager.uploadFile(filePath, imageFile);
-
-                // ActivityImage 엔티티 생성 및 저장
-                ActivityImage newImage = ActivityImage.builder()
-                        .activity(activity)
-                        .imagePath(filePath)
-                        .displayOrder(imageInfo.displayOrder())
-                        .build();
-
-                ActivityImage savedImage = activityImageRepository.save(newImage);
-                addedCount++;
-
-                results.add(new ManageActivityImagesResponse.ImageResult(
-                        savedImage.getId(),
-                        savedImage.getImageUrl(),
-                        savedImage.getDisplayOrder(),
-                        ManageActivityImagesResponse.ProcessStatus.ADDED
-                ));
-            }
-        }
-
-        // 결과를 displayOrder 순으로 정렬
-        results.sort((a, b) -> Integer.compare(a.displayOrder(), b.displayOrder()));
-
-        // 처리 결과 요약
-        ManageActivityImagesResponse.ProcessSummary summary = new ManageActivityImagesResponse.ProcessSummary(
-                addedCount,
-                deletedCount,
-                reorderedCount,
-                results.size()
-        );
-
-        return ManageActivityImagesResponse.of(requestDto.activityId(), results, summary);
-    }
-
-    /**
-     * Activity 이미지 삭제
-     */
-    private void deleteActivityImage(Long imageId) {
-        ActivityImage image = activityImageRepository.findById(imageId)
-                .orElseThrow(() -> new ActivityException(ActivityCommonErrorCode.ACTIVITY_IMAGE_NOT_FOUND));
-        
-        // S3에서 이미지 삭제 (선택사항 - 비용 절약을 위해 보관할 수도 있음)
-        // s3Manager.deleteFile(image.getImagePath());
-        
-        // DB에서 이미지 삭제
-        activityImageRepository.delete(image);
+        return String.format("%s%s", UUID.randomUUID(), originalFilename);
     }
 
     /**
@@ -604,6 +438,84 @@ public class ActivityService {
                 activityId, userId, activity.getTitle(), newTitle);
 
         return savedActivity;
+    }
+
+    /**
+     * 활동 이미지 업로드
+     * @param userId 사용자 ID
+     * @param activityId 활동 ID
+     * @param files 업로드할 이미지 파일들
+     * @return 업로드 결과
+     */
+    @Transactional
+    public UploadActivityImagesResponse uploadActivityImages(Long userId, Long activityId, List<MultipartFile> files) {
+        // Activity 존재 및 소유권 확인
+        Activity activity = getActivityWithUser(activityId);
+        if (!activity.getUser().getId().equals(userId)) {
+            throw new ActivityException(ActivityCommonErrorCode.ACTIVITY_ACCESS_DENIED);
+        }
+
+        // 현재 이미지 개수 확인
+        int currentImageCount = activityImageRepository.countByActivity(activity);
+        if (currentImageCount + files.size() > 30) {
+            throw new ActivityException(ActivityImageErrorCode.MAX_IMAGE_COUNT_EXCEEDED);
+        }
+
+        List<ActivityImage> uploadedImages = new ArrayList<>();
+        
+        for (MultipartFile imageFile : files) {
+            // 이미지 파일 유효성 검증
+            validateImageFile(imageFile);
+
+            String imagePath = generateImageFileName(imageFile);
+            s3Manager.uploadFile(imagePath, imageFile);
+            
+            // 표시 순서 자동 할당 (업로드 순서대로)
+            Integer displayOrder = currentImageCount + uploadedImages.size() + 1;
+
+            ActivityImage activityImage = ActivityImage.builder()
+                    .imagePath(imagePath)
+                    .activity(activity)
+                    .displayOrder(displayOrder)
+                    .build();
+            
+            ActivityImage savedImage = activityImageRepository.save(activityImage);
+            uploadedImages.add(savedImage);
+        }
+
+        return UploadActivityImagesResponse.from(uploadedImages);
+    }
+
+    /**
+     * 활동 이미지 삭제
+     * @param userId 사용자 ID
+     * @param activityId 활동 ID
+     * @param imageId 삭제할 이미지 ID
+     * @return 삭제 결과
+     */
+    @Transactional
+    public DeleteActivityImageResponse deleteActivityImage(Long userId, Long activityId, Long imageId) {
+        // Activity 존재 및 소유권 확인
+        Activity activity = getActivityWithUser(activityId);
+        if (!activity.getUser().getId().equals(userId)) {
+            throw new ActivityException(ActivityCommonErrorCode.ACTIVITY_ACCESS_DENIED);
+        }
+
+        // 이미지 존재 및 소유권 확인
+        ActivityImage activityImage = activityImageRepository.findById(imageId)
+                .orElseThrow(() -> new ActivityException(ActivityCommonErrorCode.ACTIVITY_IMAGE_NOT_FOUND));
+        
+        if (!activityImage.getActivity().getId().equals(activityId)) {
+            throw new ActivityException(ActivityCommonErrorCode.ACTIVITY_ACCESS_DENIED);
+        }
+        
+        // S3에서 이미지 삭제
+        s3Manager.deleteFile(activityImage.getImagePath());
+        
+        // DB에서 이미지 삭제
+        activityImageRepository.delete(activityImage);
+        
+        return DeleteActivityImageResponse.from(imageId);
     }
 
 }

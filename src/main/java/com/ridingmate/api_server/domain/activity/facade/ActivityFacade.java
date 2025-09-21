@@ -1,11 +1,13 @@
 package com.ridingmate.api_server.domain.activity.facade;
 
+import com.ggalmazor.ltdownsampling.Point;
 import com.ridingmate.api_server.domain.activity.dto.request.ActivityListRequest;
 import com.ridingmate.api_server.domain.activity.dto.request.ActivityStatsRequest;
-import com.ridingmate.api_server.domain.activity.dto.request.ManageActivityImagesRequest;
 import com.ridingmate.api_server.domain.activity.dto.request.UpdateActivityTitleRequest;
 import com.ridingmate.api_server.domain.activity.dto.response.*;
 import com.ridingmate.api_server.domain.activity.entity.Activity;
+import com.ridingmate.api_server.domain.activity.entity.ActivityGpsLog;
+import com.ridingmate.api_server.domain.activity.dto.projection.GpsLogProjection;
 import com.ridingmate.api_server.domain.activity.entity.ActivityImage;
 import com.ridingmate.api_server.domain.activity.service.ActivityService;
 import com.ridingmate.api_server.domain.auth.security.AuthUser;
@@ -18,7 +20,6 @@ import com.ridingmate.api_server.infra.terra.TerraMapper;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.locationtech.jts.geom.Coordinate;
-import org.locationtech.jts.geom.Envelope;
 import org.locationtech.jts.geom.LineString;
 import org.springframework.data.domain.Page;
 import org.springframework.stereotype.Component;
@@ -126,15 +127,17 @@ public class ActivityFacade {
      * @return 활동 상세 응답
      */
     public ActivityDetailResponse getActivityDetail(Long activityId) {
-        // 1. Activity와 User 정보 조회
         Activity activity = activityService.getActivityWithUser(activityId);
+
+        List<GpsLogProjection> gpsLogProjections = activityService.getActivityGpsLogProjections(activityId);
+
+        Coordinate[] coordinates = gpsLogProjections.stream()
+                .map(GpsLogProjection::toCoordinate)
+                .toArray(Coordinate[]::new);
         
-        // 2. GPS 좌표 조회 및 고도 프로필 생성
-        Coordinate[] coordinates = activityService.getActivityGpsCoordinates(activityId);
-        List<com.ggalmazor.ltdownsampling.Point> elevationPoints = 
+        List<Point> elevationPoints =
                 GeometryUtil.downsampleElevationProfile(coordinates, activity.getDistance() / 1000.0);
-        
-        // 3. 활동 이미지 목록 조회
+
         List<ActivityImage> activityImages = activityService.getActivityImages(activityId);
         List<ActivityDetailResponse.ActivityImageResponse> imageResponses = activityImages.stream()
                 .map(image -> ActivityDetailResponse.ActivityImageResponse.from(
@@ -142,23 +145,24 @@ public class ActivityFacade {
                         s3Manager.getPresignedUrl(image.getImagePath())
                 ))
                 .collect(Collectors.toList());
-        
-        // 4. S3 URL 생성
+
+        // S3 URL 생성
         String profileImageUrl = activity.getUser().getProfileImagePath() != null
                 ? s3Manager.getPresignedUrl(activity.getUser().getProfileImagePath())
                 : null;
-        
+
         String thumbnailImageUrl = activity.getThumbnailImagePath() != null
                 ? s3Manager.getPresignedUrl(activity.getThumbnailImagePath())
                 : null;
-        
-        // 5. Bounding Box 계산
+
+        // Bounding Box 계산
         List<Double> bbox = GeometryUtil.calculateBoundingBoxList(coordinates);
-        
+
         return ActivityDetailResponse.from(
                 activity,
                 elevationPoints,
-                coordinates, // 원본 좌표 배열 추가
+                coordinates,
+                gpsLogProjections,
                 profileImageUrl,
                 thumbnailImageUrl,
                 imageResponses,
@@ -177,15 +181,27 @@ public class ActivityFacade {
     }
 
 
+
     /**
-     * Activity 이미지 전체 관리 (추가/삭제/순서변경)
+     * 활동 이미지 업로드
      * @param authUser 인증된 사용자
-     * @param requestDto 이미지 관리 요청 DTO
-     * @param imageFiles 업로드할 이미지 파일들
-     * @return 이미지 관리 결과
+     * @param activityId 활동 ID
+     * @param files 업로드할 이미지 파일들
+     * @return 업로드 결과
      */
-    public ManageActivityImagesResponse manageActivityImages(AuthUser authUser, ManageActivityImagesRequest requestDto, List<MultipartFile> imageFiles) {
-        return activityService.manageActivityImages(authUser.id(), requestDto, imageFiles);
+    public UploadActivityImagesResponse uploadActivityImages(AuthUser authUser, Long activityId, List<MultipartFile> files) {
+        return activityService.uploadActivityImages(authUser.id(), activityId, files);
+    }
+
+    /**
+     * 활동 이미지 삭제
+     * @param authUser 인증된 사용자
+     * @param activityId 활동 ID
+     * @param imageId 삭제할 이미지 ID
+     * @return 삭제 결과
+     */
+    public DeleteActivityImageResponse deleteActivityImage(AuthUser authUser, Long activityId, Long imageId) {
+        return activityService.deleteActivityImage(authUser.id(), activityId, imageId);
     }
 
     /**

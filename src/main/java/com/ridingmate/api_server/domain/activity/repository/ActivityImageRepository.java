@@ -1,5 +1,6 @@
 package com.ridingmate.api_server.domain.activity.repository;
 
+import com.ridingmate.api_server.domain.activity.entity.Activity;
 import com.ridingmate.api_server.domain.activity.entity.ActivityImage;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
@@ -40,6 +41,13 @@ public interface ActivityImageRepository extends JpaRepository<ActivityImage, Lo
      */
     @Query("SELECT COUNT(ai) FROM ActivityImage ai WHERE ai.activity.id = :activityId")
     Integer countByActivityId(@Param("activityId") Long activityId);
+
+    /**
+     * 특정 활동의 이미지 개수 조회 (Activity 엔티티 사용)
+     * @param activity 활동 엔티티
+     * @return 이미지 개수
+     */
+    int countByActivity(Activity activity);
 
     /**
      * 여러 활동의 첫 번째 이미지들을 한 번에 조회 (배치 처리용)
