@@ -2,13 +2,13 @@ package com.ridingmate.api_server.domain.activity.controller;
 
 import com.ridingmate.api_server.domain.activity.dto.request.ActivityListRequest;
 import com.ridingmate.api_server.domain.activity.dto.request.ActivityStatsRequest;
-import com.ridingmate.api_server.domain.activity.dto.request.ManageActivityImagesRequest;
 import com.ridingmate.api_server.domain.activity.dto.request.UpdateActivityTitleRequest;
 import com.ridingmate.api_server.domain.activity.dto.response.ActivityDetailResponse;
 import com.ridingmate.api_server.domain.activity.dto.response.ActivityListResponse;
 import com.ridingmate.api_server.domain.activity.dto.response.ActivityStatsResponse;
-import com.ridingmate.api_server.domain.activity.dto.response.ManageActivityImagesResponse;
+import com.ridingmate.api_server.domain.activity.dto.response.DeleteActivityImageResponse;
 import com.ridingmate.api_server.domain.activity.dto.response.UpdateActivityTitleResponse;
+import com.ridingmate.api_server.domain.activity.dto.response.UploadActivityImagesResponse;
 import com.ridingmate.api_server.domain.activity.exception.ActivitySuccessCode;
 import com.ridingmate.api_server.domain.activity.facade.ActivityFacade;
 import com.ridingmate.api_server.domain.auth.security.AuthUser;
@@ -67,19 +67,31 @@ public class ActivityController implements ActivityApi {
     }
 
 
-    @PutMapping(value = "/{activityId}/images", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
-    @FormDataRequestBody
+
+    @PostMapping(value = "/{activityId}/images", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     @Override
-    public ResponseEntity<CommonResponse<ManageActivityImagesResponse>> manageActivityImages(
+    public ResponseEntity<CommonResponse<UploadActivityImagesResponse>> uploadActivityImages(
             @AuthenticationPrincipal AuthUser authUser,
             @PathVariable Long activityId,
-            @RequestPart ManageActivityImagesRequest requestDto,
-            @RequestPart List<MultipartFile> imageFiles
+            @RequestPart List<MultipartFile> files
     ) {
-        ManageActivityImagesResponse response = activityFacade.manageActivityImages(authUser, requestDto, imageFiles);
+        UploadActivityImagesResponse response = activityFacade.uploadActivityImages(authUser, activityId, files);
         return ResponseEntity
                 .status(ActivitySuccessCode.ACTIVITY_IMAGE_ADDED.getStatus())
                 .body(CommonResponse.success(ActivitySuccessCode.ACTIVITY_IMAGE_ADDED, response));
+    }
+
+    @DeleteMapping("/{activityId}/images/{imageId}")
+    @Override
+    public ResponseEntity<CommonResponse<DeleteActivityImageResponse>> deleteActivityImage(
+            @AuthenticationPrincipal AuthUser authUser,
+            @PathVariable Long activityId,
+            @PathVariable Long imageId
+    ) {
+        DeleteActivityImageResponse response = activityFacade.deleteActivityImage(authUser, activityId, imageId);
+        return ResponseEntity
+                .status(ActivitySuccessCode.ACTIVITY_IMAGE_DELETED.getStatus())
+                .body(CommonResponse.success(ActivitySuccessCode.ACTIVITY_IMAGE_DELETED, response));
     }
 
     @PutMapping("/{activityId}/title")

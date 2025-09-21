@@ -1,6 +1,5 @@
 package com.ridingmate.api_server.domain.route.dto.response;
 
-import com.ridingmate.api_server.domain.route.dto.FilterRangeInfo;
 import com.ridingmate.api_server.domain.route.entity.Recommendation;
 import com.ridingmate.api_server.domain.route.entity.Route;
 import com.ridingmate.api_server.global.dto.PaginationResponse;
@@ -14,10 +13,7 @@ public record RecommendationListResponse(
     List<RecommendationItemResponse> recommendations,
     
     @Schema(description = "페이지네이션 정보")
-    PaginationResponse pagination,
-    
-    @Schema(description = "필터링 범위 정보")
-    FilterRangeInfo filterRange
+    PaginationResponse pagination
 ) {
     
     @Schema(description = "추천 코스 아이템")
@@ -49,8 +45,8 @@ public record RecommendationListResponse(
         @Schema(description = "추천 타입")
         String recommendationType,
         
-        @Schema(description = "썸네일 이미지 URL")
-        String thumbnailImageUrl
+        @Schema(description = "썸네일 이미지 경로")
+        String thumbnailImagePath
     ) {
         
         public static RecommendationItemResponse from(Route route, Recommendation recommendation, String thumbnailUrl) {

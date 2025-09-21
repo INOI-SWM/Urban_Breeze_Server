@@ -47,4 +47,5 @@ public class ActivityImage extends BaseTimeEntity {
     public void updateDisplayOrder(Integer newDisplayOrder) {
         this.displayOrder = newDisplayOrder;
     }
+
 }

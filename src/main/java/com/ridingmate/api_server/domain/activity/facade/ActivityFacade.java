@@ -3,7 +3,6 @@ package com.ridingmate.api_server.domain.activity.facade;
 import com.ggalmazor.ltdownsampling.Point;
 import com.ridingmate.api_server.domain.activity.dto.request.ActivityListRequest;
 import com.ridingmate.api_server.domain.activity.dto.request.ActivityStatsRequest;
-import com.ridingmate.api_server.domain.activity.dto.request.ManageActivityImagesRequest;
 import com.ridingmate.api_server.domain.activity.dto.request.UpdateActivityTitleRequest;
 import com.ridingmate.api_server.domain.activity.dto.response.*;
 import com.ridingmate.api_server.domain.activity.entity.Activity;
@@ -182,15 +181,27 @@ public class ActivityFacade {
     }
 
 
+
     /**
-     * Activity 이미지 전체 관리 (추가/삭제/순서변경)
+     * 활동 이미지 업로드
      * @param authUser 인증된 사용자
-     * @param requestDto 이미지 관리 요청 DTO
-     * @param imageFiles 업로드할 이미지 파일들
-     * @return 이미지 관리 결과
+     * @param activityId 활동 ID
+     * @param files 업로드할 이미지 파일들
+     * @return 업로드 결과
      */
-    public ManageActivityImagesResponse manageActivityImages(AuthUser authUser, ManageActivityImagesRequest requestDto, List<MultipartFile> imageFiles) {
-        return activityService.manageActivityImages(authUser.id(), requestDto, imageFiles);
+    public UploadActivityImagesResponse uploadActivityImages(AuthUser authUser, Long activityId, List<MultipartFile> files) {
+        return activityService.uploadActivityImages(authUser.id(), activityId, files);
+    }
+
+    /**
+     * 활동 이미지 삭제
+     * @param authUser 인증된 사용자
+     * @param activityId 활동 ID
+     * @param imageId 삭제할 이미지 ID
+     * @return 삭제 결과
+     */
+    public DeleteActivityImageResponse deleteActivityImage(AuthUser authUser, Long activityId, Long imageId) {
+        return activityService.deleteActivityImage(authUser.id(), activityId, imageId);
     }
 
     /**

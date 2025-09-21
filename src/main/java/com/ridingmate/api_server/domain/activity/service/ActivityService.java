@@ -5,9 +5,9 @@ import com.ridingmate.api_server.domain.activity.dto.projection.ActivityStatsPro
 import com.ridingmate.api_server.domain.activity.dto.projection.GpsLogProjection;
 import com.ridingmate.api_server.domain.activity.dto.request.ActivityListRequest;
 import com.ridingmate.api_server.domain.activity.dto.request.ActivityStatsRequest;
-import com.ridingmate.api_server.domain.activity.dto.request.ManageActivityImagesRequest;
 import com.ridingmate.api_server.domain.activity.dto.response.ActivityStatsResponse;
-import com.ridingmate.api_server.domain.activity.dto.response.ManageActivityImagesResponse;
+import com.ridingmate.api_server.domain.activity.dto.response.DeleteActivityImageResponse;
+import com.ridingmate.api_server.domain.activity.dto.response.UploadActivityImagesResponse;
 import com.ridingmate.api_server.domain.activity.entity.Activity;
 import com.ridingmate.api_server.domain.activity.entity.ActivityGpsLog;
 import com.ridingmate.api_server.domain.activity.entity.ActivityImage;
@@ -37,15 +37,9 @@ import org.springframework.web.multipart.MultipartFile;
 
 import java.time.Duration;
 import java.time.LocalDate;
-import java.time.LocalDateTime;
-import java.time.temporal.TemporalAdjusters;
-import java.time.temporal.WeekFields;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Locale;
-import java.util.Map;
 import java.util.UUID;
-import java.util.stream.Collectors;
 
 @Service
 @Slf4j
@@ -396,133 +390,10 @@ public class ActivityService {
     /**
      * 이미지 파일명 생성
      */
-    private String generateImageFileName(Long activityId, MultipartFile imageFile) {
+    private static String generateImageFileName(MultipartFile imageFile) {
         String originalFilename = imageFile.getOriginalFilename();
-        String extension = originalFilename != null && originalFilename.contains(".")
-                ? originalFilename.substring(originalFilename.lastIndexOf("."))
-                : ".jpg";
         
-        return String.format("activity_%d_%s%s", activityId, UUID.randomUUID(), extension);
-    }
-
-    /**
-     * Activity 이미지 전체 관리 (추가/삭제/순서변경)
-     * @param userId 사용자 ID
-     * @param requestDto 이미지 관리 요청 DTO
-     * @param imageFiles 업로드할 이미지 파일들
-     * @return 이미지 관리 결과
-     */
-    @Transactional
-    public ManageActivityImagesResponse manageActivityImages(Long userId, ManageActivityImagesRequest requestDto, List<MultipartFile> imageFiles) {
-        // Activity 존재 및 소유권 확인
-        Activity activity = getActivityWithUser(requestDto.activityId());
-        if (!activity.getUser().getId().equals(userId)) {
-            throw new ActivityException(ActivityCommonErrorCode.ACTIVITY_ACCESS_DENIED);
-        }
-
-        // 유효한 이미지들만 필터링 (삭제되지 않은 이미지들)
-        List<ManageActivityImagesRequest.ImageMetaInfo> validImages = requestDto.images().stream()
-                .filter(imageInfo -> !imageInfo.isDeleted())
-                .collect(Collectors.toList());
-
-        // 최대 이미지 개수 확인 (30장)
-        if (validImages.size() > 30) {
-            throw new ActivityException(ActivityImageErrorCode.MAX_IMAGE_COUNT_EXCEEDED);
-        }
-
-        // 파일명으로 MultipartFile 매핑
-        Map<String, MultipartFile> fileMap = imageFiles.stream()
-                .collect(Collectors.toMap(MultipartFile::getOriginalFilename, file -> file));
-
-        // 처리 결과 추적
-        List<ManageActivityImagesResponse.ImageResult> results = new ArrayList<>();
-        int addedCount = 0;
-        int deletedCount = 0;
-        int reorderedCount = 0;
-
-        // 모든 이미지 처리 (단일 반복문)
-        for (ManageActivityImagesRequest.ImageMetaInfo imageInfo : requestDto.images()) {
-            if (imageInfo.isImageToDelete()) {
-                // 삭제 처리
-                deleteActivityImage(imageInfo.imageId());
-                deletedCount++;
-            } else if (imageInfo.isExistingImage()) {
-                // 기존 이미지 순서 업데이트
-                ActivityImage existingImage = activityImageRepository.findById(imageInfo.imageId())
-                        .orElseThrow(() -> new ActivityException(ActivityCommonErrorCode.ACTIVITY_IMAGE_NOT_FOUND));
-                
-                // 순서가 변경된 경우
-                if (!existingImage.getDisplayOrder().equals(imageInfo.displayOrder())) {
-                    existingImage.updateDisplayOrder(imageInfo.displayOrder());
-                    activityImageRepository.save(existingImage);
-                    reorderedCount++;
-                }
-                
-                results.add(new ManageActivityImagesResponse.ImageResult(
-                        existingImage.getId(),
-                        existingImage.getImageUrl(),
-                        existingImage.getDisplayOrder(),
-                        ManageActivityImagesResponse.ProcessStatus.KEPT
-                ));
-            } else if (imageInfo.imageId() == null && imageInfo.fileName() != null && !imageInfo.isDeleted()) {
-                // 새 이미지 추가 (isNewImage() 메서드 제거로 직접 조건 확인)
-                MultipartFile imageFile = fileMap.get(imageInfo.fileName());
-                if (imageFile == null) {
-                    throw new ActivityException(ActivityImageErrorCode.ACTIVITY_IMAGE_FILE_NOT_FOUND);
-                }
-
-                // 이미지 파일 유효성 검사
-                validateImageFile(imageFile);
-
-                // S3에 이미지 업로드
-                String filePath = "activity-image/" + generateImageFileName(requestDto.activityId(), imageFile);
-                s3Manager.uploadFile(filePath, imageFile);
-
-                // ActivityImage 엔티티 생성 및 저장
-                ActivityImage newImage = ActivityImage.builder()
-                        .activity(activity)
-                        .imagePath(filePath)
-                        .displayOrder(imageInfo.displayOrder())
-                        .build();
-
-                ActivityImage savedImage = activityImageRepository.save(newImage);
-                addedCount++;
-
-                results.add(new ManageActivityImagesResponse.ImageResult(
-                        savedImage.getId(),
-                        savedImage.getImageUrl(),
-                        savedImage.getDisplayOrder(),
-                        ManageActivityImagesResponse.ProcessStatus.ADDED
-                ));
-            }
-        }
-
-        // 결과를 displayOrder 순으로 정렬
-        results.sort((a, b) -> Integer.compare(a.displayOrder(), b.displayOrder()));
-
-        // 처리 결과 요약
-        ManageActivityImagesResponse.ProcessSummary summary = new ManageActivityImagesResponse.ProcessSummary(
-                addedCount,
-                deletedCount,
-                reorderedCount,
-                results.size()
-        );
-
-        return ManageActivityImagesResponse.of(requestDto.activityId(), results, summary);
-    }
-
-    /**
-     * Activity 이미지 삭제
-     */
-    private void deleteActivityImage(Long imageId) {
-        ActivityImage image = activityImageRepository.findById(imageId)
-                .orElseThrow(() -> new ActivityException(ActivityCommonErrorCode.ACTIVITY_IMAGE_NOT_FOUND));
-        
-        // S3에서 이미지 삭제 (선택사항 - 비용 절약을 위해 보관할 수도 있음)
-        // s3Manager.deleteFile(image.getImagePath());
-        
-        // DB에서 이미지 삭제
-        activityImageRepository.delete(image);
+        return String.format("%s%s", UUID.randomUUID(), originalFilename);
     }
 
     /**
@@ -567,6 +438,84 @@ public class ActivityService {
                 activityId, userId, activity.getTitle(), newTitle);
 
         return savedActivity;
+    }
+
+    /**
+     * 활동 이미지 업로드
+     * @param userId 사용자 ID
+     * @param activityId 활동 ID
+     * @param files 업로드할 이미지 파일들
+     * @return 업로드 결과
+     */
+    @Transactional
+    public UploadActivityImagesResponse uploadActivityImages(Long userId, Long activityId, List<MultipartFile> files) {
+        // Activity 존재 및 소유권 확인
+        Activity activity = getActivityWithUser(activityId);
+        if (!activity.getUser().getId().equals(userId)) {
+            throw new ActivityException(ActivityCommonErrorCode.ACTIVITY_ACCESS_DENIED);
+        }
+
+        // 현재 이미지 개수 확인
+        int currentImageCount = activityImageRepository.countByActivity(activity);
+        if (currentImageCount + files.size() > 30) {
+            throw new ActivityException(ActivityImageErrorCode.MAX_IMAGE_COUNT_EXCEEDED);
+        }
+
+        List<ActivityImage> uploadedImages = new ArrayList<>();
+        
+        for (MultipartFile imageFile : files) {
+            // 이미지 파일 유효성 검증
+            validateImageFile(imageFile);
+
+            String imagePath = generateImageFileName(imageFile);
+            s3Manager.uploadFile(imagePath, imageFile);
+            
+            // 표시 순서 자동 할당 (업로드 순서대로)
+            Integer displayOrder = currentImageCount + uploadedImages.size() + 1;
+
+            ActivityImage activityImage = ActivityImage.builder()
+                    .imagePath(imagePath)
+                    .activity(activity)
+                    .displayOrder(displayOrder)
+                    .build();
+            
+            ActivityImage savedImage = activityImageRepository.save(activityImage);
+            uploadedImages.add(savedImage);
+        }
+
+        return UploadActivityImagesResponse.from(uploadedImages);
+    }
+
+    /**
+     * 활동 이미지 삭제
+     * @param userId 사용자 ID
+     * @param activityId 활동 ID
+     * @param imageId 삭제할 이미지 ID
+     * @return 삭제 결과
+     */
+    @Transactional
+    public DeleteActivityImageResponse deleteActivityImage(Long userId, Long activityId, Long imageId) {
+        // Activity 존재 및 소유권 확인
+        Activity activity = getActivityWithUser(activityId);
+        if (!activity.getUser().getId().equals(userId)) {
+            throw new ActivityException(ActivityCommonErrorCode.ACTIVITY_ACCESS_DENIED);
+        }
+
+        // 이미지 존재 및 소유권 확인
+        ActivityImage activityImage = activityImageRepository.findById(imageId)
+                .orElseThrow(() -> new ActivityException(ActivityCommonErrorCode.ACTIVITY_IMAGE_NOT_FOUND));
+        
+        if (!activityImage.getActivity().getId().equals(activityId)) {
+            throw new ActivityException(ActivityCommonErrorCode.ACTIVITY_ACCESS_DENIED);
+        }
+        
+        // S3에서 이미지 삭제
+        s3Manager.deleteFile(activityImage.getImagePath());
+        
+        // DB에서 이미지 삭제
+        activityImageRepository.delete(activityImage);
+        
+        return DeleteActivityImageResponse.from(imageId);
     }
 
 }
