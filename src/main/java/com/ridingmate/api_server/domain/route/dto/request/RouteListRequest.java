@@ -38,63 +38,59 @@ public record RouteListRequest(
     List<RouteRelationType> relationTypes,
     
     @Parameter(
-            description = "최소 거리 (km) - 기본값: 0.0",
-            example = "0.0",
-            schema = @Schema(type = "number", defaultValue = "0.0")
+            description = "최소 거리 (km) - 비어있으면 전체 범위 조회",
+            example = "0.0"
     )
     Double minDistanceKm,
     
     @Parameter(
-            description = "최대 거리 (km) - 기본값: 200.0",
-            example = "200.0",
-            schema = @Schema(type = "number", defaultValue = "200.0")
+            description = "최대 거리 (km) - 비어있으면 전체 범위 조회",
+            example = "200.0"
     )
     Double maxDistanceKm,
     
     @Parameter(
-            description = "최소 고도 상승 (미터) - 기본값: 0.0",
-            example = "0.0",
-            schema = @Schema(type = "number", defaultValue = "0.0")
+            description = "최소 고도 상승 (미터) - 비어있으면 전체 범위 조회",
+            example = "0.0"
     )
     Double minElevationGain,
     
     @Parameter(
-            description = "최대 고도 상승 (미터) - 기본값: 100.0",
-            example = "100.0",
-            schema = @Schema(type = "number", defaultValue = "100.0")
+            description = "최대 고도 상승 (미터) - 비어있으면 전체 범위 조회",
+            example = "100.0"
     )
     Double maxElevationGain
 ) {
     
     /**
      * 최소 거리를 미터 단위로 변환하여 반환
-     * @return 최소 거리 (미터) - 기본값: 0.0
+     * @return 최소 거리 (미터) - null이면 필터 적용 안함
      */
     public Double getMinDistanceInMeter() {
-        return (minDistanceKm != null ? minDistanceKm : 0.0) * 1000;
+        return minDistanceKm != null ? minDistanceKm * 1000 : null;
     }
     
     /**
      * 최대 거리를 미터 단위로 변환하여 반환
-     * @return 최대 거리 (미터) - 기본값: 200000.0
+     * @return 최대 거리 (미터) - null이면 필터 적용 안함
      */
     public Double getMaxDistanceInMeter() {
-        return (maxDistanceKm != null ? maxDistanceKm : 200.0) * 1000;
+        return maxDistanceKm != null ? maxDistanceKm * 1000 : null;
     }
     
     /**
-     * 최소 고도 상승을 반환 (기본값 적용)
-     * @return 최소 고도 상승 (미터) - 기본값: 0.0
+     * 최소 고도 상승을 반환
+     * @return 최소 고도 상승 (미터) - null이면 필터 적용 안함
      */
-    public Double getMinElevationGainWithDefault() {
-        return minElevationGain != null ? minElevationGain : 0.0;
+    public Double getMinElevationGain() {
+        return minElevationGain;
     }
     
     /**
-     * 최대 고도 상승을 반환 (기본값 적용)
-     * @return 최대 고도 상승 (미터) - 기본값: 1000.0
+     * 최대 고도 상승을 반환
+     * @return 최대 고도 상승 (미터) - null이면 필터 적용 안함
      */
-    public Double getMaxElevationGainWithDefault() {
-        return maxElevationGain != null ? maxElevationGain : 1000.0;
+    public Double getMaxElevationGain() {
+        return maxElevationGain;
     }
 } 
