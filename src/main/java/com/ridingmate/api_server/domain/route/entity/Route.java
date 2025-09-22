@@ -55,7 +55,7 @@ public class Route extends BaseTimeEntity {
     @Column(name = "elevation_gain", nullable = false)
     private Double elevationGain;
 
-    @Column(name = "route_id", nullable = false, unique = true)
+    @Column(name = "route_id", nullable = false, unique = true, length = 32)
     private String routeId;
 
     @Enumerated(EnumType.STRING)
