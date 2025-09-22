@@ -45,7 +45,7 @@ public record RouteListItemResponse(
      */
     public static RouteListItemResponse from(Route route, String thumbnailUrl, String profileImageUrl) {
         return new RouteListItemResponse(
-                route.getRouteId(),
+                route.getRouteId().toString(),
                 route.getTitle(),
                 thumbnailUrl,
                 route.getCreatedAt(),

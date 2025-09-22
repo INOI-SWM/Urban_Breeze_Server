@@ -34,7 +34,6 @@ import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
-import com.ridingmate.api_server.global.util.UuidUtil;
 
 import com.ridingmate.api_server.domain.route.dto.request.RouteListRequest;
 import com.ridingmate.api_server.infra.aws.s3.S3Manager;
@@ -67,7 +66,7 @@ public class RouteService {
                 .distance(request.distance())
                 .duration(Duration.ofSeconds(request.duration()))
                 .elevationGain(request.elevationGain())
-                .routeId(UuidUtil.generateOrderedUuid())
+                .routeId(UUID.randomUUID())
                 .routeLine(routeLine)
                 .minLon(request.bbox().get(0))
                 .minLat(request.bbox().get(1))
@@ -130,7 +129,7 @@ public class RouteService {
     @Transactional(readOnly = true)
     public String createShareLink(Route route, Long userId) {
         checkRouteAuth(userId, route);
-        String routeId = route.getRouteId(); // shareId 대신 routeId 사용
+        String routeId = route.getRouteId().toString();
         String scheme = appConfigProperties.scheme();
 
         return String.format("%s%s", scheme, routeId);
@@ -199,13 +198,13 @@ public class RouteService {
 
     @Transactional(readOnly = true)
     public Route getRouteWithUserByRouteId(String routeId){
-        return routeRepository.findRouteWithUserByRouteId(routeId)
+        return routeRepository.findRouteWithUserByRouteId(UUID.fromString(routeId))
             .orElseThrow(() -> new RouteException(RouteCommonErrorCode.ROUTE_NOT_FOUND));
     }
 
     @Transactional(readOnly = true)
     public Route getRouteByRouteId(String routeId){
-        return routeRepository.findByRouteId(routeId)
+        return routeRepository.findByRouteId(UUID.fromString(routeId))
             .orElseThrow(() -> new RouteException(RouteCommonErrorCode.ROUTE_NOT_FOUND));
     }
 

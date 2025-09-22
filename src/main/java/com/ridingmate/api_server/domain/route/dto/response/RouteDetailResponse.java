@@ -72,7 +72,7 @@ public record RouteDetailResponse(
                 .collect(Collectors.toList());
 
         return new RouteDetailResponse(
-            route.getRouteId(),
+            route.getRouteId().toString(),
             route.getTitle(),
             GeometryUtil.lineStringToPolyline(route.getRouteLine()),
             route.getCreatedAt(),

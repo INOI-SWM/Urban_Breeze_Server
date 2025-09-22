@@ -16,6 +16,7 @@ import org.locationtech.jts.geom.LineString;
 
 import java.time.Duration;
 import java.util.List;
+import java.util.UUID;
 
 @Entity
 @Getter
@@ -55,8 +56,8 @@ public class Route extends BaseTimeEntity {
     @Column(name = "elevation_gain", nullable = false)
     private Double elevationGain;
 
-    @Column(name = "route_id", nullable = false, unique = true, length = 32)
-    private String routeId;
+    @Column(name = "route_id", nullable = false, unique = true)
+    private UUID routeId;
 
     @Enumerated(EnumType.STRING)
     @Column(name = "region")
@@ -97,7 +98,7 @@ public class Route extends BaseTimeEntity {
 
     @Builder
     private Route(User user, String title, String description, Double distance, Duration duration, Double elevationGain,
-                  String routeId, LandscapeType landscapeType, String gpxFilePath, Double maxLat, Double maxLon, 
+                  UUID routeId, LandscapeType landscapeType, String gpxFilePath, Double maxLat, Double maxLon,
                   Double minLat, Double minLon, LineString routeLine) {
         this.user = user;
         this.title = title;
