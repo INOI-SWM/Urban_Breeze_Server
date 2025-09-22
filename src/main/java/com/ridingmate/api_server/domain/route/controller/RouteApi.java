@@ -60,7 +60,7 @@ public interface RouteApi {
     })
     ResponseEntity<CommonResponse<ShareRouteResponse>> shareRoute(
             @AuthenticationPrincipal AuthUser authUser,
-            @PathVariable Long routeId);
+            @PathVariable String routeId);
 
     @Operation(
             summary = "내 경로 목록 조회",
@@ -105,7 +105,7 @@ public interface RouteApi {
     })
     ResponseEntity<CommonResponse<RouteDetailResponse>> getRouteDetail(
             @Parameter(description = "경로 ID")
-            @PathVariable Long routeId);
+            @PathVariable String routeId);
 
     @Operation(
             summary = "지도 장소 검색",

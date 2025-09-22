@@ -56,7 +56,7 @@ public class RouteController implements RouteApi{
     @ApiErrorCodeExample(RouteCommonErrorCode.class)
     public ResponseEntity<CommonResponse<ShareRouteResponse>> shareRoute(
             @AuthenticationPrincipal AuthUser authUser,
-            @PathVariable Long routeId) {
+            @PathVariable String routeId) {
         ShareRouteResponse  response = routeFacade.shareRoute(authUser, routeId);
         return ResponseEntity
                 .status(RouteSuccessCode.SHARE_LINK_FETCHED.getStatus())
@@ -79,7 +79,7 @@ public class RouteController implements RouteApi{
     @GetMapping("/{routeId}")
     @ApiErrorCodeExample(RouteCommonErrorCode.class)
     public ResponseEntity<CommonResponse<RouteDetailResponse>> getRouteDetail(
-        @PathVariable Long routeId
+        @PathVariable String routeId
     ) {
         RouteDetailResponse response = routeFacade.getRouteDetail(routeId);
         return ResponseEntity

@@ -28,6 +28,21 @@ public interface RouteRepository extends JpaRepository<Route, Long> {
         """)
     Optional<Route> findRouteWithUser(@Param("routeId") Long routeId);
 
+    @Query("""
+        SELECT r
+        FROM Route r
+        JOIN FETCH r.user
+        WHERE r.routeId = :routeId
+        """)
+    Optional<Route> findRouteWithUserByRouteId(@Param("routeId") String routeId);
+
+    @Query("""
+        SELECT r
+        FROM Route r
+        WHERE r.routeId = :routeId
+        """)
+    Optional<Route> findByRouteId(@Param("routeId") String routeId);
+
     /**
      * 사용자별 특정 관계 타입의 경로 조회 (거리 및 고도 필터링 포함)
      */

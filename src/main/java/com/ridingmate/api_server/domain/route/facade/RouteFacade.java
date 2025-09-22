@@ -70,8 +70,9 @@ public class RouteFacade {
         return CreateRouteResponse.from(route);
     }
 
-    public ShareRouteResponse shareRoute(AuthUser authUser, Long routeId) {
-        String shareLink = routeService.createShareLink(routeId, authUser.id());
+    public ShareRouteResponse shareRoute(AuthUser authUser, String routeId) {
+        Route route = routeService.getRouteWithUserByRouteId(routeId);
+        String shareLink = routeService.createShareLink(route, authUser.id());
         return new ShareRouteResponse(shareLink);
     }
 
@@ -101,9 +102,9 @@ public class RouteFacade {
         return RouteListResponse.of(routeItems, routePage, filterRangeInfo);
     }
 
-    public RouteDetailResponse getRouteDetail(Long routeId){
-        Route route = routeService.getRouteWithUser(routeId);
-        Coordinate[] coordinates = routeService.getRouteDetailList(routeId);
+    public RouteDetailResponse getRouteDetail(String routeId){
+        Route route = routeService.getRouteWithUserByRouteId(routeId);
+        Coordinate[] coordinates = routeService.getRouteDetailList(route.getId());
 
         // 고도 프로필 다운샘플링 (GeometryUtil에서 모든 로직 처리)
         List<Point> elevationProfilePoints = GeometryUtil.downsampleElevationProfile(coordinates, route.getDistance());

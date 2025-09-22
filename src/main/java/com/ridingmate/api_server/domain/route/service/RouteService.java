@@ -34,6 +34,7 @@ import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
+import com.ridingmate.api_server.global.util.UuidUtil;
 
 import com.ridingmate.api_server.domain.route.dto.request.RouteListRequest;
 
@@ -61,7 +62,7 @@ public class RouteService {
                 .distance(request.distance())
                 .duration(Duration.ofSeconds(request.duration()))
                 .elevationGain(request.elevationGain())
-                .shareId(UUID.randomUUID().toString())
+                .routeId(UuidUtil.generateOrderedUuid())
                 .routeLine(routeLine)
                 .minLon(request.bbox().get(0))
                 .minLat(request.bbox().get(1))
@@ -122,12 +123,12 @@ public class RouteService {
     }
 
     @Transactional(readOnly = true)
-    public String createShareLink(Long routeId, Long userId) {
-        Route route = getUserRoute(userId, routeId);
-        String shareId = getShareId(route);
+    public String createShareLink(Route route, Long userId) {
+        checkRouteAuth(userId, route);
+        String routeId = route.getRouteId(); // shareId 대신 routeId 사용
         String scheme = appConfigProperties.scheme();
 
-        return String.format("%s/%s", scheme, shareId);
+        return String.format("%s%s", scheme, routeId);
     }
 
     /**
@@ -191,8 +192,19 @@ public class RouteService {
             .orElseThrow(() -> new RouteException(RouteCommonErrorCode.ROUTE_NOT_FOUND));
     }
 
-    private Route getUserRoute(Long userId, Long routeId) {
-        Route route = getRoute(routeId);
+    @Transactional(readOnly = true)
+    public Route getRouteWithUserByRouteId(String routeId){
+        return routeRepository.findRouteWithUserByRouteId(routeId)
+            .orElseThrow(() -> new RouteException(RouteCommonErrorCode.ROUTE_NOT_FOUND));
+    }
+
+    @Transactional(readOnly = true)
+    public Route getRouteByRouteId(String routeId){
+        return routeRepository.findByRouteId(routeId)
+            .orElseThrow(() -> new RouteException(RouteCommonErrorCode.ROUTE_NOT_FOUND));
+    }
+
+    private Route checkRouteAuth(Long userId, Route route) {
         if (!route.getUser().getId().equals(userId)) {
             throw new RouteException(RouteCommonErrorCode.ROUTE_ACCESS_DENIED);
         }
@@ -204,13 +216,6 @@ public class RouteService {
             .orElseThrow(() -> new RouteException(RouteCommonErrorCode.ROUTE_NOT_FOUND));
     }
 
-    private String getShareId(Route route){
-        String shareId = route.getShareId();
-        if ( shareId == null || shareId.isBlank()) {
-            throw new RouteException(RouteShareErrorCode.SHARE_ID_NOT_FOUND);
-        }
-        return shareId;
-    }
 
     private String createThumbnailImagePath(Long routeId) {
         String uuid = UUID.randomUUID().toString();

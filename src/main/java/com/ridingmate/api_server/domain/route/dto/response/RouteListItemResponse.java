@@ -7,8 +7,8 @@ import io.swagger.v3.oas.annotations.media.Schema;
 import java.time.LocalDateTime;
 
 public record RouteListItemResponse(
-        @Schema(description = "경로 ID", example = "1")
-        Long id,
+        @Schema(description = "경로 ID", example = "550e8400-e29b-41d4-a716-446655440000")
+        String routeId,
 
         @Schema(description = "경로 제목", example = "한강 라이딩 경로")
         String title,
@@ -45,7 +45,7 @@ public record RouteListItemResponse(
      */
     public static RouteListItemResponse from(Route route, String thumbnailUrl, String profileImageUrl) {
         return new RouteListItemResponse(
-                route.getId(),
+                route.getRouteId(),
                 route.getTitle(),
                 thumbnailUrl,
                 route.getCreatedAt(),
