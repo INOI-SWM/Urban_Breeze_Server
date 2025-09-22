@@ -21,13 +21,16 @@ import com.ridingmate.api_server.infra.ors.OrsClient;
 import com.ridingmate.api_server.infra.ors.OrsMapper;
 import com.ridingmate.api_server.infra.ors.dto.response.OrsRouteResponse;
 import com.ridingmate.api_server.global.util.GeometryUtil;
+import com.ridingmate.api_server.global.util.GpxGenerator;
 import lombok.RequiredArgsConstructor;
 import org.locationtech.jts.geom.Coordinate;
 import org.locationtech.jts.geom.LineString;
 import org.springframework.data.domain.Page;
 import org.springframework.stereotype.Component;
 
+import java.io.IOException;
 import java.util.List;
+import java.util.UUID;
 
 @Component
 @RequiredArgsConstructor
@@ -49,20 +52,29 @@ public class RouteFacade {
 
     public CreateRouteResponse createRoute(AuthUser authUser, CreateRouteRequest request) {
         LineString routeLine = GeometryUtil.polylineToLineString(request.polyline());
-        byte[] thumbnailBytes = geoapifyClient.getStaticMap(routeLine);
         Route route = routeService.createRoute(authUser.id(), request, routeLine);
 
-        Coordinate[] geometry = request.geometry().stream()
-                .map(dto -> new Coordinate(dto.longitude(), dto.latitude(), dto.elevation()))
-                .toArray(Coordinate[]::new);
+        // 썸네일 이미지 S3 업로드
+        byte[] thumbnailBytes = geoapifyClient.getStaticMap(routeLine);
+        s3Manager.uploadByteFiles(route.getThumbnailImagePath(), thumbnailBytes, "image/png");
 
-        s3Manager.uploadByteFiles(route.getThumbnailImagePath(), thumbnailBytes);
+        // GPX 파일 생성 및 S3 업로드
+        try {
+            String gpxFilePath = GpxGenerator.generateGpxFilePath(route.getId());
+            Coordinate[] coordinates = routeService.getRouteDetailList(route.getId());
+            byte[] gpxBytes = GpxGenerator.generateGpxBytesFromCoordinates(coordinates, route.getTitle());
+            s3Manager.uploadByteFiles(gpxFilePath, gpxBytes, "application/gpx+xml");
+            routeService.updateGpxFilePath(route.getId(), gpxFilePath);
+        } catch (IOException e) {
+            throw new RuntimeException("GPX 파일 생성 중 오류가 발생했습니다: " + e.getMessage(), e);
+        }
 
         return CreateRouteResponse.from(route);
     }
 
-    public ShareRouteResponse shareRoute(AuthUser authUser, Long routeId) {
-        String shareLink = routeService.createShareLink(routeId, authUser.id());
+    public ShareRouteResponse shareRoute(AuthUser authUser, String routeId) {
+        Route route = routeService.getRouteWithUserByRouteId(routeId);
+        String shareLink = routeService.createShareLink(route, authUser.id());
         return new ShareRouteResponse(shareLink);
     }
 
@@ -92,9 +104,9 @@ public class RouteFacade {
         return RouteListResponse.of(routeItems, routePage, filterRangeInfo);
     }
 
-    public RouteDetailResponse getRouteDetail(Long routeId){
-        Route route = routeService.getRouteWithUser(routeId);
-        Coordinate[] coordinates = routeService.getRouteDetailList(routeId);
+    public RouteDetailResponse getRouteDetail(String routeId){
+        Route route = routeService.getRouteWithUserByRouteId(routeId);
+        Coordinate[] coordinates = routeService.getRouteDetailList(route.getId());
 
         // 고도 프로필 다운샘플링 (GeometryUtil에서 모든 로직 처리)
         List<Point> elevationProfilePoints = GeometryUtil.downsampleElevationProfile(coordinates, route.getDistance());
@@ -108,4 +120,13 @@ public class RouteFacade {
         KakaoSearchResponse response = kakaoClient.searchPlaces(KakaoSearchRequest.from(query, lon, lat));
         return kakaoMapper.toMapSearchResponse(response);
     }
+
+    public GpxDownloadInfo downloadGpxFile(String routeId) {
+        Route route = routeService.getRouteWithUserByRouteId(routeId);  // 1번만 조회
+        byte[] content = routeService.downloadGpxFile(route);
+        String fileName = routeService.generateGpxFileName(route);
+        
+        return GpxDownloadInfo.of(content, fileName);
+    }
+
 }

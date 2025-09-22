@@ -16,6 +16,7 @@ import org.springframework.stereotype.Repository;
 
 import java.util.List;
 import java.util.Optional;
+import java.util.UUID;
 
 @Repository
 public interface RouteRepository extends JpaRepository<Route, Long> {
@@ -27,6 +28,21 @@ public interface RouteRepository extends JpaRepository<Route, Long> {
         WHERE r.id = :routeId
         """)
     Optional<Route> findRouteWithUser(@Param("routeId") Long routeId);
+
+    @Query("""
+        SELECT r
+        FROM Route r
+        JOIN FETCH r.user
+        WHERE r.routeId = :routeId
+        """)
+    Optional<Route> findRouteWithUserByRouteId(@Param("routeId") UUID routeId);
+
+    @Query("""
+        SELECT r
+        FROM Route r
+        WHERE r.routeId = :routeId
+        """)
+    Optional<Route> findByRouteId(@Param("routeId") UUID routeId);
 
     /**
      * 사용자별 특정 관계 타입의 경로 조회 (거리 및 고도 필터링 포함)
@@ -145,4 +161,5 @@ public interface RouteRepository extends JpaRepository<Route, Long> {
             JOIN r.recommendation rec
             """)
         RouteFilterRangeProjection findMaxDistanceAndElevationForRecommendations();
+
 }

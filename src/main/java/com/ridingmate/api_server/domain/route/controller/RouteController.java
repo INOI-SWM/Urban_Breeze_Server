@@ -20,6 +20,9 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
+import java.net.URLEncoder;
+import java.nio.charset.StandardCharsets;
+
 @RestController
 @RequestMapping("/api/routes")
 @RequiredArgsConstructor
@@ -56,7 +59,7 @@ public class RouteController implements RouteApi{
     @ApiErrorCodeExample(RouteCommonErrorCode.class)
     public ResponseEntity<CommonResponse<ShareRouteResponse>> shareRoute(
             @AuthenticationPrincipal AuthUser authUser,
-            @PathVariable Long routeId) {
+            @PathVariable String routeId) {
         ShareRouteResponse  response = routeFacade.shareRoute(authUser, routeId);
         return ResponseEntity
                 .status(RouteSuccessCode.SHARE_LINK_FETCHED.getStatus())
@@ -79,7 +82,7 @@ public class RouteController implements RouteApi{
     @GetMapping("/{routeId}")
     @ApiErrorCodeExample(RouteCommonErrorCode.class)
     public ResponseEntity<CommonResponse<RouteDetailResponse>> getRouteDetail(
-        @PathVariable Long routeId
+        @PathVariable String routeId
     ) {
         RouteDetailResponse response = routeFacade.getRouteDetail(routeId);
         return ResponseEntity
@@ -98,5 +101,19 @@ public class RouteController implements RouteApi{
         return ResponseEntity
                 .status(RouteSuccessCode.MAP_SEARCH_FETCHED.getStatus())
                 .body(CommonResponse.success(RouteSuccessCode.MAP_SEARCH_FETCHED, response));
+    }
+
+    @Override
+    @GetMapping("/{routeId}/gpx")
+    @ApiErrorCodeExample(RouteCommonErrorCode.class)
+    public ResponseEntity<byte[]> downloadGpxFile(@PathVariable String routeId) {
+        GpxDownloadInfo downloadInfo = routeFacade.downloadGpxFile(routeId);
+
+        String encodedFileName = URLEncoder.encode(downloadInfo.fileName(), StandardCharsets.UTF_8);
+        
+        return ResponseEntity.ok()
+                .header("Content-Type", downloadInfo.contentType())
+                .header("Content-Disposition", "attachment; filename=\"" + encodedFileName + "\"")
+                .body(downloadInfo.content());
     }
 }

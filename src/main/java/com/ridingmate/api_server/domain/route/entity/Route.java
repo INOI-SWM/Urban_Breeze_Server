@@ -16,6 +16,7 @@ import org.locationtech.jts.geom.LineString;
 
 import java.time.Duration;
 import java.util.List;
+import java.util.UUID;
 
 @Entity
 @Getter
@@ -55,8 +56,8 @@ public class Route extends BaseTimeEntity {
     @Column(name = "elevation_gain", nullable = false)
     private Double elevationGain;
 
-    @Column(name = "share_id", nullable = false)
-    private String shareId;
+    @Column(name = "route_id", nullable = false, unique = true)
+    private UUID routeId;
 
     @Enumerated(EnumType.STRING)
     @Column(name = "region")
@@ -97,7 +98,7 @@ public class Route extends BaseTimeEntity {
 
     @Builder
     private Route(User user, String title, String description, Double distance, Duration duration, Double elevationGain,
-                  String shareId, LandscapeType landscapeType, String gpxFilePath, Double maxLat, Double maxLon, 
+                  UUID routeId, LandscapeType landscapeType, String gpxFilePath, Double maxLat, Double maxLon,
                   Double minLat, Double minLon, LineString routeLine) {
         this.user = user;
         this.title = title;
@@ -105,7 +106,7 @@ public class Route extends BaseTimeEntity {
         this.distance = distance;
         this.duration = duration;
         this.elevationGain = elevationGain;
-        this.shareId = shareId;
+        this.routeId = routeId;
         this.landscapeType = landscapeType;
         this.gpxFilePath = gpxFilePath;
         this.maxLat = maxLat;
@@ -135,6 +136,10 @@ public class Route extends BaseTimeEntity {
 
     public void updateThumbnailImagePath(String thumbnailImagePath) {
         this.thumbnailImagePath = thumbnailImagePath;
+    }
+
+    public void updateGpxFilePath(String gpxFilePath) {
+        this.gpxFilePath = gpxFilePath;
     }
 
     /**

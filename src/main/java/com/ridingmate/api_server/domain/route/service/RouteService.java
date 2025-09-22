@@ -36,6 +36,10 @@ import java.util.List;
 import java.util.UUID;
 
 import com.ridingmate.api_server.domain.route.dto.request.RouteListRequest;
+import com.ridingmate.api_server.infra.aws.s3.S3Manager;
+import com.ridingmate.api_server.global.util.GpxGenerator;
+
+import java.io.InputStream;
 
 @Service
 @RequiredArgsConstructor
@@ -47,6 +51,7 @@ public class RouteService {
     private final UserRouteRepository userRouteRepository;
     private final UserRepository userRepository;
     private final RouteGpsLogRepository routeGpsLogRepository;
+    private final S3Manager s3Manager;
 
     @Transactional
     public Route createRoute(Long userId, CreateRouteRequest request, LineString routeLine) {
@@ -61,7 +66,7 @@ public class RouteService {
                 .distance(request.distance())
                 .duration(Duration.ofSeconds(request.duration()))
                 .elevationGain(request.elevationGain())
-                .shareId(UUID.randomUUID().toString())
+                .routeId(UUID.randomUUID())
                 .routeLine(routeLine)
                 .minLon(request.bbox().get(0))
                 .minLat(request.bbox().get(1))
@@ -122,12 +127,12 @@ public class RouteService {
     }
 
     @Transactional(readOnly = true)
-    public String createShareLink(Long routeId, Long userId) {
-        Route route = getUserRoute(userId, routeId);
-        String shareId = getShareId(route);
+    public String createShareLink(Route route, Long userId) {
+        checkRouteAuth(userId, route);
+        String routeId = route.getRouteId().toString();
         String scheme = appConfigProperties.scheme();
 
-        return String.format("%s/%s", scheme, shareId);
+        return String.format("%s%s", scheme, routeId);
     }
 
     /**
@@ -171,17 +176,17 @@ public class RouteService {
             // 모든 관계 타입 조회
             return routeRepository.findByUserWithRelationsAndFilters(user,
                 request.getMinDistanceInMeter(), request.getMaxDistanceInMeter(),
-                request.minElevationGain(), request.maxElevationGain(), pageable);
+                request.getMinElevationGain(), request.getMaxElevationGain(), pageable);
         } else if (request.relationTypes().size() == 1) {
             // 단일 관계 타입 조회
             return routeRepository.findByUserAndRelationTypeWithFilters(user, request.relationTypes().get(0),
                 request.getMinDistanceInMeter(), request.getMaxDistanceInMeter(),
-                request.minElevationGain(), request.maxElevationGain(), pageable);
+                request.getMinElevationGain(), request.getMaxElevationGain(), pageable);
         } else {
             // 여러 관계 타입 조회
             return routeRepository.findByUserAndRelationTypesWithFilters(user, request.relationTypes(),
                 request.getMinDistanceInMeter(), request.getMaxDistanceInMeter(),
-                request.minElevationGain(), request.maxElevationGain(), pageable);
+                request.getMinElevationGain(), request.getMaxElevationGain(), pageable);
         }
     }
 
@@ -191,8 +196,19 @@ public class RouteService {
             .orElseThrow(() -> new RouteException(RouteCommonErrorCode.ROUTE_NOT_FOUND));
     }
 
-    private Route getUserRoute(Long userId, Long routeId) {
-        Route route = getRoute(routeId);
+    @Transactional(readOnly = true)
+    public Route getRouteWithUserByRouteId(String routeId){
+        return routeRepository.findRouteWithUserByRouteId(UUID.fromString(routeId))
+            .orElseThrow(() -> new RouteException(RouteCommonErrorCode.ROUTE_NOT_FOUND));
+    }
+
+    @Transactional(readOnly = true)
+    public Route getRouteByRouteId(String routeId){
+        return routeRepository.findByRouteId(UUID.fromString(routeId))
+            .orElseThrow(() -> new RouteException(RouteCommonErrorCode.ROUTE_NOT_FOUND));
+    }
+
+    private Route checkRouteAuth(Long userId, Route route) {
         if (!route.getUser().getId().equals(userId)) {
             throw new RouteException(RouteCommonErrorCode.ROUTE_ACCESS_DENIED);
         }
@@ -204,13 +220,6 @@ public class RouteService {
             .orElseThrow(() -> new RouteException(RouteCommonErrorCode.ROUTE_NOT_FOUND));
     }
 
-    private String getShareId(Route route){
-        String shareId = route.getShareId();
-        if ( shareId == null || shareId.isBlank()) {
-            throw new RouteException(RouteShareErrorCode.SHARE_ID_NOT_FOUND);
-        }
-        return shareId;
-    }
 
     private String createThumbnailImagePath(Long routeId) {
         String uuid = UUID.randomUUID().toString();
@@ -322,6 +331,84 @@ public class RouteService {
             result.getRoundedMinElevationGain(), 
             result.getRoundedMaxElevationGain()
         );
+    }
+
+    /**
+     * Route의 GPX 파일 경로를 업데이트합니다.
+     *
+     * @param routeId     Route ID
+     * @param gpxFilePath S3에 저장된 GPX 파일 경로
+     */
+    @Transactional
+    public void updateGpxFilePath(Long routeId, String gpxFilePath) {
+        Route route = routeRepository.findById(routeId)
+            .orElseThrow(() -> new RouteException(RouteCommonErrorCode.ROUTE_NOT_FOUND));
+        
+        route.updateGpxFilePath(gpxFilePath);
+    }
+
+    /**
+     * 경로의 GPX 파일을 다운로드합니다.
+     * S3에 저장된 파일이 있으면 다운로드하고, 없으면 새로 생성합니다.
+     *
+     * @param route 경로
+     * @return GPX 파일의 바이트 배열
+     */
+    @Transactional(readOnly = true)
+    public byte[] downloadGpxFile(Route route) {
+        if (route.getGpxFilePath() != null && !route.getGpxFilePath().isEmpty()) {
+            try {
+                try (InputStream inputStream = s3Manager.downloadFile(route.getGpxFilePath())) {
+                    return inputStream.readAllBytes();
+                }
+            } catch (Exception e) {
+                return generateGpxFile(route);
+            }
+        } else {
+            return generateGpxFile(route);
+        }
+    }
+
+        /**
+     * 경로의 GPX 파일명을 생성합니다.
+     * 
+     * @param route 경로
+     * @return 안전한 파일명
+     */
+    public String generateGpxFileName(Route route) {
+        if (route.getTitle() == null || route.getTitle().trim().isEmpty()) {
+            return "route.gpx";
+        }
+        
+        // 파일명에 사용할 수 없는 문자들을 언더스코어로 대체
+        String safeFileName = route.getTitle()
+            .replaceAll("[^a-zA-Z0-9가-힣\\s]", "_")  // 특수문자 제거
+            .replaceAll("\\s+", "_")                 // 공백을 언더스코어로
+            .replaceAll("_{2,}", "_")                // 연속된 언더스코어를 하나로
+            .replaceAll("^_|_$", "");                // 앞뒤 언더스코어 제거
+        
+        // 빈 문자열이거나 너무 긴 경우 처리
+        if (safeFileName.isEmpty() || safeFileName.length() > 100) {
+            return "route.gpx";
+        }
+        
+        return safeFileName + ".gpx";
+    }
+
+    /**
+     * 경로 데이터로부터 GPX 파일을 생성합니다.
+     *
+     * @param route 경로 엔티티
+     * @return GPX 파일의 바이트 배열
+     */
+    private byte[] generateGpxFile(Route route) {
+        try {
+            // 실제 GPS 로그 데이터를 사용하여 GPX 생성
+            Coordinate[] coordinates = getRouteDetailList(route.getId());
+            return GpxGenerator.generateGpxBytesFromCoordinates(coordinates, route.getTitle());
+        } catch (Exception e) {
+            throw new RuntimeException("GPX 파일 생성 중 오류가 발생했습니다: " + e.getMessage(), e);
+        }
     }
 
 }

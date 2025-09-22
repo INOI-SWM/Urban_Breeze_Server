@@ -38,37 +38,33 @@ public record RouteListRequest(
     List<RouteRelationType> relationTypes,
     
     @Parameter(
-            description = "최소 거리 (km)",
-            example = "0.0",
-            required = true
+            description = "최소 거리 (km) - 비어있으면 전체 범위 조회",
+            example = "0.0"
     )
     Double minDistanceKm,
     
     @Parameter(
-            description = "최대 거리 (km)",
-            example = "50.0",
-            required = true
+            description = "최대 거리 (km) - 비어있으면 전체 범위 조회",
+            example = "200.0"
     )
     Double maxDistanceKm,
     
     @Parameter(
-            description = "최소 고도 상승 (미터)",
-            example = "0.0",
-            required = true
+            description = "최소 고도 상승 (미터) - 비어있으면 전체 범위 조회",
+            example = "0.0"
     )
     Double minElevationGain,
     
     @Parameter(
-            description = "최대 고도 상승 (미터)",
-            example = "500.0",
-            required = true
+            description = "최대 고도 상승 (미터) - 비어있으면 전체 범위 조회",
+            example = "100.0"
     )
     Double maxElevationGain
 ) {
     
     /**
      * 최소 거리를 미터 단위로 변환하여 반환
-     * @return 최소 거리 (미터)
+     * @return 최소 거리 (미터) - null이면 필터 적용 안함
      */
     public Double getMinDistanceInMeter() {
         return minDistanceKm != null ? minDistanceKm * 1000 : null;
@@ -76,9 +72,25 @@ public record RouteListRequest(
     
     /**
      * 최대 거리를 미터 단위로 변환하여 반환
-     * @return 최대 거리 (미터)
+     * @return 최대 거리 (미터) - null이면 필터 적용 안함
      */
     public Double getMaxDistanceInMeter() {
         return maxDistanceKm != null ? maxDistanceKm * 1000 : null;
+    }
+    
+    /**
+     * 최소 고도 상승을 반환
+     * @return 최소 고도 상승 (미터) - null이면 필터 적용 안함
+     */
+    public Double getMinElevationGain() {
+        return minElevationGain;
+    }
+    
+    /**
+     * 최대 고도 상승을 반환
+     * @return 최대 고도 상승 (미터) - null이면 필터 적용 안함
+     */
+    public Double getMaxElevationGain() {
+        return maxElevationGain;
     }
 } 

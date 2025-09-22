@@ -62,7 +62,7 @@ public class ActivityFacade {
                 // 썸네일 경로 설정 및 S3 업로드
                 String thumbnailPath = createThumbnailImagePath(activity.getId());
                 activity.updateThumbnailImagePath(thumbnailPath);
-                s3Manager.uploadByteFiles(thumbnailPath, thumbnailBytes);
+                s3Manager.uploadByteFiles(thumbnailPath, thumbnailBytes, "image/png");
                 
                 // 썸네일을 activity_images 테이블에도 추가 (displayOrder = 0으로 설정하여 가장 앞에 표시)
                 activityService.addThumbnailToActivityImages(activity, thumbnailPath);
