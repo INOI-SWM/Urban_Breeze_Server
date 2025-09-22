@@ -403,7 +403,9 @@ public class RouteService {
      */
     private byte[] generateGpxFile(Route route) {
         try {
-            return GpxGenerator.generateGpxBytes(route.getId(), route.getTitle(), route.getRouteLine());
+            // 실제 GPS 로그 데이터를 사용하여 GPX 생성
+            Coordinate[] coordinates = getRouteDetailList(route.getId());
+            return GpxGenerator.generateGpxBytesFromCoordinates(coordinates, route.getTitle());
         } catch (Exception e) {
             throw new RuntimeException("GPX 파일 생성 중 오류가 발생했습니다: " + e.getMessage(), e);
         }

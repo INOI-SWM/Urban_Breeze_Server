@@ -61,7 +61,8 @@ public class RouteFacade {
         // GPX 파일 생성 및 S3 업로드
         try {
             String gpxFilePath = GpxGenerator.generateGpxFilePath(route.getId());
-            byte[] gpxBytes = GpxGenerator.generateGpxBytes(route.getId(), route.getTitle(), routeLine);
+            Coordinate[] coordinates = routeService.getRouteDetailList(route.getId());
+            byte[] gpxBytes = GpxGenerator.generateGpxBytesFromCoordinates(coordinates, route.getTitle());
             s3Manager.uploadByteFiles(gpxFilePath, gpxBytes, "application/gpx+xml");
             routeService.updateGpxFilePath(route.getId(), gpxFilePath);
         } catch (IOException e) {
