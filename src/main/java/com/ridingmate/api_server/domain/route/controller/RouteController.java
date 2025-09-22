@@ -20,6 +20,9 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
+import java.net.URLEncoder;
+import java.nio.charset.StandardCharsets;
+
 @RestController
 @RequestMapping("/api/routes")
 @RequiredArgsConstructor
@@ -105,10 +108,12 @@ public class RouteController implements RouteApi{
     @ApiErrorCodeExample(RouteCommonErrorCode.class)
     public ResponseEntity<byte[]> downloadGpxFile(@PathVariable String routeId) {
         GpxDownloadInfo downloadInfo = routeFacade.downloadGpxFile(routeId);
+
+        String encodedFileName = URLEncoder.encode(downloadInfo.fileName(), StandardCharsets.UTF_8);
         
         return ResponseEntity.ok()
                 .header("Content-Type", downloadInfo.contentType())
-                .header("Content-Disposition", "attachment; filename=\"" + downloadInfo.fileName() + "\"")
+                .header("Content-Disposition", "attachment; filename=\"" + encodedFileName + "\"")
                 .body(downloadInfo.content());
     }
 }
