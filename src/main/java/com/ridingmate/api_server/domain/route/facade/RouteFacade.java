@@ -119,4 +119,12 @@ public class RouteFacade {
         return kakaoMapper.toMapSearchResponse(response);
     }
 
+    public GpxDownloadInfo downloadGpxFile(String routeId) {
+        Route route = routeService.getRouteWithUserByRouteId(routeId);  // 1번만 조회
+        byte[] content = routeService.downloadGpxFile(route);
+        String fileName = routeService.generateGpxFileName(route);
+        
+        return GpxDownloadInfo.of(content, fileName);
+    }
+
 }

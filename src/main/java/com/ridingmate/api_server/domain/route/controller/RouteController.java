@@ -99,4 +99,16 @@ public class RouteController implements RouteApi{
                 .status(RouteSuccessCode.MAP_SEARCH_FETCHED.getStatus())
                 .body(CommonResponse.success(RouteSuccessCode.MAP_SEARCH_FETCHED, response));
     }
+
+    @Override
+    @GetMapping("/{routeId}/gpx")
+    @ApiErrorCodeExample(RouteCommonErrorCode.class)
+    public ResponseEntity<byte[]> downloadGpxFile(@PathVariable String routeId) {
+        GpxDownloadInfo downloadInfo = routeFacade.downloadGpxFile(routeId);
+        
+        return ResponseEntity.ok()
+                .header("Content-Type", downloadInfo.contentType())
+                .header("Content-Disposition", "attachment; filename=\"" + downloadInfo.fileName() + "\"")
+                .body(downloadInfo.content());
+    }
 }

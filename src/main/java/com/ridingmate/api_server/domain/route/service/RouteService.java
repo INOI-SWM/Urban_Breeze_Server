@@ -37,6 +37,10 @@ import java.util.UUID;
 import com.ridingmate.api_server.global.util.UuidUtil;
 
 import com.ridingmate.api_server.domain.route.dto.request.RouteListRequest;
+import com.ridingmate.api_server.infra.aws.s3.S3Manager;
+import com.ridingmate.api_server.global.util.GpxGenerator;
+
+import java.io.InputStream;
 
 @Service
 @RequiredArgsConstructor
@@ -48,6 +52,7 @@ public class RouteService {
     private final UserRouteRepository userRouteRepository;
     private final UserRepository userRepository;
     private final RouteGpsLogRepository routeGpsLogRepository;
+    private final S3Manager s3Manager;
 
     @Transactional
     public Route createRoute(Long userId, CreateRouteRequest request, LineString routeLine) {
@@ -341,6 +346,68 @@ public class RouteService {
             .orElseThrow(() -> new RouteException(RouteCommonErrorCode.ROUTE_NOT_FOUND));
         
         route.updateGpxFilePath(gpxFilePath);
+    }
+
+    /**
+     * 경로의 GPX 파일을 다운로드합니다.
+     * S3에 저장된 파일이 있으면 다운로드하고, 없으면 새로 생성합니다.
+     *
+     * @param route 경로
+     * @return GPX 파일의 바이트 배열
+     */
+    @Transactional(readOnly = true)
+    public byte[] downloadGpxFile(Route route) {
+        if (route.getGpxFilePath() != null && !route.getGpxFilePath().isEmpty()) {
+            try {
+                try (InputStream inputStream = s3Manager.downloadFile(route.getGpxFilePath())) {
+                    return inputStream.readAllBytes();
+                }
+            } catch (Exception e) {
+                return generateGpxFile(route);
+            }
+        } else {
+            return generateGpxFile(route);
+        }
+    }
+
+        /**
+     * 경로의 GPX 파일명을 생성합니다.
+     * 
+     * @param route 경로
+     * @return 안전한 파일명
+     */
+    public String generateGpxFileName(Route route) {
+        if (route.getTitle() == null || route.getTitle().trim().isEmpty()) {
+            return "route.gpx";
+        }
+        
+        // 파일명에 사용할 수 없는 문자들을 언더스코어로 대체
+        String safeFileName = route.getTitle()
+            .replaceAll("[^a-zA-Z0-9가-힣\\s]", "_")  // 특수문자 제거
+            .replaceAll("\\s+", "_")                 // 공백을 언더스코어로
+            .replaceAll("_{2,}", "_")                // 연속된 언더스코어를 하나로
+            .replaceAll("^_|_$", "");                // 앞뒤 언더스코어 제거
+        
+        // 빈 문자열이거나 너무 긴 경우 처리
+        if (safeFileName.isEmpty() || safeFileName.length() > 100) {
+            return "route.gpx";
+        }
+        
+        return safeFileName + ".gpx";
+    }
+
+    /**
+     * 경로 데이터로부터 GPX 파일을 생성합니다.
+     *
+     * @param route 경로 엔티티
+     * @return GPX 파일의 바이트 배열
+     */
+    private byte[] generateGpxFile(Route route) {
+        try {
+            return GpxGenerator.generateGpxBytes(route.getId(), route.getTitle(), route.getRouteLine());
+        } catch (Exception e) {
+            throw new RuntimeException("GPX 파일 생성 중 오류가 발생했습니다: " + e.getMessage(), e);
+        }
     }
 
 }

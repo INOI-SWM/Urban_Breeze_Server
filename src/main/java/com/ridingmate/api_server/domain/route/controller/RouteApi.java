@@ -133,4 +133,24 @@ public interface RouteApi {
             @Parameter(description = "검색 중심점 위도 (latitude)", required = true, example = "37.5665")
             @RequestParam Double lat
     );
+
+    @Operation(
+            summary = "경로 GPX 파일 다운로드",
+            description = """
+                    특정 경로의 GPX 파일을 다운로드합니다.
+                    
+                    - GPX 파일은 GPS 추적 데이터를 포함한 표준 형식입니다.
+                    - 대부분의 GPS 앱과 호환됩니다.
+                    - 파일명: {경로제목}.gpx
+                    """
+    )
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "성공: GPX 파일 다운로드 완료"),
+            @ApiResponse(responseCode = "404", description = "경로를 찾을 수 없습니다."),
+            @ApiResponse(responseCode = "500", description = "GPX 파일 생성 중 오류가 발생했습니다."),
+    })
+    ResponseEntity<byte[]> downloadGpxFile(
+            @Parameter(description = "경로 ID")
+            @PathVariable String routeId
+    );
 }
