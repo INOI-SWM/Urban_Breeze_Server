@@ -21,12 +21,14 @@ import com.ridingmate.api_server.infra.ors.OrsClient;
 import com.ridingmate.api_server.infra.ors.OrsMapper;
 import com.ridingmate.api_server.infra.ors.dto.response.OrsRouteResponse;
 import com.ridingmate.api_server.global.util.GeometryUtil;
+import com.ridingmate.api_server.global.util.GpxGenerator;
 import lombok.RequiredArgsConstructor;
 import org.locationtech.jts.geom.Coordinate;
 import org.locationtech.jts.geom.LineString;
 import org.springframework.data.domain.Page;
 import org.springframework.stereotype.Component;
 
+import java.io.IOException;
 import java.util.List;
 
 @Component
@@ -49,14 +51,21 @@ public class RouteFacade {
 
     public CreateRouteResponse createRoute(AuthUser authUser, CreateRouteRequest request) {
         LineString routeLine = GeometryUtil.polylineToLineString(request.polyline());
-        byte[] thumbnailBytes = geoapifyClient.getStaticMap(routeLine);
         Route route = routeService.createRoute(authUser.id(), request, routeLine);
 
-        Coordinate[] geometry = request.geometry().stream()
-                .map(dto -> new Coordinate(dto.longitude(), dto.latitude(), dto.elevation()))
-                .toArray(Coordinate[]::new);
+        // 썸네일 이미지 S3 업로드
+        byte[] thumbnailBytes = geoapifyClient.getStaticMap(routeLine);
+        s3Manager.uploadByteFiles(route.getThumbnailImagePath(), thumbnailBytes, "image/png");
 
-        s3Manager.uploadByteFiles(route.getThumbnailImagePath(), thumbnailBytes);
+        // GPX 파일 생성 및 S3 업로드
+        try {
+            String gpxFilePath = GpxGenerator.generateGpxFilePath(route.getId());
+            byte[] gpxBytes = GpxGenerator.generateGpxBytes(route.getId(), route.getTitle(), routeLine);
+            s3Manager.uploadByteFiles(gpxFilePath, gpxBytes, "application/gpx+xml");
+            routeService.updateGpxFilePath(route.getId(), gpxFilePath);
+        } catch (IOException e) {
+            throw new RuntimeException("GPX 파일 생성 중 오류가 발생했습니다: " + e.getMessage(), e);
+        }
 
         return CreateRouteResponse.from(route);
     }
@@ -108,4 +117,5 @@ public class RouteFacade {
         KakaoSearchResponse response = kakaoClient.searchPlaces(KakaoSearchRequest.from(query, lon, lat));
         return kakaoMapper.toMapSearchResponse(response);
     }
+
 }

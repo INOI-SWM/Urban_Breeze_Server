@@ -46,11 +46,11 @@ public class S3Manager {
         }
     }
 
-    public void uploadByteFiles(String key, byte[] data) {
+    public void uploadByteFiles(String key, byte[] data, String contentType) {
         PutObjectRequest request = PutObjectRequest.builder()
                 .bucket(awsProperty.s3().bucket())
                 .key(key)
-                .contentType("image/png")
+                .contentType(contentType)
                 .build();
 
         s3Client.putObject(request, RequestBody.fromBytes(data));

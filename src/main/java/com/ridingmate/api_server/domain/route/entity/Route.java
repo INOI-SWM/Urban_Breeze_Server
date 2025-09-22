@@ -137,6 +137,10 @@ public class Route extends BaseTimeEntity {
         this.thumbnailImagePath = thumbnailImagePath;
     }
 
+    public void updateGpxFilePath(String gpxFilePath) {
+        this.gpxFilePath = gpxFilePath;
+    }
+
     /**
      * 출발 좌표 반환
      */

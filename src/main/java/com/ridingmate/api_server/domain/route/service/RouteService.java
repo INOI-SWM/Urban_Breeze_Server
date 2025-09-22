@@ -324,4 +324,18 @@ public class RouteService {
         );
     }
 
+    /**
+     * Route의 GPX 파일 경로를 업데이트합니다.
+     *
+     * @param routeId     Route ID
+     * @param gpxFilePath S3에 저장된 GPX 파일 경로
+     */
+    @Transactional
+    public void updateGpxFilePath(Long routeId, String gpxFilePath) {
+        Route route = routeRepository.findById(routeId)
+            .orElseThrow(() -> new RouteException(RouteCommonErrorCode.ROUTE_NOT_FOUND));
+        
+        route.updateGpxFilePath(gpxFilePath);
+    }
+
 }

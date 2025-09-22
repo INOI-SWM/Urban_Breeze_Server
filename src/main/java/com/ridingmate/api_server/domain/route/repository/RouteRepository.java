@@ -145,4 +145,5 @@ public interface RouteRepository extends JpaRepository<Route, Long> {
             JOIN r.recommendation rec
             """)
         RouteFilterRangeProjection findMaxDistanceAndElevationForRecommendations();
+
 }
