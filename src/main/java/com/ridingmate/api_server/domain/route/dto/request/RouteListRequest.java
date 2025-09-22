@@ -38,47 +38,63 @@ public record RouteListRequest(
     List<RouteRelationType> relationTypes,
     
     @Parameter(
-            description = "최소 거리 (km)",
+            description = "최소 거리 (km) - 기본값: 0.0",
             example = "0.0",
-            required = true
+            schema = @Schema(type = "number", defaultValue = "0.0")
     )
     Double minDistanceKm,
     
     @Parameter(
-            description = "최대 거리 (km)",
-            example = "50.0",
-            required = true
+            description = "최대 거리 (km) - 기본값: 200.0",
+            example = "200.0",
+            schema = @Schema(type = "number", defaultValue = "200.0")
     )
     Double maxDistanceKm,
     
     @Parameter(
-            description = "최소 고도 상승 (미터)",
+            description = "최소 고도 상승 (미터) - 기본값: 0.0",
             example = "0.0",
-            required = true
+            schema = @Schema(type = "number", defaultValue = "0.0")
     )
     Double minElevationGain,
     
     @Parameter(
-            description = "최대 고도 상승 (미터)",
-            example = "500.0",
-            required = true
+            description = "최대 고도 상승 (미터) - 기본값: 100.0",
+            example = "100.0",
+            schema = @Schema(type = "number", defaultValue = "100.0")
     )
     Double maxElevationGain
 ) {
     
     /**
      * 최소 거리를 미터 단위로 변환하여 반환
-     * @return 최소 거리 (미터)
+     * @return 최소 거리 (미터) - 기본값: 0.0
      */
     public Double getMinDistanceInMeter() {
-        return minDistanceKm != null ? minDistanceKm * 1000 : null;
+        return (minDistanceKm != null ? minDistanceKm : 0.0) * 1000;
     }
     
     /**
      * 최대 거리를 미터 단위로 변환하여 반환
-     * @return 최대 거리 (미터)
+     * @return 최대 거리 (미터) - 기본값: 200000.0
      */
     public Double getMaxDistanceInMeter() {
-        return maxDistanceKm != null ? maxDistanceKm * 1000 : null;
+        return (maxDistanceKm != null ? maxDistanceKm : 200.0) * 1000;
+    }
+    
+    /**
+     * 최소 고도 상승을 반환 (기본값 적용)
+     * @return 최소 고도 상승 (미터) - 기본값: 0.0
+     */
+    public Double getMinElevationGainWithDefault() {
+        return minElevationGain != null ? minElevationGain : 0.0;
+    }
+    
+    /**
+     * 최대 고도 상승을 반환 (기본값 적용)
+     * @return 최대 고도 상승 (미터) - 기본값: 1000.0
+     */
+    public Double getMaxElevationGainWithDefault() {
+        return maxElevationGain != null ? maxElevationGain : 1000.0;
     }
 } 

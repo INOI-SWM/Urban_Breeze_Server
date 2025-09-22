@@ -172,17 +172,17 @@ public class RouteService {
             // 모든 관계 타입 조회
             return routeRepository.findByUserWithRelationsAndFilters(user,
                 request.getMinDistanceInMeter(), request.getMaxDistanceInMeter(),
-                request.minElevationGain(), request.maxElevationGain(), pageable);
+                request.getMinElevationGainWithDefault(), request.getMaxElevationGainWithDefault(), pageable);
         } else if (request.relationTypes().size() == 1) {
             // 단일 관계 타입 조회
             return routeRepository.findByUserAndRelationTypeWithFilters(user, request.relationTypes().get(0),
                 request.getMinDistanceInMeter(), request.getMaxDistanceInMeter(),
-                request.minElevationGain(), request.maxElevationGain(), pageable);
+                request.getMinElevationGainWithDefault(), request.getMaxElevationGainWithDefault(), pageable);
         } else {
             // 여러 관계 타입 조회
             return routeRepository.findByUserAndRelationTypesWithFilters(user, request.relationTypes(),
                 request.getMinDistanceInMeter(), request.getMaxDistanceInMeter(),
-                request.minElevationGain(), request.maxElevationGain(), pageable);
+                request.getMinElevationGainWithDefault(), request.getMaxElevationGainWithDefault(), pageable);
         }
     }
 
