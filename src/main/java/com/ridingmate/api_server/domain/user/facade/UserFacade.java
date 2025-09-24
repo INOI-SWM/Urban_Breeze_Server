@@ -1,5 +1,8 @@
 package com.ridingmate.api_server.domain.user.facade;
 
+import com.ridingmate.api_server.domain.auth.dto.AgreementStatusResponse;
+import com.ridingmate.api_server.domain.auth.dto.AgreementUpdateRequest;
+import com.ridingmate.api_server.domain.auth.service.AgreementService;
 import com.ridingmate.api_server.domain.user.dto.UserResponse;
 import com.ridingmate.api_server.domain.user.dto.request.BirthYearUpdateRequest;
 import com.ridingmate.api_server.domain.user.dto.request.GenderUpdateRequest;
@@ -18,6 +21,7 @@ public class UserFacade {
 
     private final UserService userService;
     private final S3Manager s3Manager;
+    private final AgreementService agreementService;
 
     public UserResponse getMyInfo(Long userId) {
         User user = userService.getMyInfo(userId);
@@ -53,5 +57,9 @@ public class UserFacade {
         User user = userService.updateProfileImage(userId, profileImage);
         String profileImageUrl = s3Manager.getPresignedUrl(user.getProfileImagePath());
         return UserResponse.of(user, profileImageUrl);
+    }
+
+    public AgreementStatusResponse updateAgreements(Long userId, AgreementUpdateRequest request) {
+        return agreementService.updateAgreements(userId, request);
     }
 }

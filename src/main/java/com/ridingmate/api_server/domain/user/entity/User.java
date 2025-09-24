@@ -57,14 +57,27 @@ public class User extends BaseTimeEntity {
     @Column(name = "gender")
     private Gender gender;
 
+    @Column(name = "terms_of_service_agreed", nullable = false)
+    private Boolean termsOfServiceAgreed;
+
+    @Column(name = "privacy_policy_agreed", nullable = false)
+    private Boolean privacyPolicyAgreed;
+
+    @Column(name = "location_service_agreed", nullable = false)
+    private Boolean locationServiceAgreed;
+
     @Builder
     public User(SocialProvider socialProvider, String socialId, String email,
-                String nickname, String profileImagePath) {
+                String nickname, String profileImagePath, Boolean termsOfServiceAgreed,
+                Boolean privacyPolicyAgreed, Boolean locationServiceAgreed) {
         this.socialProvider = socialProvider;
         this.socialId = socialId;
         this.email = email;
         this.nickname = nickname;
         this.profileImagePath = profileImagePath;
+        this.termsOfServiceAgreed = termsOfServiceAgreed;
+        this.privacyPolicyAgreed = privacyPolicyAgreed;
+        this.locationServiceAgreed = locationServiceAgreed;
     }
 
     @PrePersist
@@ -85,6 +98,9 @@ public class User extends BaseTimeEntity {
                 .email(email)
                 .nickname(nickname)
                 .profileImagePath(DEFAULT_PROFILE_IMAGE_PATH)
+                .termsOfServiceAgreed(true)      // 서비스 이용약관 동의 (필수)
+                .privacyPolicyAgreed(true)       // 개인정보 처리방침 동의 (필수)
+                .locationServiceAgreed(true)     // 위치기반 서비스 이용약관 동의 (필수)
                 .build();
     }
 
@@ -121,6 +137,27 @@ public class User extends BaseTimeEntity {
      */
     public void updateProfileImagePath(String profileImagePath) {
         this.profileImagePath = profileImagePath;
+    }
+
+    /**
+     * 서비스 이용약관 동의 업데이트
+     */
+    public void updateTermsOfServiceAgreed(Boolean termsOfServiceAgreed) {
+        this.termsOfServiceAgreed = termsOfServiceAgreed;
+    }
+
+    /**
+     * 개인정보 처리방침 동의 업데이트
+     */
+    public void updatePrivacyPolicyAgreed(Boolean privacyPolicyAgreed) {
+        this.privacyPolicyAgreed = privacyPolicyAgreed;
+    }
+
+    /**
+     * 위치기반 서비스 이용약관 동의 업데이트
+     */
+    public void updateLocationServiceAgreed(Boolean locationServiceAgreed) {
+        this.locationServiceAgreed = locationServiceAgreed;
     }
 
 }

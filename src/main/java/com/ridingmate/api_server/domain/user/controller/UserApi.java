@@ -1,16 +1,16 @@
 package com.ridingmate.api_server.domain.user.controller;
 
+import com.ridingmate.api_server.domain.auth.dto.AgreementStatusResponse;
+import com.ridingmate.api_server.domain.auth.dto.AgreementUpdateRequest;
 import com.ridingmate.api_server.domain.auth.security.AuthUser;
 import com.ridingmate.api_server.domain.user.dto.UserResponse;
 import com.ridingmate.api_server.domain.user.dto.request.BirthYearUpdateRequest;
 import com.ridingmate.api_server.domain.user.dto.request.GenderUpdateRequest;
 import com.ridingmate.api_server.domain.user.dto.request.IntroduceUpdateRequest;
 import com.ridingmate.api_server.domain.user.dto.request.NicknameUpdateRequest;
-import com.ridingmate.api_server.domain.user.dto.request.ProfileImageUpdateRequest;
 import com.ridingmate.api_server.global.exception.CommonResponse;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
-import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
@@ -74,6 +74,17 @@ public interface UserApi {
     ResponseEntity<CommonResponse<UserResponse>> updateProfileImage(
             @Parameter(hidden = true) @AuthenticationPrincipal AuthUser authUser,
             @Valid @RequestPart("profileImage") MultipartFile profileImage
+    );
+
+    @Operation(
+            summary = "동의항목 업데이트", 
+            description = "사용자의 동의항목을 업데이트합니다."
+    )
+    @ApiResponse(responseCode = "200", description = "성공: 동의항목 업데이트 완료")
+    @PutMapping("/user/agreements")
+    ResponseEntity<CommonResponse<AgreementStatusResponse>> updateAgreements(
+            @Parameter(hidden = true) @AuthenticationPrincipal AuthUser authUser,
+            @Valid @RequestBody AgreementUpdateRequest request
     );
 
 }

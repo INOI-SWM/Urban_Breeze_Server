@@ -15,7 +15,8 @@ public enum UserSuccessCode implements SuccessCode {
     UPDATE_INTRODUCE_SUCCESS(HttpStatus.OK, "한 줄 소개 변경 성공"),
     UPDATE_GENDER_SUCCESS(HttpStatus.OK, "성별 변경 성공"),
     UPDATE_BIRTH_YEAR_SUCCESS(HttpStatus.OK, "출생년도 변경 성공"),
-    UPDATE_PROFILE_IMAGE_SUCCESS(HttpStatus.OK, "프로필 이미지 변경 성공");
+    UPDATE_PROFILE_IMAGE_SUCCESS(HttpStatus.OK, "프로필 이미지 변경 성공"),
+    UPDATE_AGREEMENTS_SUCCESS(HttpStatus.OK, "동의항목 업데이트 성공");
 
     private final HttpStatus status;
     private final String message;

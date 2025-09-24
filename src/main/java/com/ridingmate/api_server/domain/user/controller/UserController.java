@@ -1,12 +1,13 @@
 package com.ridingmate.api_server.domain.user.controller;
 
+import com.ridingmate.api_server.domain.auth.dto.AgreementStatusResponse;
+import com.ridingmate.api_server.domain.auth.dto.AgreementUpdateRequest;
 import com.ridingmate.api_server.domain.auth.security.AuthUser;
 import com.ridingmate.api_server.domain.user.dto.UserResponse;
 import com.ridingmate.api_server.domain.user.dto.request.BirthYearUpdateRequest;
 import com.ridingmate.api_server.domain.user.dto.request.GenderUpdateRequest;
 import com.ridingmate.api_server.domain.user.dto.request.IntroduceUpdateRequest;
 import com.ridingmate.api_server.domain.user.dto.request.NicknameUpdateRequest;
-import com.ridingmate.api_server.domain.user.dto.request.ProfileImageUpdateRequest;
 import com.ridingmate.api_server.domain.user.exception.UserSuccessCode;
 import com.ridingmate.api_server.domain.user.facade.UserFacade;
 import com.ridingmate.api_server.global.exception.CommonResponse;
@@ -77,5 +78,14 @@ public class UserController implements UserApi {
         return ResponseEntity
                 .status(UserSuccessCode.UPDATE_PROFILE_IMAGE_SUCCESS.getStatus())
                 .body(CommonResponse.success(UserSuccessCode.UPDATE_PROFILE_IMAGE_SUCCESS, response));
+    }
+
+    @Override
+    @PutMapping("/user/agreements")
+    public ResponseEntity<CommonResponse<AgreementStatusResponse>> updateAgreements(AuthUser authUser, AgreementUpdateRequest request) {
+        AgreementStatusResponse response = userFacade.updateAgreements(authUser.id(), request);
+        return ResponseEntity
+                .status(UserSuccessCode.UPDATE_AGREEMENTS_SUCCESS.getStatus())
+                .body(CommonResponse.success(UserSuccessCode.UPDATE_AGREEMENTS_SUCCESS, response));
     }
 }
