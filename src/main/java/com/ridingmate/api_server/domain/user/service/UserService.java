@@ -90,6 +90,11 @@ public class UserService {
     public User updateProfileImage(Long userId, MultipartFile profileImage) {
         User user = getUser(userId);
         
+        // 파일이 없거나 비어있으면 기본 이미지로 변경
+        if (profileImage == null || profileImage.isEmpty()) {
+            return resetProfileImageToDefault(user);
+        }
+        
         // 파일 유효성 검증
         validateProfileImage(profileImage);
         
@@ -112,6 +117,28 @@ public class UserService {
         user.updateProfileImagePath(imagePath);
         
         log.info("사용자 {} 프로필 이미지 업데이트 완료: {}", userId, imagePath);
+        return user;
+    }
+    
+    /**
+     * 프로필 이미지를 기본값으로 리셋
+     */
+    private User resetProfileImageToDefault(User user) {
+        // 기존 프로필 이미지가 기본값이 아닌 경우 S3에서 삭제
+        String currentImagePath = user.getProfileImagePath();
+        if (currentImagePath != null && !currentImagePath.equals(User.DEFAULT_PROFILE_IMAGE_PATH)) {
+            try {
+                s3Manager.deleteFile(currentImagePath);
+                log.info("기존 프로필 이미지 삭제 완료: {}", currentImagePath);
+            } catch (Exception e) {
+                log.warn("기존 프로필 이미지 삭제 실패: {}", currentImagePath, e);
+            }
+        }
+        
+        // 기본 이미지로 설정
+        user.updateProfileImagePath(User.DEFAULT_PROFILE_IMAGE_PATH);
+        
+        log.info("사용자 {} 프로필 이미지를 기본값으로 리셋 완료", user.getId());
         return user;
     }
     
