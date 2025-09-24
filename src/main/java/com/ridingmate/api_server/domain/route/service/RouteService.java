@@ -23,6 +23,7 @@ import com.ridingmate.api_server.domain.user.repository.UserRepository;
 import com.ridingmate.api_server.global.config.AppConfigProperties;
 import com.ridingmate.api_server.global.util.GeometryUtil;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.locationtech.jts.geom.Coordinate;
 import org.locationtech.jts.geom.LineString;
 import org.springframework.data.domain.*;
@@ -43,6 +44,7 @@ import java.io.InputStream;
 
 @Service
 @RequiredArgsConstructor
+@Slf4j
 public class RouteService {
 
     private final AppConfigProperties appConfigProperties;
@@ -409,6 +411,72 @@ public class RouteService {
         } catch (Exception e) {
             throw new RuntimeException("GPX 파일 생성 중 오류가 발생했습니다: " + e.getMessage(), e);
         }
+    }
+
+    /**
+     * 사용자 삭제 시 경로 데이터 처리
+     * - 경로 데이터는 법정 기간 동안 보존 (삭제하지 않음)
+     * - 사용자-경로 관계만 소프트 삭제 처리
+     */
+    @Transactional
+    public void handleUserDeletion(User user) {
+        log.info("경로 데이터 처리 시작: userId={}", user.getId());
+        
+        try {
+            // 1. 사용자-경로 관계 소프트 삭제 처리
+            markUserRoutesAsDeleted(user);
+            
+            // 2. 사용자가 생성한 경로들의 사용자 정보 마스킹
+            maskRouteUserInfo(user);
+            
+            log.info("경로 데이터 처리 완료: userId={}", user.getId());
+        } catch (Exception e) {
+            log.error("경로 데이터 처리 중 오류 발생: userId={}", user.getId(), e);
+            // 경로 데이터 처리 실패해도 사용자 삭제는 계속 진행
+        }
+    }
+
+    /**
+     * 사용자-경로 관계 소프트 삭제 처리
+     */
+    private void markUserRoutesAsDeleted(User user) {
+        log.info("사용자-경로 관계 소프트 삭제 처리 시작: userId={}", user.getId());
+        
+        // 사용자의 모든 활성 경로 관계를 소프트 삭제
+        List<UserRoute> activeUserRoutes = userRouteRepository.findByUserAndIsDeleteFalse(user);
+        
+        for (UserRoute userRoute : activeUserRoutes) {
+            userRoute.markAsDeleted();
+            log.debug("사용자-경로 관계 소프트 삭제: userRouteId={}, routeId={}", 
+                userRoute.getId(), userRoute.getRoute().getId());
+        }
+        
+        log.info("사용자-경로 관계 소프트 삭제 처리 완료: userId={}, count={}", 
+            user.getId(), activeUserRoutes.size());
+    }
+
+    /**
+     * 경로의 사용자 정보 마스킹 처리
+     */
+    private void maskRouteUserInfo(User user) {
+        log.info("경로 사용자 정보 마스킹 처리 시작: userId={}", user.getId());
+
+        List<Route> userRoutes = routeRepository.findByUser(user);
+        
+        for (Route route : userRoutes) {
+            // 경로 제목 마스킹 (개인정보 보호)
+            String maskedTitle = "탈퇴한 사용자의 경로";
+            route.updateTitle(maskedTitle);
+            
+            // 경로 설명 삭제
+            route.updateDescription(null);
+            
+            log.debug("경로 사용자 정보 마스킹: routeId={}, title={}", 
+                route.getId(), maskedTitle);
+        }
+        
+        log.info("경로 사용자 정보 마스킹 처리 완료: userId={}, count={}", 
+            user.getId(), userRoutes.size());
     }
 
 }

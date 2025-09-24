@@ -162,4 +162,18 @@ public class Route extends BaseTimeEntity {
     public List<Coordinate> getAllCoordinates() {
         return GeometryUtil.getAllCoordinates(this.routeLine);
     }
+
+    /**
+     * 경로 제목 업데이트
+     */
+    public void updateTitle(String title) {
+        this.title = title;
+    }
+
+    /**
+     * 경로 설명 업데이트
+     */
+    public void updateDescription(String description) {
+        this.description = description;
+    }
 }

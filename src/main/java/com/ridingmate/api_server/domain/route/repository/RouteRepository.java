@@ -162,4 +162,9 @@ public interface RouteRepository extends JpaRepository<Route, Long> {
             """)
         RouteFilterRangeProjection findMaxDistanceAndElevationForRecommendations();
 
+    /**
+     * 특정 사용자가 생성한 모든 경로 조회
+     */
+    List<Route> findByUser(User user);
+
 }
