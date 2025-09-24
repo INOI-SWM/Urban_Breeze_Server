@@ -13,10 +13,7 @@ import com.ridingmate.api_server.domain.user.facade.UserFacade;
 import com.ridingmate.api_server.global.exception.CommonResponse;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PutMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
 @RestController
@@ -87,5 +84,14 @@ public class UserController implements UserApi {
         return ResponseEntity
                 .status(UserSuccessCode.UPDATE_AGREEMENTS_SUCCESS.getStatus())
                 .body(CommonResponse.success(UserSuccessCode.UPDATE_AGREEMENTS_SUCCESS, response));
+    }
+
+    @Override
+    @DeleteMapping("/user")
+    public ResponseEntity<CommonResponse<Void>> deleteUser(AuthUser authUser) {
+        userFacade.deleteUser(authUser.id());
+        return ResponseEntity
+                .status(UserSuccessCode.DELETE_USER_SUCCESS.getStatus())
+                .body(CommonResponse.success(UserSuccessCode.DELETE_USER_SUCCESS));
     }
 }

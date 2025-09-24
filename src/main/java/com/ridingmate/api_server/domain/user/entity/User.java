@@ -11,6 +11,7 @@ import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
+import java.time.LocalDateTime;
 import java.util.UUID;
 
 
@@ -65,6 +66,9 @@ public class User extends BaseTimeEntity {
 
     @Column(name = "location_service_agreed", nullable = false)
     private Boolean locationServiceAgreed;
+
+    @Column(name = "deleted_at")
+    private LocalDateTime deletedAt;
 
     @Builder
     public User(SocialProvider socialProvider, String socialId, String email,
@@ -158,6 +162,31 @@ public class User extends BaseTimeEntity {
      */
     public void updateLocationServiceAgreed(Boolean locationServiceAgreed) {
         this.locationServiceAgreed = locationServiceAgreed;
+    }
+
+    /**
+     * 삭제 여부 확인
+     */
+    public boolean isDeleted() {
+        return deletedAt != null;
+    }
+
+    /**
+     * 사용자 삭제 처리 (소프트 삭제)
+     */
+    public void delete() {
+        this.deletedAt = LocalDateTime.now();
+        maskPersonalData();
+    }
+
+    /**
+     * 개인정보 마스킹 처리
+     */
+    private void maskPersonalData() {
+        this.email = "deleted_" + this.id + "@deleted.com";
+        this.nickname = "탈퇴한 사용자";
+        this.profileImagePath = DEFAULT_PROFILE_IMAGE_PATH;
+        this.introduce = null;
     }
 
 }

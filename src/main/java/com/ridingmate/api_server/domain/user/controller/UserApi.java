@@ -17,10 +17,7 @@ import jakarta.validation.Valid;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PutMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestPart;
+import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
 @Tag(name = "User API", description = "사용자 관련 API")
@@ -85,6 +82,16 @@ public interface UserApi {
     ResponseEntity<CommonResponse<AgreementStatusResponse>> updateAgreements(
             @Parameter(hidden = true) @AuthenticationPrincipal AuthUser authUser,
             @Valid @RequestBody AgreementUpdateRequest request
+    );
+
+    @Operation(
+            summary = "회원 탈퇴", 
+            description = "현재 로그인된 사용자의 계정을 삭제합니다. 개인정보는 마스킹되고, 위치정보는 법정 기간 동안 보존됩니다."
+    )
+    @ApiResponse(responseCode = "200", description = "성공: 회원 탈퇴 완료")
+    @DeleteMapping("/user")
+    ResponseEntity<CommonResponse<Void>> deleteUser(
+            @Parameter(hidden = true) @AuthenticationPrincipal AuthUser authUser
     );
 
 }

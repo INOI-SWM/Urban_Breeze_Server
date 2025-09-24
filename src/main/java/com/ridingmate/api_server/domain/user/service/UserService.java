@@ -19,7 +19,6 @@ import org.springframework.web.multipart.MultipartFile;
 @Slf4j
 @Service
 @RequiredArgsConstructor
-@Transactional
 public class UserService {
 
     private final UserRepository userRepository;
@@ -53,9 +52,16 @@ public class UserService {
         });
     }
 
+    @Transactional(readOnly = true)
     public User getUser(Long userId){
-        return userRepository.findById(userId)
+        User user = userRepository.findById(userId)
                 .orElseThrow(() -> new UserException(UserErrorCode.USER_NOT_FOUND));
+        
+        if (user.isDeleted()) {
+            throw new UserException(UserErrorCode.DELETED_USER);
+        }
+        
+        return user;
     }
 
     @Transactional(readOnly = true)
@@ -63,30 +69,35 @@ public class UserService {
         return getUser(userId);
     }
 
+    @Transactional
     public User updateNickname(Long userId, NicknameUpdateRequest request) {
         User user = getUser(userId);
         user.updateNickname(request.nickname());
         return user;
     }
 
+    @Transactional
     public User updateIntroduce(Long userId, IntroduceUpdateRequest request) {
         User user = getUser(userId);
         user.updateIntroduce(request.introduce());
         return user;
     }
 
+    @Transactional
     public User updateGender(Long userId, GenderUpdateRequest request) {
         User user = getUser(userId);
         user.updateGender(request.gender());
         return user;
     }
 
+    @Transactional
     public User updateBirthYear(Long userId, BirthYearUpdateRequest request) {
         User user = getUser(userId);
         user.updateBirthYear(request.birthYear());
         return user;
     }
 
+    @Transactional
     public User updateProfileImage(Long userId, MultipartFile profileImage) {
         User user = getUser(userId);
         
@@ -190,5 +201,42 @@ public class UserService {
             return ".jpg";
         }
         return filename.substring(lastDotIndex);
+    }
+
+    /**
+     * 사용자 삭제 처리 (소프트 삭제)
+     */
+    @Transactional
+    public void deleteUser(Long userId) {
+        User user = getUser(userId);
+
+        if (user.isDeleted()) {
+            log.warn("이미 삭제된 사용자입니다: userId={}", userId);
+            throw new UserException(UserErrorCode.USER_ALREADY_DELETED);
+        }
+
+        user.delete();
+
+        //관련 데이터 처리
+        handleRelatedData(userId);
+
+        log.info("사용자 삭제 완료: userId={}, deletedAt={}", userId, user.getDeletedAt());
+    }
+
+    /**
+     * 관련 데이터 처리
+     * - 경로 데이터: 보존 (법정 의무)
+     * - 활동 데이터: 보존 (법정 의무)
+     * - 개인정보: 이미 마스킹됨
+     */
+    private void handleRelatedData(Long userId) {
+        log.info("관련 데이터 처리 시작: userId={}", userId);
+
+        // TODO: 필요시 추가 처리 로직 구현
+        // - 경로 데이터 보존 확인
+        // - 활동 데이터 보존 확인
+        // - 제3자 서비스 연동 해제
+
+        log.info("관련 데이터 처리 완료: userId={}", userId);
     }
 } 

@@ -62,4 +62,11 @@ public class UserFacade {
     public AgreementStatusResponse updateAgreements(Long userId, AgreementUpdateRequest request) {
         return agreementService.updateAgreements(userId, request);
     }
+
+    /**
+     * 사용자 삭제 처리
+     */
+    public void deleteUser(Long userId) {
+        userService.deleteUser(userId);
+    }
 }
