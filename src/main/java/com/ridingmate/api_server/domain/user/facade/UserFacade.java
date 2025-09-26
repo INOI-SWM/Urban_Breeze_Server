@@ -65,6 +65,12 @@ public class UserFacade {
         return UserResponse.of(user, profileImageUrl);
     }
 
+    public UserResponse deleteProfileImage(Long userId) {
+        User user = userService.deleteProfileImage(userId);
+        String profileImageUrl = s3Manager.getPresignedUrl(user.getProfileImagePath());
+        return UserResponse.of(user, profileImageUrl);
+    }
+
     public AgreementStatusResponse updateAgreements(Long userId, AgreementUpdateRequest request) {
         return agreementService.updateAgreements(userId, request);
     }

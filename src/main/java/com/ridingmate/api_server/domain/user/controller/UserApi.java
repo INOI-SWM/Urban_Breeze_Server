@@ -64,13 +64,23 @@ public interface UserApi {
 
     @Operation(
             summary = "프로필 이미지 변경", 
-            description = "현재 로그인된 사용자의 프로필 이미지를 변경합니다. 파일을 보내지 않으면 기본 이미지로 변경됩니다."
+            description = "현재 로그인된 사용자의 프로필 이미지를 변경합니다."
     )
     @ApiResponse(responseCode = "200", description = "성공: 프로필 이미지 변경 완료")
     @PutMapping(value = "/user/profile/image", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     ResponseEntity<CommonResponse<UserResponse>> updateProfileImage(
             @Parameter(hidden = true) @AuthenticationPrincipal AuthUser authUser,
-            @RequestPart(value = "profileImage", required = false) MultipartFile profileImage
+            @RequestPart(value = "profileImage") MultipartFile profileImage
+    );
+
+    @Operation(
+            summary = "프로필 이미지 삭제", 
+            description = "현재 로그인된 사용자의 프로필 이미지를 기본 이미지로 변경합니다."
+    )
+    @ApiResponse(responseCode = "200", description = "성공: 프로필 이미지 삭제 완료")
+    @DeleteMapping("/user/profile/image")
+    ResponseEntity<CommonResponse<UserResponse>> deleteProfileImage(
+            @Parameter(hidden = true) @AuthenticationPrincipal AuthUser authUser
     );
 
     @Operation(

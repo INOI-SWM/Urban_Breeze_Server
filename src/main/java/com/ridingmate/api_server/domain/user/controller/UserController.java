@@ -78,6 +78,15 @@ public class UserController implements UserApi {
     }
 
     @Override
+    @DeleteMapping("/user/profile/image")
+    public ResponseEntity<CommonResponse<UserResponse>> deleteProfileImage(AuthUser authUser) {
+        UserResponse response = userFacade.deleteProfileImage(authUser.id());
+        return ResponseEntity
+                .status(UserSuccessCode.DELETE_PROFILE_IMAGE_SUCCESS.getStatus())
+                .body(CommonResponse.success(UserSuccessCode.DELETE_PROFILE_IMAGE_SUCCESS, response));
+    }
+
+    @Override
     @PutMapping("/user/agreements")
     public ResponseEntity<CommonResponse<AgreementStatusResponse>> updateAgreements(AuthUser authUser, AgreementUpdateRequest request) {
         AgreementStatusResponse response = userFacade.updateAgreements(authUser.id(), request);

@@ -101,11 +101,6 @@ public class UserService {
     public User updateProfileImage(Long userId, MultipartFile profileImage) {
         User user = getUser(userId);
         
-        // 파일이 없거나 비어있으면 기본 이미지로 변경
-        if (profileImage == null || profileImage.isEmpty()) {
-            return resetProfileImageToDefault(user);
-        }
-        
         // 파일 유효성 검증
         validateProfileImage(profileImage);
         
@@ -129,6 +124,15 @@ public class UserService {
         
         log.info("사용자 {} 프로필 이미지 업데이트 완료: {}", userId, imagePath);
         return user;
+    }
+
+    /**
+     * 프로필 이미지를 기본 이미지로 변경 (삭제)
+     */
+    @Transactional
+    public User deleteProfileImage(Long userId) {
+        User user = getUser(userId);
+        return resetProfileImageToDefault(user);
     }
     
     /**
