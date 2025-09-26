@@ -70,4 +70,10 @@ public interface ActivityGpsLogRepository extends JpaRepository<ActivityGpsLog, 
      * @return GPS 로그 리스트
      */
     List<ActivityGpsLog> findByActivityIdOrderByLogTimeAsc(Long activityId);
+
+    /**
+     * 특정 활동의 모든 GPS 로그 삭제
+     * @param activityId 활동 ID
+     */
+    void deleteByActivityId(Long activityId);
 }

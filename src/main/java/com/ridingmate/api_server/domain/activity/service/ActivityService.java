@@ -556,21 +556,10 @@ public class ActivityService {
         log.info("활동 정보 마스킹 및 소프트 삭제 처리 시작: count={}", activities.size());
         
         for (Activity activity : activities) {
-            // 1. 활동 제목 마스킹 (개인정보 보호)
-            String maskedTitle = "탈퇴한 사용자의 활동";
-            activity.updateTitle(maskedTitle);
-            
-            // 2. 썸네일 이미지 경로를 null로 설정 (ActivityImage 삭제 후 처리)
-            activity.updateThumbnailImagePath(null);
-            
-            // 3. 개인정보 마스킹 및 삭제 처리 (통합)
+            // 모든 개인정보 필드 마스킹 및 소프트 삭제 처리 (통합)
             activity.maskPersonalDataForDeletion();
             
-            // 4. 소프트 삭제 처리
-            activity.markAsDeleted();
-            
-            log.debug("활동 정보 마스킹 및 소프트 삭제: activityId={}, title={}", 
-                activity.getId(), maskedTitle);
+            log.debug("활동 정보 마스킹 및 소프트 삭제: activityId={}", activity.getId());
         }
         
         log.info("활동 정보 마스킹 및 소프트 삭제 처리 완료: count={}", activities.size());
@@ -645,12 +634,10 @@ public class ActivityService {
                 
                 log.debug("활동 GPS 로그 삭제 시작: activityId={}, count={}", activity.getId(), activityGpsLogs.size());
                 
-                for (ActivityGpsLog activityGpsLog : activityGpsLogs) {
-                    // GPS 로그의 개인정보 마스킹 (좌표, 시간, 생체, 성능 데이터)
-                    activityGpsLog.maskPersonalData();
-                }
+                // DB에서 모든 GPS 로그 하드 삭제
+                activityGpsLogRepository.deleteByActivityId(activity.getId());
                 
-                log.debug("활동 GPS 로그 마스킹 완료: activityId={}", activity.getId());
+                log.debug("활동 GPS 로그 하드 삭제 완료: activityId={}", activity.getId());
                 
             } catch (Exception e) {
                 log.warn("활동 GPS 로그 처리 중 오류: activityId={}", activity.getId(), e);
