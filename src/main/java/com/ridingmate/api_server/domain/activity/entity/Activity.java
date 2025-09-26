@@ -25,31 +25,31 @@ public class Activity extends BaseTimeEntity {
     @JoinColumn(name = "user_id", nullable = false)
     private User user;
 
-    @Column(name = "title", nullable = false)
+    @Column(name = "title")
     private String title;
 
-    @Column(name = "started_at", nullable = false, updatable = false)
+    @Column(name = "started_at", updatable = false)
     private LocalDateTime startedAt;
 
-    @Column(name = "ended_at", nullable = false, updatable = false)
+    @Column(name = "ended_at",updatable = false)
     private LocalDateTime endedAt;
 
     /**
      * 경로 총 거리 (단위: 미터)
      */
-    @Column(name = "distance", nullable = false)
+    @Column(name = "distance")
     private Double distance;
 
     /**
      * 총 소요 시간 (단위: 초)
      */
-    @Column(name = "duration", nullable = false)
+    @Column(name = "duration")
     private Duration duration;
 
     /**
      * 총 상승 고도 (단위: 미터)
      */
-    @Column(name = "elevation_gain", nullable = false)
+    @Column(name = "elevation_gain")
     private Double elevationGain;
 
     /**
@@ -88,6 +88,12 @@ public class Activity extends BaseTimeEntity {
     @Column(name = "max_power")
     private Integer maxPower;
 
+    /**
+     * 삭제 여부 (소프트 삭제)
+     */
+    @Column(name = "is_delete", nullable = false)
+    private Boolean isDelete = false;
+
     @Builder
     private Activity(User user, String title, Double distance,
                      Duration duration, Double elevationGain,
@@ -123,5 +129,43 @@ public class Activity extends BaseTimeEntity {
      */
     public void updateTitle(String title) {
         this.title = title;
+    }
+
+    /**
+     * 소프트 삭제 처리
+     */
+    public void markAsDeleted() {
+        this.isDelete = true;
+    }
+
+    /**
+     * 삭제 여부 확인
+     */
+    public boolean isDeleted() {
+        return this.isDelete;
+    }
+
+    /**
+     * 활동 개인정보 마스킹 및 삭제 처리
+     * - 모든 필드를 null로 마스킹
+     * - 소프트 삭제 처리
+     */
+    public void maskPersonalDataForDeletion() {
+        // 1. 모든 개인정보 필드 마스킹
+        this.title = null;
+        this.thumbnailImagePath = null;
+        this.averageHeartRate = null;
+        this.maxHeartRate = null;
+        this.cadence = null;
+        this.averagePower = null;
+        this.maxPower = null;
+        this.distance = null;
+        this.duration = null;
+        this.elevationGain = null;
+        this.startedAt = null;
+        this.endedAt = null;
+        
+        // 2. 소프트 삭제 처리
+        this.isDelete = true;
     }
 }

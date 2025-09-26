@@ -32,7 +32,7 @@ public class Route extends BaseTimeEntity {
     @JoinColumn(name = "user_id", nullable = false)
     private User user;
 
-    @Column(name = "title", nullable = false)
+    @Column(name = "title")
     private String title;
 
     @Column(name = "description")
@@ -41,22 +41,22 @@ public class Route extends BaseTimeEntity {
     /**
      * 경로 총 거리 (단위: 미터)
      */
-    @Column(name = "distance", nullable = false)
+    @Column(name = "distance")
     private Double distance;
 
     /**
      * 총 소요 시간 (단위: 초)
      */
-    @Column(name = "duration", nullable = false)
+    @Column(name = "duration")
     private Duration duration;
 
     /**
      * 총 상승 고도 (단위: 미터)
      */
-    @Column(name = "elevation_gain", nullable = false)
+    @Column(name = "elevation_gain")
     private Double elevationGain;
 
-    @Column(name = "route_id", nullable = false, unique = true)
+    @Column(name = "route_id", unique = true)
     private UUID routeId;
 
     @Enumerated(EnumType.STRING)
@@ -77,23 +77,26 @@ public class Route extends BaseTimeEntity {
     @Column(name = "gpx_file_path")
     private String gpxFilePath;
 
-    @Column(name = "max_lat", nullable = false)
+    @Column(name = "max_lat")
     private Double maxLat;
 
-    @Column(name = "max_lon", nullable = false)
+    @Column(name = "max_lon")
     private Double maxLon;
 
-    @Column(name = "min_lat", nullable = false)
+    @Column(name = "min_lat")
     private Double minLat;
 
-    @Column(name = "min_lon", nullable = false)
+    @Column(name = "min_lon")
     private Double minLon;
 
-    @Column(name = "route_line", nullable = false, columnDefinition = "geometry(LineString, 4326)")
+    @Column(name = "route_line", columnDefinition = "geometry(LineString, 4326)")
     private LineString routeLine;
 
     @OneToOne(mappedBy = "route", cascade = CascadeType.ALL)
     private Recommendation recommendation;
+
+    @Column(name = "is_delete", nullable = false)
+    private Boolean isDelete = false;
 
 
     @Builder
@@ -161,5 +164,57 @@ public class Route extends BaseTimeEntity {
      */
     public List<Coordinate> getAllCoordinates() {
         return GeometryUtil.getAllCoordinates(this.routeLine);
+    }
+
+    /**
+     * 경로 제목 업데이트
+     */
+    public void updateTitle(String title) {
+        this.title = title;
+    }
+
+    /**
+     * 경로 설명 업데이트
+     */
+    public void updateDescription(String description) {
+        this.description = description;
+    }
+
+    /**
+     * 경로 개인정보 마스킹 및 삭제 처리
+     * - 모든 필드를 null로 마스킹
+     * - 소프트 삭제 처리
+     */
+    public void maskPersonalDataForDeletion() {
+        // 1. 모든 개인정보 필드 마스킹
+        this.title = null;
+        this.description = null;
+        this.thumbnailImagePath = null;
+        this.gpxFilePath = null;
+        this.distance = null;
+        this.duration = null;
+        this.elevationGain = null;
+        this.maxLat = null;
+        this.maxLon = null;
+        this.minLat = null;
+        this.minLon = null;
+        this.routeLine = null;
+        
+        // 2. 소프트 삭제 처리
+        this.isDelete = true;
+    }
+
+    /**
+     * 경로 소프트 삭제 처리
+     */
+    public void markAsDeleted() {
+        this.isDelete = true;
+    }
+
+    /**
+     * 경로 삭제 여부 확인
+     */
+    public boolean isDeleted() {
+        return this.isDelete;
     }
 }

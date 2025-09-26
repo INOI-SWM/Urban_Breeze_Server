@@ -1,21 +1,19 @@
 package com.ridingmate.api_server.domain.user.controller;
 
+import com.ridingmate.api_server.domain.auth.dto.AgreementStatusResponse;
+import com.ridingmate.api_server.domain.auth.dto.AgreementUpdateRequest;
 import com.ridingmate.api_server.domain.auth.security.AuthUser;
 import com.ridingmate.api_server.domain.user.dto.UserResponse;
 import com.ridingmate.api_server.domain.user.dto.request.BirthYearUpdateRequest;
 import com.ridingmate.api_server.domain.user.dto.request.GenderUpdateRequest;
 import com.ridingmate.api_server.domain.user.dto.request.IntroduceUpdateRequest;
 import com.ridingmate.api_server.domain.user.dto.request.NicknameUpdateRequest;
-import com.ridingmate.api_server.domain.user.dto.request.ProfileImageUpdateRequest;
 import com.ridingmate.api_server.domain.user.exception.UserSuccessCode;
 import com.ridingmate.api_server.domain.user.facade.UserFacade;
 import com.ridingmate.api_server.global.exception.CommonResponse;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PutMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
 @RestController
@@ -77,5 +75,32 @@ public class UserController implements UserApi {
         return ResponseEntity
                 .status(UserSuccessCode.UPDATE_PROFILE_IMAGE_SUCCESS.getStatus())
                 .body(CommonResponse.success(UserSuccessCode.UPDATE_PROFILE_IMAGE_SUCCESS, response));
+    }
+
+    @Override
+    @DeleteMapping("/user/profile/image")
+    public ResponseEntity<CommonResponse<UserResponse>> deleteProfileImage(AuthUser authUser) {
+        UserResponse response = userFacade.deleteProfileImage(authUser.id());
+        return ResponseEntity
+                .status(UserSuccessCode.DELETE_PROFILE_IMAGE_SUCCESS.getStatus())
+                .body(CommonResponse.success(UserSuccessCode.DELETE_PROFILE_IMAGE_SUCCESS, response));
+    }
+
+    @Override
+    @PutMapping("/user/agreements")
+    public ResponseEntity<CommonResponse<AgreementStatusResponse>> updateAgreements(AuthUser authUser, AgreementUpdateRequest request) {
+        AgreementStatusResponse response = userFacade.updateAgreements(authUser.id(), request);
+        return ResponseEntity
+                .status(UserSuccessCode.UPDATE_AGREEMENTS_SUCCESS.getStatus())
+                .body(CommonResponse.success(UserSuccessCode.UPDATE_AGREEMENTS_SUCCESS, response));
+    }
+
+    @Override
+    @DeleteMapping("/user")
+    public ResponseEntity<CommonResponse<Void>> deleteUser(AuthUser authUser) {
+        userFacade.deleteUser(authUser.id());
+        return ResponseEntity
+                .status(UserSuccessCode.DELETE_USER_SUCCESS.getStatus())
+                .body(CommonResponse.success(UserSuccessCode.DELETE_USER_SUCCESS));
     }
 }

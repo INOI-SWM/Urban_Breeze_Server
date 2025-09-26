@@ -19,7 +19,6 @@ import org.springframework.web.multipart.MultipartFile;
 @Slf4j
 @Service
 @RequiredArgsConstructor
-@Transactional
 public class UserService {
 
     private final UserRepository userRepository;
@@ -53,9 +52,16 @@ public class UserService {
         });
     }
 
+    @Transactional(readOnly = true)
     public User getUser(Long userId){
-        return userRepository.findById(userId)
+        User user = userRepository.findById(userId)
                 .orElseThrow(() -> new UserException(UserErrorCode.USER_NOT_FOUND));
+        
+        if (user.isDeleted()) {
+            throw new UserException(UserErrorCode.DELETED_USER);
+        }
+        
+        return user;
     }
 
     @Transactional(readOnly = true)
@@ -63,30 +69,35 @@ public class UserService {
         return getUser(userId);
     }
 
+    @Transactional
     public User updateNickname(Long userId, NicknameUpdateRequest request) {
         User user = getUser(userId);
         user.updateNickname(request.nickname());
         return user;
     }
 
+    @Transactional
     public User updateIntroduce(Long userId, IntroduceUpdateRequest request) {
         User user = getUser(userId);
         user.updateIntroduce(request.introduce());
         return user;
     }
 
+    @Transactional
     public User updateGender(Long userId, GenderUpdateRequest request) {
         User user = getUser(userId);
         user.updateGender(request.gender());
         return user;
     }
 
+    @Transactional
     public User updateBirthYear(Long userId, BirthYearUpdateRequest request) {
         User user = getUser(userId);
         user.updateBirthYear(request.birthYear());
         return user;
     }
 
+    @Transactional
     public User updateProfileImage(Long userId, MultipartFile profileImage) {
         User user = getUser(userId);
         
@@ -112,6 +123,37 @@ public class UserService {
         user.updateProfileImagePath(imagePath);
         
         log.info("사용자 {} 프로필 이미지 업데이트 완료: {}", userId, imagePath);
+        return user;
+    }
+
+    /**
+     * 프로필 이미지를 기본 이미지로 변경 (삭제)
+     */
+    @Transactional
+    public User deleteProfileImage(Long userId) {
+        User user = getUser(userId);
+        return resetProfileImageToDefault(user);
+    }
+    
+    /**
+     * 프로필 이미지를 기본값으로 리셋
+     */
+    private User resetProfileImageToDefault(User user) {
+        // 기존 프로필 이미지가 기본값이 아닌 경우 S3에서 삭제
+        String currentImagePath = user.getProfileImagePath();
+        if (currentImagePath != null && !currentImagePath.equals(User.DEFAULT_PROFILE_IMAGE_PATH)) {
+            try {
+                s3Manager.deleteFile(currentImagePath);
+                log.info("기존 프로필 이미지 삭제 완료: {}", currentImagePath);
+            } catch (Exception e) {
+                log.warn("기존 프로필 이미지 삭제 실패: {}", currentImagePath, e);
+            }
+        }
+        
+        // 기본 이미지로 설정
+        user.updateProfileImagePath(User.DEFAULT_PROFILE_IMAGE_PATH);
+        
+        log.info("사용자 {} 프로필 이미지를 기본값으로 리셋 완료", user.getId());
         return user;
     }
     
@@ -164,4 +206,43 @@ public class UserService {
         }
         return filename.substring(lastDotIndex);
     }
+
+    /**
+     * 사용자 삭제 처리 (소프트 삭제 + 개인정보 마스킹 + 관련 데이터 처리)
+     */
+    @Transactional
+    public void deleteUser(User user) {
+        log.info("사용자 삭제 요청 시작: userId={}", user.getId());
+
+        // 2. 이미 삭제된 사용자인지 확인
+        if (user.isDeleted()) {
+            log.warn("이미 삭제된 사용자입니다: userId={}", user.getId());
+            throw new UserException(UserErrorCode.USER_ALREADY_DELETED);
+        }
+
+        // 3. 기존 프로필 이미지 S3에서 삭제
+        deleteProfileImageFromS3(user);
+
+        // 4. 사용자 삭제 처리 (소프트 삭제 + 개인정보 마스킹)
+        user.delete();
+
+        log.info("사용자 삭제 완료: userId={}, deletedAt={}", user.getId(), user.getDeletedAt());
+    }
+
+    /**
+     * S3에서 기존 프로필 이미지 삭제
+     */
+    private void deleteProfileImageFromS3(User user) {
+        String currentImagePath = user.getProfileImagePath();
+        if (currentImagePath != null && !currentImagePath.equals(User.DEFAULT_PROFILE_IMAGE_PATH)) {
+            try {
+                s3Manager.deleteFile(currentImagePath);
+                log.info("기존 프로필 이미지 S3에서 삭제 완료: {}", currentImagePath);
+            } catch (Exception e) {
+                log.warn("기존 프로필 이미지 S3 삭제 실패: {}", currentImagePath, e);
+                // S3 삭제 실패해도 사용자 삭제는 계속 진행
+            }
+        }
+    }
+
 } 

@@ -518,4 +518,133 @@ public class ActivityService {
         return DeleteActivityImageResponse.from(imageId);
     }
 
+    /**
+     * 사용자 삭제 시 활동 데이터 처리
+     * - 활동 데이터는 법정 기간 동안 보존 (삭제하지 않음)
+     * - 사용자 정보만 마스킹 처리
+     */
+    @Transactional
+    public void handleUserDeletion(User user) {
+        log.info("활동 데이터 처리 시작: userId={}", user.getId());
+        
+        try {
+            // 1. 사용자의 모든 활동 조회 (삭제된 활동 포함)
+            List<Activity> userActivities = activityRepository.findByUser(user);
+            
+            // 2. 활동 정보 마스킹 처리
+            maskActivityUserInfo(userActivities);
+            
+            // 3. 활동 이미지 처리 (S3에서 삭제)
+            handleActivityImages(userActivities);
+            
+            // 4. 활동 GPS 로그 처리 (개인정보 즉시 파기)
+            handleActivityGpsLogs(userActivities);
+            
+            log.info("활동 데이터 처리 완료: userId={}, count={}", user.getId(), userActivities.size());
+        } catch (Exception e) {
+            log.error("활동 데이터 처리 중 오류 발생: userId={}", user.getId(), e);
+            // 활동 데이터 처리 실패해도 사용자 삭제는 계속 진행
+        }
+    }
+
+    /**
+     * 활동 정보 마스킹 및 소프트 삭제 처리
+     * - 모든 개인정보 관련 필드 마스킹/제거
+     * - 통계용 데이터만 보존
+     */
+    private void maskActivityUserInfo(List<Activity> activities) {
+        log.info("활동 정보 마스킹 및 소프트 삭제 처리 시작: count={}", activities.size());
+        
+        for (Activity activity : activities) {
+            // 모든 개인정보 필드 마스킹 및 소프트 삭제 처리 (통합)
+            activity.maskPersonalDataForDeletion();
+            
+            log.debug("활동 정보 마스킹 및 소프트 삭제: activityId={}", activity.getId());
+        }
+        
+        log.info("활동 정보 마스킹 및 소프트 삭제 처리 완료: count={}", activities.size());
+    }
+
+    /**
+     * 활동 이미지 처리 (S3에서 삭제)
+     * - ActivityImage 테이블의 모든 이미지를 삭제 (썸네일 포함)
+     */
+    private void handleActivityImages(List<Activity> activities) {
+        log.info("활동 이미지 처리 시작: count={}", activities.size());
+        
+        for (Activity activity : activities) {
+            try {
+                // ActivityImage 테이블의 모든 이미지 조회 및 삭제
+                deleteAllActivityImages(activity);
+                
+            } catch (Exception e) {
+                log.warn("활동 이미지 처리 중 오류: activityId={}", activity.getId(), e);
+            }
+        }
+        
+        log.info("활동 이미지 처리 완료: count={}", activities.size());
+    }
+
+    /**
+     * 활동의 모든 이미지 삭제 (썸네일 포함)
+     */
+    private void deleteAllActivityImages(Activity activity) {
+        try {
+            // 활동의 모든 이미지 조회 (썸네일 포함)
+            List<ActivityImage> activityImages = activityImageRepository.findByActivityIdOrderByDisplayOrder(activity.getId());
+            
+            log.debug("활동 이미지 삭제 시작: activityId={}, count={}", activity.getId(), activityImages.size());
+            
+            for (ActivityImage activityImage : activityImages) {
+                try {
+                    // S3에서 이미지 삭제 (썸네일 포함 모든 이미지)
+                    s3Manager.deleteFile(activityImage.getImagePath());
+                    log.debug("활동 이미지 삭제: activityId={}, imageId={}, path={}", 
+                        activity.getId(), activityImage.getId(), activityImage.getImagePath());
+                } catch (Exception e) {
+                    log.warn("활동 이미지 삭제 실패: activityId={}, imageId={}, path={}", 
+                        activity.getId(), activityImage.getId(), activityImage.getImagePath(), e);
+                }
+            }
+            
+            // DB에서 모든 이미지 삭제 (썸네일 포함)
+            activityImageRepository.deleteByActivityId(activity.getId());
+            
+            log.debug("활동 이미지 DB 삭제 완료: activityId={}", activity.getId());
+            
+        } catch (Exception e) {
+            log.warn("활동 이미지 삭제 중 오류: activityId={}", activity.getId(), e);
+        }
+    }
+
+    /**
+     * 활동 GPS 로그 처리 (개인정보 즉시 파기)
+     * - 좌표 데이터: 즉시 파기 (원본 위치)
+     * - 시간 정보: 즉시 파기 (동선 복원 가능)
+     * - 생체 정보: 즉시 파기 (건강/민감 성격)
+     * - 성능 데이터: 즉시 파기 (개인 성능 특성)
+     */
+    private void handleActivityGpsLogs(List<Activity> activities) {
+        log.info("활동 GPS 로그 처리 시작: count={}", activities.size());
+        
+        for (Activity activity : activities) {
+            try {
+                // 활동의 모든 GPS 로그 조회
+                List<ActivityGpsLog> activityGpsLogs = activityGpsLogRepository.findByActivityIdOrderByLogTimeAsc(activity.getId());
+                
+                log.debug("활동 GPS 로그 삭제 시작: activityId={}, count={}", activity.getId(), activityGpsLogs.size());
+                
+                // DB에서 모든 GPS 로그 하드 삭제
+                activityGpsLogRepository.deleteByActivityId(activity.getId());
+                
+                log.debug("활동 GPS 로그 하드 삭제 완료: activityId={}", activity.getId());
+                
+            } catch (Exception e) {
+                log.warn("활동 GPS 로그 처리 중 오류: activityId={}", activity.getId(), e);
+            }
+        }
+        
+        log.info("활동 GPS 로그 처리 완료: count={}", activities.size());
+    }
+
 }

@@ -1,6 +1,7 @@
 package com.ridingmate.api_server.domain.auth.dto.response;
 
 import com.ridingmate.api_server.domain.auth.dto.TokenInfo;
+import com.ridingmate.api_server.domain.auth.dto.AgreementStatusResponse;
 import com.ridingmate.api_server.domain.user.entity.User;
 import com.ridingmate.api_server.domain.user.enums.Gender;
 import io.swagger.v3.oas.annotations.media.Schema;
@@ -15,7 +16,10 @@ public record LoginResponse(
         TokenInfo tokenInfo,
 
         @Schema(description = "사용자 정보")
-        UserInfo userInfo
+        UserInfo userInfo,
+        
+        @Schema(description = "동의항목 상태")
+        AgreementStatusResponse agreementStatus
 ) {
 
     /**
@@ -49,10 +53,11 @@ public record LoginResponse(
      *
      * @param tokenInfo JWT 토큰 정보
      * @param userInfo 사용자 정보
+     * @param agreementStatus 동의항목 상태
      * @return LoginResponse
      */
-    public static LoginResponse of(TokenInfo tokenInfo, UserInfo userInfo) {
-        return new LoginResponse(tokenInfo, userInfo);
+    public static LoginResponse of(TokenInfo tokenInfo, UserInfo userInfo, AgreementStatusResponse agreementStatus) {
+        return new LoginResponse(tokenInfo, userInfo, agreementStatus);
     }
 
     /**
@@ -60,9 +65,10 @@ public record LoginResponse(
      *
      * @param tokenInfo JWT 토큰 정보
      * @param user 사용자
+     * @param agreementStatus 동의항목 상태
      * @return LoginResponse
      */
-    public static LoginResponse of(TokenInfo tokenInfo, User user) {
+    public static LoginResponse of(TokenInfo tokenInfo, User user, AgreementStatusResponse agreementStatus) {
         UserInfo userInfo = new UserInfo(
                 user.getUuid(),
                 user.getNickname(),
@@ -72,6 +78,6 @@ public record LoginResponse(
                 user.getBirthYear(),
                 user.getGender()
         );
-        return LoginResponse.of(tokenInfo, userInfo);
+        return LoginResponse.of(tokenInfo, userInfo, agreementStatus);
     }
 }

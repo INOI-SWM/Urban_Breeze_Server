@@ -23,6 +23,7 @@ import com.ridingmate.api_server.domain.user.repository.UserRepository;
 import com.ridingmate.api_server.global.config.AppConfigProperties;
 import com.ridingmate.api_server.global.util.GeometryUtil;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.locationtech.jts.geom.Coordinate;
 import org.locationtech.jts.geom.LineString;
 import org.springframework.data.domain.*;
@@ -43,6 +44,7 @@ import java.io.InputStream;
 
 @Service
 @RequiredArgsConstructor
+@Slf4j
 public class RouteService {
 
     private final AppConfigProperties appConfigProperties;
@@ -408,6 +410,101 @@ public class RouteService {
             return GpxGenerator.generateGpxBytesFromCoordinates(coordinates, route.getTitle());
         } catch (Exception e) {
             throw new RuntimeException("GPX 파일 생성 중 오류가 발생했습니다: " + e.getMessage(), e);
+        }
+    }
+
+    /**
+     * 사용자 삭제 시 경로 데이터 처리
+     * - 경로 데이터는 법정 기간 동안 보존 (삭제하지 않음)
+     * - 사용자-경로 관계만 소프트 삭제 처리
+     */
+    @Transactional
+    public void handleUserDeletion(User user) {
+        log.info("경로 데이터 처리 시작: userId={}", user.getId());
+        
+        try {
+            // 1. 사용자-경로 관계 소프트 삭제 처리
+            markUserRoutesAsDeleted(user);
+            
+            // 2. 사용자가 생성한 경로들의 사용자 정보 마스킹
+            maskRouteUserInfo(user);
+            
+            // 3. 경로 GPS 로그 처리 (법정 보존 대상)
+            handleRouteGpsLogs(user);
+            
+            log.info("경로 데이터 처리 완료: userId={}", user.getId());
+        } catch (Exception e) {
+            log.error("경로 데이터 처리 중 오류 발생: userId={}", user.getId(), e);
+            // 경로 데이터 처리 실패해도 사용자 삭제는 계속 진행
+        }
+    }
+
+    /**
+     * 사용자-경로 관계 소프트 삭제 처리
+     */
+    private void markUserRoutesAsDeleted(User user) {
+        log.info("사용자-경로 관계 소프트 삭제 처리 시작: userId={}", user.getId());
+        
+        // 사용자의 모든 활성 경로 관계를 소프트 삭제
+        List<UserRoute> activeUserRoutes = userRouteRepository.findByUserAndIsDeleteFalse(user);
+        
+        for (UserRoute userRoute : activeUserRoutes) {
+            userRoute.markAsDeleted();
+            log.debug("사용자-경로 관계 소프트 삭제: userRouteId={}, routeId={}", 
+                userRoute.getId(), userRoute.getRoute().getId());
+        }
+        
+        log.info("사용자-경로 관계 소프트 삭제 처리 완료: userId={}, count={}", 
+            user.getId(), activeUserRoutes.size());
+    }
+
+    /**
+     * 경로의 사용자 정보 마스킹 처리
+     */
+    private void maskRouteUserInfo(User user) {
+        log.info("경로 사용자 정보 마스킹 처리 시작: userId={}", user.getId());
+
+        List<Route> userRoutes = routeRepository.findByUser(user);
+        
+        for (Route route : userRoutes) {
+            // 모든 개인정보 필드 마스킹 및 소프트 삭제 처리 (통합)
+            route.maskPersonalDataForDeletion();
+            
+            log.debug("경로 사용자 정보 마스킹 및 소프트 삭제: routeId={}", route.getId());
+        }
+        
+        log.info("경로 사용자 정보 마스킹 처리 완료: userId={}, count={}", 
+            user.getId(), userRoutes.size());
+    }
+
+    /**
+     * 경로 GPS 로그 처리
+     * - RouteGpsLog의 개인정보 마스킹 처리
+     * - GPS 데이터는 법정 보존 대상이지만 개인정보는 마스킹
+     */
+    private void handleRouteGpsLogs(User user) {
+        log.info("경로 GPS 로그 처리 시작: userId={}", user.getId());
+        
+        try {
+            List<Route> userRoutes = routeRepository.findByUser(user);
+            
+            for (Route route : userRoutes) {
+                // 경로의 모든 GPS 로그 조회
+                List<RouteGpsLog> routeGpsLogs = routeGpsLogRepository.findByRouteIdOrderByLogTimeAsc(route.getId());
+                
+                log.debug("경로 GPS 로그 마스킹 시작: routeId={}, count={}", 
+                    route.getId(), routeGpsLogs.size());
+                
+                // DB에서 모든 GPS 로그 하드 삭제
+                routeGpsLogRepository.deleteByRouteId(route.getId());
+                
+                log.debug("경로 GPS 로그 하드 삭제 완료: routeId={}", route.getId());
+            }
+            
+            log.info("경로 GPS 로그 처리 완료: userId={}, routeCount={}", 
+                user.getId(), userRoutes.size());
+        } catch (Exception e) {
+            log.warn("경로 GPS 로그 처리 중 오류: userId={}", user.getId(), e);
         }
     }
 

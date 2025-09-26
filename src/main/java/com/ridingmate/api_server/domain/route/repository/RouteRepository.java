@@ -26,6 +26,7 @@ public interface RouteRepository extends JpaRepository<Route, Long> {
         FROM Route r
         JOIN FETCH r.user
         WHERE r.id = :routeId
+        AND r.isDelete = false
         """)
     Optional<Route> findRouteWithUser(@Param("routeId") Long routeId);
 
@@ -34,6 +35,7 @@ public interface RouteRepository extends JpaRepository<Route, Long> {
         FROM Route r
         JOIN FETCH r.user
         WHERE r.routeId = :routeId
+        AND r.isDelete = false
         """)
     Optional<Route> findRouteWithUserByRouteId(@Param("routeId") UUID routeId);
 
@@ -41,6 +43,7 @@ public interface RouteRepository extends JpaRepository<Route, Long> {
         SELECT r
         FROM Route r
         WHERE r.routeId = :routeId
+        AND r.isDelete = false
         """)
     Optional<Route> findByRouteId(@Param("routeId") UUID routeId);
 
@@ -53,6 +56,7 @@ public interface RouteRepository extends JpaRepository<Route, Long> {
         WHERE ur.user = :user
         AND ur.relationType = :relationType
         AND ur.isDelete = false
+        AND r.isDelete = false
         AND (:minDistance IS NULL OR r.distance >= :minDistance)
         AND (:maxDistance IS NULL OR r.distance <= :maxDistance)
         AND (:minElevationGain IS NULL OR r.elevationGain >= :minElevationGain)
@@ -75,6 +79,7 @@ public interface RouteRepository extends JpaRepository<Route, Long> {
         WHERE ur.user = :user
         AND ur.relationType IN :relationTypes
         AND ur.isDelete = false
+        AND r.isDelete = false
         AND (:minDistance IS NULL OR r.distance >= :minDistance)
         AND (:maxDistance IS NULL OR r.distance <= :maxDistance)
         AND (:minElevationGain IS NULL OR r.elevationGain >= :minElevationGain)
@@ -96,6 +101,7 @@ public interface RouteRepository extends JpaRepository<Route, Long> {
         JOIN UserRoute ur ON ur.route = r
         WHERE ur.user = :user
         AND ur.isDelete = false
+        AND r.isDelete = false
         AND (:minDistance IS NULL OR r.distance >= :minDistance)
         AND (:maxDistance IS NULL OR r.distance <= :maxDistance)
         AND (:minElevationGain IS NULL OR r.elevationGain >= :minElevationGain)
@@ -114,7 +120,8 @@ public interface RouteRepository extends JpaRepository<Route, Long> {
     @Query("""
         SELECT r FROM Route r
         JOIN r.recommendation rec
-        WHERE (:recommendationTypes IS NULL OR rec.recommendationType IN :recommendationTypes)
+        WHERE r.isDelete = false
+        AND (:recommendationTypes IS NULL OR rec.recommendationType IN :recommendationTypes)
         AND (:regions IS NULL OR r.region IN :regions)
         AND (:difficulties IS NULL OR r.difficulty IN :difficulties)
         AND (:minDistance IS NULL OR r.distance >= :minDistance)
@@ -145,6 +152,7 @@ public interface RouteRepository extends JpaRepository<Route, Long> {
             JOIN UserRoute ur ON ur.route = r
             WHERE ur.user = :user
             AND ur.isDelete = false
+            AND r.isDelete = false
             """)
         RouteFilterRangeProjection findMaxDistanceAndElevationByUser(@Param("user") User user);
 
@@ -159,7 +167,13 @@ public interface RouteRepository extends JpaRepository<Route, Long> {
                 MAX(r.elevationGain) as maxElevationGain
             FROM Route r
             JOIN r.recommendation rec
+            WHERE r.isDelete = false
             """)
         RouteFilterRangeProjection findMaxDistanceAndElevationForRecommendations();
+
+    /**
+     * 특정 사용자가 생성한 모든 경로 조회
+     */
+    List<Route> findByUser(User user);
 
 }
