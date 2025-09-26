@@ -176,4 +176,34 @@ public class Route extends BaseTimeEntity {
     public void updateDescription(String description) {
         this.description = description;
     }
+
+    /**
+     * 경로 개인정보 마스킹 및 삭제 처리
+     * - 모든 개인정보 관련 필드 마스킹/제거
+     */
+    public void maskPersonalDataForDeletion() {
+        // 1. 제목 마스킹 (개인정보 보호)
+        this.title = "탈퇴한 사용자의 경로";
+        
+        // 2. 설명 제거 (개인정보 보호)
+        this.description = null;
+        
+        // 3. 썸네일 이미지 경로 제거 (개인정보 보호)
+        this.thumbnailImagePath = null;
+        
+        // 4. GPX 파일 경로 제거 (개인정보 보호)
+        this.gpxFilePath = null;
+        
+        // 5. 거리/시간/고도 데이터 마스킹 (개인정보 보호)
+        this.distance = 0.0;
+        this.duration = Duration.ZERO;
+        this.elevationGain = 0.0;
+        
+        // 6. 좌표 정보 마스킹 (개인정보 보호)
+        this.maxLat = null;
+        this.maxLon = null;
+        this.minLat = null;
+        this.minLon = null;
+        this.routeLine = null;
+    }
 }

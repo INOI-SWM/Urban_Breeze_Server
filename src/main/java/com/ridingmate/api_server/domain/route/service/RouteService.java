@@ -429,6 +429,9 @@ public class RouteService {
             // 2. 사용자가 생성한 경로들의 사용자 정보 마스킹
             maskRouteUserInfo(user);
             
+            // 3. 경로 GPS 로그 처리 (법정 보존 대상)
+            handleRouteGpsLogs(user);
+            
             log.info("경로 데이터 처리 완료: userId={}", user.getId());
         } catch (Exception e) {
             log.error("경로 데이터 처리 중 오류 발생: userId={}", user.getId(), e);
@@ -464,19 +467,48 @@ public class RouteService {
         List<Route> userRoutes = routeRepository.findByUser(user);
         
         for (Route route : userRoutes) {
-            // 경로 제목 마스킹 (개인정보 보호)
-            String maskedTitle = "탈퇴한 사용자의 경로";
-            route.updateTitle(maskedTitle);
-            
-            // 경로 설명 삭제
-            route.updateDescription(null);
+            // 경로 개인정보 마스킹 및 삭제 처리 (통합)
+            route.maskPersonalDataForDeletion();
             
             log.debug("경로 사용자 정보 마스킹: routeId={}, title={}", 
-                route.getId(), maskedTitle);
+                route.getId(), route.getTitle());
         }
         
         log.info("경로 사용자 정보 마스킹 처리 완료: userId={}, count={}", 
             user.getId(), userRoutes.size());
+    }
+
+    /**
+     * 경로 GPS 로그 처리
+     * - RouteGpsLog의 개인정보 마스킹 처리
+     * - GPS 데이터는 법정 보존 대상이지만 개인정보는 마스킹
+     */
+    private void handleRouteGpsLogs(User user) {
+        log.info("경로 GPS 로그 처리 시작: userId={}", user.getId());
+        
+        try {
+            List<Route> userRoutes = routeRepository.findByUser(user);
+            
+            for (Route route : userRoutes) {
+                // 경로의 모든 GPS 로그 조회
+                List<RouteGpsLog> routeGpsLogs = routeGpsLogRepository.findByRouteIdOrderByLogTimeAsc(route.getId());
+                
+                log.debug("경로 GPS 로그 마스킹 시작: routeId={}, count={}", 
+                    route.getId(), routeGpsLogs.size());
+                
+                for (RouteGpsLog routeGpsLog : routeGpsLogs) {
+                    // GPS 로그의 개인정보 마스킹 처리
+                    routeGpsLog.maskPersonalDataForDeletion();
+                }
+                
+                log.debug("경로 GPS 로그 마스킹 완료: routeId={}", route.getId());
+            }
+            
+            log.info("경로 GPS 로그 처리 완료: userId={}, routeCount={}", 
+                user.getId(), userRoutes.size());
+        } catch (Exception e) {
+            log.warn("경로 GPS 로그 처리 중 오류: userId={}", user.getId(), e);
+        }
     }
 
 }
