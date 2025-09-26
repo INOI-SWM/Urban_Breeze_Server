@@ -70,4 +70,30 @@ public class ActivityGpsLog {
         this.cadence = cadence;
         this.power = power;
     }
+
+    /**
+     * GPS 로그 개인정보 마스킹 처리
+     * - 좌표 데이터: 즉시 파기 (원본 위치)
+     * - 시간 정보: 즉시 파기 (동선 복원 가능)
+     * - 생체 정보: 즉시 파기 (건강/민감 성격)
+     * - 성능 데이터: 즉시 파기 (개인 성능 특성)
+     */
+    public void maskPersonalData() {
+        // 좌표 데이터 즉시 파기 (원본 위치)
+        this.latitude = null;
+        this.longitude = null;
+        this.elevation = null;
+        
+        // 시간 정보 즉시 파기 (동선 복원 가능)
+        this.logTime = null;
+        
+        // 생체 정보 즉시 파기 (건강/민감 성격)
+        this.heartRate = null;
+        
+        // 성능 데이터 즉시 파기 (개인 성능 특성)
+        this.speed = null;
+        this.distance = null;
+        this.cadence = null;
+        this.power = null;
+    }
 }

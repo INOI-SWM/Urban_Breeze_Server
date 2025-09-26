@@ -39,7 +39,7 @@ public interface ActivityGpsLogRepository extends JpaRepository<ActivityGpsLog, 
     @Query("""
         SELECT agl
         FROM ActivityGpsLog agl
-        WHERE agl.activity = :activity 
+        WHERE agl.activity = :activity
         ORDER BY agl.logTime ASC
         """)
     List<ActivityGpsLog> findGpsLogsByActivity(@Param("activity") Activity activity);
@@ -63,4 +63,11 @@ public interface ActivityGpsLogRepository extends JpaRepository<ActivityGpsLog, 
         ORDER BY agl.logTime ASC
         """)
     List<GpsLogProjection> findGpsLogProjectionsByActivity(@Param("activity") Activity activity);
+
+    /**
+     * 특정 활동의 모든 GPS 로그를 timestamp 순으로 조회 (Activity ID로)
+     * @param activityId 활동 ID
+     * @return GPS 로그 리스트
+     */
+    List<ActivityGpsLog> findByActivityIdOrderByLogTimeAsc(Long activityId);
 }

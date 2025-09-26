@@ -12,6 +12,7 @@ import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
 import java.time.LocalDateTime;
+import java.util.List;
 
 @Repository
 public interface ActivityRepository extends JpaRepository<Activity, Long> {
@@ -24,7 +25,7 @@ public interface ActivityRepository extends JpaRepository<Activity, Long> {
      */
     @Query("SELECT a FROM Activity a " +
            "JOIN FETCH a.user " +
-           "WHERE a.user = :user")
+           "WHERE a.user = :user AND a.isDelete = false")
     Page<Activity> findByUserWithSort(@Param("user") User user, Pageable pageable);
 
     /**
@@ -34,7 +35,7 @@ public interface ActivityRepository extends JpaRepository<Activity, Long> {
      */
     @Query("SELECT a FROM Activity a " +
            "JOIN FETCH a.user " +
-           "WHERE a.id = :activityId")
+           "WHERE a.id = :activityId AND a.isDelete = false")
     Activity findActivityWithUser(@Param("activityId") Long activityId);
 
     /**
@@ -46,7 +47,7 @@ public interface ActivityRepository extends JpaRepository<Activity, Long> {
             MAX(a.startedAt)
         ) 
         FROM Activity a 
-        WHERE a.user = :user
+        WHERE a.user = :user AND a.isDelete = false
         """)
     ActivityDateRangeProjection findFirstAndLastActivityDate(@Param("user") User user);
 
@@ -64,6 +65,7 @@ public interface ActivityRepository extends JpaRepository<Activity, Long> {
         WHERE user_id = :userId 
         AND started_at >= :startDate 
         AND started_at < :endDate
+        AND is_delete = false
         """, nativeQuery = true)
     ActivityStatsProjection findActivityStatsByPeriod(@Param("userId") Long userId,
                                                       @Param("startDate") LocalDateTime startDate,
@@ -80,8 +82,18 @@ public interface ActivityRepository extends JpaRepository<Activity, Long> {
             CAST(COALESCE(SUM(elevation_gain), 0.0) AS DOUBLE PRECISION) as totalElevation,
             CAST(ROUND(COALESCE(SUM(duration), 0.0) / 1000000000.0) AS BIGINT) as totalDurationSeconds
         FROM activities 
-        WHERE user_id = :userId
+        WHERE user_id = :userId AND is_delete = false
         """, nativeQuery = true)
     ActivityStatsProjection findOverallActivityStats(@Param("userId") Long userId);
+
+    /**
+     * 특정 사용자의 모든 활동 조회 (삭제된 활동 포함)
+     */
+    List<Activity> findByUser(User user);
+
+    /**
+     * 특정 사용자의 활성 활동 조회 (삭제되지 않은 활동만)
+     */
+    List<Activity> findByUserAndIsDeleteFalse(User user);
 
 }

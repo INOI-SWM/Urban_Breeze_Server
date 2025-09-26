@@ -72,4 +72,10 @@ public interface ActivityImageRepository extends JpaRepository<ActivityImage, Lo
            "WHERE ai.activity.id IN :activityIds " +
            "GROUP BY ai.activity.id")
     List<Object[]> countByActivityIds(@Param("activityIds") List<Long> activityIds);
+
+    /**
+     * 특정 활동의 모든 이미지 삭제
+     * @param activityId 활동 ID
+     */
+    void deleteByActivityId(Long activityId);
 }

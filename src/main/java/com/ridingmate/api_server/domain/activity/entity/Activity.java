@@ -88,6 +88,12 @@ public class Activity extends BaseTimeEntity {
     @Column(name = "max_power")
     private Integer maxPower;
 
+    /**
+     * 삭제 여부 (소프트 삭제)
+     */
+    @Column(name = "is_delete", nullable = false)
+    private Boolean isDelete = false;
+
     @Builder
     private Activity(User user, String title, Double distance,
                      Duration duration, Double elevationGain,
@@ -123,5 +129,44 @@ public class Activity extends BaseTimeEntity {
      */
     public void updateTitle(String title) {
         this.title = title;
+    }
+
+    /**
+     * 소프트 삭제 처리
+     */
+    public void markAsDeleted() {
+        this.isDelete = true;
+    }
+
+    /**
+     * 삭제 여부 확인
+     */
+    public boolean isDeleted() {
+        return this.isDelete;
+    }
+
+    /**
+     * 활동 개인정보 마스킹 및 삭제 처리
+     * - 모든 개인정보 관련 필드 마스킹/제거
+     * - 통계용 데이터만 보존
+     */
+    public void maskPersonalDataForDeletion() {
+        // 1. 생체 정보 즉시 파기 (건강/민감 성격)
+        this.averageHeartRate = null;
+        this.maxHeartRate = null;
+        
+        // 2. 성능 데이터 비식별 (개인 성능 특성)
+        this.cadence = null;
+        this.averagePower = null;
+        this.maxPower = null;
+        
+        // 3. 거리/고도 데이터 비식별 (집계 또는 별도 동의)
+        this.distance = 0.0;
+        this.duration = Duration.ZERO;
+        this.elevationGain = 0.0;
+        
+        // 4. 시간 정보 제거 (별도 접근 로그 엔티티로 관리)
+        this.startedAt = null;
+        this.endedAt = null;
     }
 }
