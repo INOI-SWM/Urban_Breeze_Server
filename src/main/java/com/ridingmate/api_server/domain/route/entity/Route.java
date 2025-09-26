@@ -32,7 +32,7 @@ public class Route extends BaseTimeEntity {
     @JoinColumn(name = "user_id", nullable = false)
     private User user;
 
-    @Column(name = "title", nullable = false)
+    @Column(name = "title")
     private String title;
 
     @Column(name = "description")
@@ -41,22 +41,22 @@ public class Route extends BaseTimeEntity {
     /**
      * 경로 총 거리 (단위: 미터)
      */
-    @Column(name = "distance", nullable = false)
+    @Column(name = "distance")
     private Double distance;
 
     /**
      * 총 소요 시간 (단위: 초)
      */
-    @Column(name = "duration", nullable = false)
+    @Column(name = "duration")
     private Duration duration;
 
     /**
      * 총 상승 고도 (단위: 미터)
      */
-    @Column(name = "elevation_gain", nullable = false)
+    @Column(name = "elevation_gain")
     private Double elevationGain;
 
-    @Column(name = "route_id", nullable = false, unique = true)
+    @Column(name = "route_id", unique = true)
     private UUID routeId;
 
     @Enumerated(EnumType.STRING)
@@ -77,19 +77,19 @@ public class Route extends BaseTimeEntity {
     @Column(name = "gpx_file_path")
     private String gpxFilePath;
 
-    @Column(name = "max_lat", nullable = false)
+    @Column(name = "max_lat")
     private Double maxLat;
 
-    @Column(name = "max_lon", nullable = false)
+    @Column(name = "max_lon")
     private Double maxLon;
 
-    @Column(name = "min_lat", nullable = false)
+    @Column(name = "min_lat")
     private Double minLat;
 
-    @Column(name = "min_lon", nullable = false)
+    @Column(name = "min_lon")
     private Double minLon;
 
-    @Column(name = "route_line", nullable = false, columnDefinition = "geometry(LineString, 4326)")
+    @Column(name = "route_line", columnDefinition = "geometry(LineString, 4326)")
     private LineString routeLine;
 
     @OneToOne(mappedBy = "route", cascade = CascadeType.ALL)

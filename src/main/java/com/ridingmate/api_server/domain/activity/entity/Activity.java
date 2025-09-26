@@ -25,31 +25,31 @@ public class Activity extends BaseTimeEntity {
     @JoinColumn(name = "user_id", nullable = false)
     private User user;
 
-    @Column(name = "title", nullable = false)
+    @Column(name = "title")
     private String title;
 
-    @Column(name = "started_at", nullable = false, updatable = false)
+    @Column(name = "started_at", updatable = false)
     private LocalDateTime startedAt;
 
-    @Column(name = "ended_at", nullable = false, updatable = false)
+    @Column(name = "ended_at",updatable = false)
     private LocalDateTime endedAt;
 
     /**
      * 경로 총 거리 (단위: 미터)
      */
-    @Column(name = "distance", nullable = false)
+    @Column(name = "distance")
     private Double distance;
 
     /**
      * 총 소요 시간 (단위: 초)
      */
-    @Column(name = "duration", nullable = false)
+    @Column(name = "duration")
     private Duration duration;
 
     /**
      * 총 상승 고도 (단위: 미터)
      */
-    @Column(name = "elevation_gain", nullable = false)
+    @Column(name = "elevation_gain")
     private Double elevationGain;
 
     /**

@@ -26,13 +26,13 @@ public class RouteGpsLog {
     @JoinColumn(name = "route_id", nullable = false)
     private Route route;
 
-    @Column(name = "log_time")
+    @Column(name = "log_time", nullable = false)
     private LocalDateTime logTime;
 
-    @Column(name = "longitude")
+    @Column(name = "longitude", nullable = false)
     private Double longitude;
 
-    @Column(name = "latitude")
+    @Column(name = "latitude", nullable = false)
     private Double latitude;
 
     @Column(name = "elevation")
