@@ -2,6 +2,7 @@ package com.ridingmate.api_server.domain.route.controller;
 
 import com.ridingmate.api_server.domain.auth.exception.AuthErrorCode;
 import com.ridingmate.api_server.domain.auth.security.AuthUser;
+import com.ridingmate.api_server.domain.route.dto.request.AddRouteToMyRoutesRequest;
 import com.ridingmate.api_server.domain.route.dto.request.CreateRouteRequest;
 import com.ridingmate.api_server.domain.route.dto.request.RouteListRequest;
 import com.ridingmate.api_server.domain.route.dto.request.RouteSegmentRequest;
@@ -115,5 +116,20 @@ public class RouteController implements RouteApi{
                 .header("Content-Type", downloadInfo.contentType())
                 .header("Content-Disposition", "attachment; filename=\"" + encodedFileName + "\"")
                 .body(downloadInfo.content());
+    }
+
+    @Override
+    @PostMapping("/my-routes")
+    @ApiErrorCodeExample(RouteCommonErrorCode.class)
+    @ApiErrorCodeExample(AuthErrorCode.class)
+    public ResponseEntity<CommonResponse<Void>> addRouteToMyRoutes(
+            @AuthenticationPrincipal AuthUser authUser,
+            @Valid @RequestBody AddRouteToMyRoutesRequest request) {
+        
+        routeFacade.addRouteToMyRoutes(authUser.id(), request);
+        
+        return ResponseEntity
+                .status(RouteSuccessCode.ROUTE_ADDED_TO_MY_ROUTES.getStatus())
+                .body(CommonResponse.success(RouteSuccessCode.ROUTE_ADDED_TO_MY_ROUTES, null));
     }
 }

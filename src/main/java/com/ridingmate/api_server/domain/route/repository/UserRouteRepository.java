@@ -22,4 +22,9 @@ public interface UserRouteRepository extends JpaRepository<UserRoute, Long> {
      * 특정 사용자의 모든 활성 경로 관계 조회
      */
     List<UserRoute> findByUserAndIsDeleteFalse(User user);
+
+    /**
+     * 특정 사용자와 경로 간의 활성 관계 존재 여부 확인
+     */
+    boolean existsByUserAndRouteAndIsDeleteFalse(User user, Route route);
 } 

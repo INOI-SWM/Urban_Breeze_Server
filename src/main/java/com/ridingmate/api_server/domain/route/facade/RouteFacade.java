@@ -3,6 +3,7 @@ package com.ridingmate.api_server.domain.route.facade;
 import com.ggalmazor.ltdownsampling.Point;
 import com.ridingmate.api_server.domain.auth.security.AuthUser;
 import com.ridingmate.api_server.domain.route.dto.FilterRangeInfo;
+import com.ridingmate.api_server.domain.route.dto.request.AddRouteToMyRoutesRequest;
 import com.ridingmate.api_server.domain.route.dto.request.CreateRouteRequest;
 import com.ridingmate.api_server.domain.route.dto.request.RouteSegmentRequest;
 import com.ridingmate.api_server.domain.route.dto.request.RouteListRequest;
@@ -127,6 +128,14 @@ public class RouteFacade {
         String fileName = routeService.generateGpxFileName(route);
         
         return GpxDownloadInfo.of(content, fileName);
+    }
+
+    /**
+     * 내 경로에 추가
+     */
+    public void addRouteToMyRoutes(Long userId, AddRouteToMyRoutesRequest request) {
+        User user = userService.getUser(userId);
+        routeService.addRouteToMyRoutes(user, request);
     }
 
 }

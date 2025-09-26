@@ -3,6 +3,7 @@ package com.ridingmate.api_server.domain.route.service;
 import com.ridingmate.api_server.domain.auth.exception.AuthErrorCode;
 import com.ridingmate.api_server.domain.auth.exception.AuthException;
 import com.ridingmate.api_server.domain.route.dto.projection.RouteFilterRangeProjection;
+import com.ridingmate.api_server.domain.route.dto.request.AddRouteToMyRoutesRequest;
 import com.ridingmate.api_server.domain.route.dto.request.CreateRouteRequest;
 import com.ridingmate.api_server.domain.route.dto.request.RecommendationListRequest;
 import com.ridingmate.api_server.domain.route.dto.FilterRangeInfo;
@@ -14,7 +15,6 @@ import com.ridingmate.api_server.domain.route.enums.RouteRelationType;
 import com.ridingmate.api_server.domain.route.exception.code.RouteCommonErrorCode;
 import com.ridingmate.api_server.domain.route.exception.RouteException;
 import com.ridingmate.api_server.domain.route.exception.code.RouteDetailErrorCode;
-import com.ridingmate.api_server.domain.route.exception.code.RouteShareErrorCode;
 import com.ridingmate.api_server.domain.route.repository.RouteGpsLogRepository;
 import com.ridingmate.api_server.domain.route.repository.RouteRepository;
 import com.ridingmate.api_server.domain.route.repository.UserRouteRepository;
@@ -506,6 +506,37 @@ public class RouteService {
         } catch (Exception e) {
             log.warn("경로 GPS 로그 처리 중 오류: userId={}", user.getId(), e);
         }
+    }
+
+    /**
+     * 내 경로에 추가
+     */
+    @Transactional
+    public void addRouteToMyRoutes(User user, AddRouteToMyRoutesRequest request) {
+        log.info("내 경로에 추가 시작: userId={}, routeId={}", user.getId(), request.getRouteId());
+        
+        // 2. 경로 조회
+        Route route = routeRepository.findByRouteId(request.getRouteId())
+                .orElseThrow(() -> new RouteException(RouteCommonErrorCode.ROUTE_NOT_FOUND));
+        
+        // 3. 이미 추가된 경로인지 확인
+        boolean alreadyExists = userRouteRepository.existsByUserAndRouteAndIsDeleteFalse(user, route);
+        if (alreadyExists) {
+            throw new RouteException(RouteCommonErrorCode.ROUTE_ALREADY_ADDED);
+        }
+        
+        // 4. UserRoute 생성 (SHARED 타입으로)
+        UserRoute userRoute = UserRoute.builder()
+                .user(user)
+                .route(route)
+                .relationType(RouteRelationType.SHARED)
+                .lastViewedAt(LocalDateTime.now())
+                .sharedByUserId(route.getUser().getId())
+                .build();
+        
+        userRouteRepository.save(userRoute);
+        
+        log.info("내 경로에 추가 완료: userId={}, routeId={}", user.getId(), request.getRouteId());
     }
 
 }

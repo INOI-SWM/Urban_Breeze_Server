@@ -1,6 +1,7 @@
 package com.ridingmate.api_server.domain.route.controller;
 
 import com.ridingmate.api_server.domain.auth.security.AuthUser;
+import com.ridingmate.api_server.domain.route.dto.request.AddRouteToMyRoutesRequest;
 import com.ridingmate.api_server.domain.route.dto.request.CreateRouteRequest;
 import com.ridingmate.api_server.domain.route.dto.request.RouteListRequest;
 import com.ridingmate.api_server.domain.route.dto.request.RouteSegmentRequest;
@@ -152,5 +153,19 @@ public interface RouteApi {
     ResponseEntity<byte[]> downloadGpxFile(
             @Parameter(description = "경로 ID")
             @PathVariable String routeId
+    );
+
+    @Operation(
+            summary = "내 경로에 추가",
+            description = "공유받은 경로를 내 경로 목록에 추가합니다."
+    )
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "성공: 경로 추가 완료"),
+            @ApiResponse(responseCode = "404", description = "경로를 찾을 수 없습니다."),
+            @ApiResponse(responseCode = "409", description = "이미 추가된 경로입니다."),
+    })
+    ResponseEntity<CommonResponse<Void>> addRouteToMyRoutes(
+            @AuthenticationPrincipal AuthUser authUser,
+            @Valid @RequestBody AddRouteToMyRoutesRequest request
     );
 }
