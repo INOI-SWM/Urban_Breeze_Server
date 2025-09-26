@@ -204,39 +204,41 @@ public class UserService {
     }
 
     /**
-     * 사용자 삭제 처리 (소프트 삭제)
+     * 사용자 삭제 처리 (소프트 삭제 + 개인정보 마스킹 + 관련 데이터 처리)
      */
     @Transactional
-    public void deleteUser(Long userId) {
-        User user = getUser(userId);
+    public void deleteUser(User user) {
+        log.info("사용자 삭제 요청 시작: userId={}", user.getId());
 
+        // 2. 이미 삭제된 사용자인지 확인
         if (user.isDeleted()) {
-            log.warn("이미 삭제된 사용자입니다: userId={}", userId);
+            log.warn("이미 삭제된 사용자입니다: userId={}", user.getId());
             throw new UserException(UserErrorCode.USER_ALREADY_DELETED);
         }
 
+        // 3. 기존 프로필 이미지 S3에서 삭제
+        deleteProfileImageFromS3(user);
+
+        // 4. 사용자 삭제 처리 (소프트 삭제 + 개인정보 마스킹)
         user.delete();
 
-        //관련 데이터 처리
-        handleRelatedData(userId);
-
-        log.info("사용자 삭제 완료: userId={}, deletedAt={}", userId, user.getDeletedAt());
+        log.info("사용자 삭제 완료: userId={}, deletedAt={}", user.getId(), user.getDeletedAt());
     }
 
     /**
-     * 관련 데이터 처리
-     * - 경로 데이터: 보존 (법정 의무)
-     * - 활동 데이터: 보존 (법정 의무)
-     * - 개인정보: 이미 마스킹됨
+     * S3에서 기존 프로필 이미지 삭제
      */
-    private void handleRelatedData(Long userId) {
-        log.info("관련 데이터 처리 시작: userId={}", userId);
-
-        // TODO: 필요시 추가 처리 로직 구현
-        // - 경로 데이터 보존 확인
-        // - 활동 데이터 보존 확인
-        // - 제3자 서비스 연동 해제
-
-        log.info("관련 데이터 처리 완료: userId={}", userId);
+    private void deleteProfileImageFromS3(User user) {
+        String currentImagePath = user.getProfileImagePath();
+        if (currentImagePath != null && !currentImagePath.equals(User.DEFAULT_PROFILE_IMAGE_PATH)) {
+            try {
+                s3Manager.deleteFile(currentImagePath);
+                log.info("기존 프로필 이미지 S3에서 삭제 완료: {}", currentImagePath);
+            } catch (Exception e) {
+                log.warn("기존 프로필 이미지 S3 삭제 실패: {}", currentImagePath, e);
+                // S3 삭제 실패해도 사용자 삭제는 계속 진행
+            }
+        }
     }
+
 } 
