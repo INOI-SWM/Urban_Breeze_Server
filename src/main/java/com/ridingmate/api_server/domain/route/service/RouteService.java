@@ -467,14 +467,10 @@ public class RouteService {
         List<Route> userRoutes = routeRepository.findByUser(user);
         
         for (Route route : userRoutes) {
-            // 경로 개인정보 마스킹 및 삭제 처리 (통합)
+            // 모든 개인정보 필드 마스킹 및 소프트 삭제 처리 (통합)
             route.maskPersonalDataForDeletion();
             
-            // 경로 소프트 삭제 처리
-            route.markAsDeleted();
-            
-            log.debug("경로 사용자 정보 마스킹 및 소프트 삭제: routeId={}, title={}", 
-                route.getId(), route.getTitle());
+            log.debug("경로 사용자 정보 마스킹 및 소프트 삭제: routeId={}", route.getId());
         }
         
         log.info("경로 사용자 정보 마스킹 처리 완료: userId={}, count={}", 
@@ -499,12 +495,10 @@ public class RouteService {
                 log.debug("경로 GPS 로그 마스킹 시작: routeId={}, count={}", 
                     route.getId(), routeGpsLogs.size());
                 
-                for (RouteGpsLog routeGpsLog : routeGpsLogs) {
-                    // GPS 로그의 개인정보 마스킹 처리
-                    routeGpsLog.maskPersonalDataForDeletion();
-                }
+                // DB에서 모든 GPS 로그 하드 삭제
+                routeGpsLogRepository.deleteByRouteId(route.getId());
                 
-                log.debug("경로 GPS 로그 마스킹 완료: routeId={}", route.getId());
+                log.debug("경로 GPS 로그 하드 삭제 완료: routeId={}", route.getId());
             }
             
             log.info("경로 GPS 로그 처리 완료: userId={}, routeCount={}", 
