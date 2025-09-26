@@ -1,5 +1,7 @@
 package com.ridingmate.api_server.domain.route.entity;
 
+import com.ridingmate.api_server.domain.route.exception.RouteException;
+import com.ridingmate.api_server.domain.route.exception.code.RouteCreationErrorCode;
 import jakarta.persistence.*;
 import lombok.AccessLevel;
 import lombok.Builder;
@@ -24,13 +26,13 @@ public class RouteGpsLog {
     @JoinColumn(name = "route_id", nullable = false)
     private Route route;
 
-    @Column(name = "log_time", nullable = false)
+    @Column(name = "log_time")
     private LocalDateTime logTime;
 
-    @Column(name = "longitude", nullable = false)
+    @Column(name = "longitude")
     private Double longitude;
 
-    @Column(name = "latitude", nullable = false)
+    @Column(name = "latitude")
     private Double latitude;
 
     @Column(name = "elevation")
@@ -38,6 +40,11 @@ public class RouteGpsLog {
 
     @Builder
     private RouteGpsLog(Route route, Double longitude, Double latitude, Double elevation, LocalDateTime logTime){
+        // GPS 로그 필수 값 검증
+        if (latitude == null || longitude == null || logTime == null) {
+            throw new RouteException(RouteCreationErrorCode.INVALID_GPS_LOG_COORDINATES);
+        }
+        
         this.route = route;
         this.longitude = longitude;
         this.latitude = latitude;
