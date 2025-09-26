@@ -1,5 +1,8 @@
 package com.ridingmate.api_server.domain.activity.entity;
 
+import com.ridingmate.api_server.domain.activity.exception.ActivityException;
+import com.ridingmate.api_server.domain.activity.exception.code.ActivityCommonErrorCode;
+import com.ridingmate.api_server.domain.activity.exception.code.ActivityValidationErrorCode;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.NotBlank;
 import lombok.AccessLevel;
@@ -26,13 +29,13 @@ public class ActivityGpsLog {
     @JoinColumn(name = "activity_id", nullable = false)
     private Activity activity;
 
-    @Column(name = "log_time", nullable = false)
+    @Column(name = "log_time")
     private LocalDateTime logTime;
 
-    @Column(name = "latitude", nullable = false)
+    @Column(name = "latitude")
     private Double latitude;
 
-    @Column(name = "longitude", nullable = false)
+    @Column(name = "longitude")
     private Double longitude;
 
     @Column(name = "elevation")
@@ -59,6 +62,11 @@ public class ActivityGpsLog {
                            Double speed, Double distance, Double heartRate, 
                            Double cadence, Double power
     ){
+
+        if (latitude == null || longitude == null || logTime == null) {
+            throw new ActivityException(ActivityValidationErrorCode.INVALID_GPS_LOG_COORDINATES);
+        }
+
         this.activity = activity;
         this.logTime = logTime;
         this.latitude = latitude;

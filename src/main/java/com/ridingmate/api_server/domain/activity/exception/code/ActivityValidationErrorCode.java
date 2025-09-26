@@ -16,6 +16,7 @@ public enum ActivityValidationErrorCode implements ErrorCode {
     FUTURE_ACTIVITY_NOT_ALLOWED(HttpStatus.BAD_REQUEST, "FUTURE_ACTIVITY_NOT_ALLOWED", "미래 시간의 활동은 생성할 수 없습니다."),
     INVALID_MONTH_PERIOD(HttpStatus.BAD_REQUEST, "INVALID_MONTH_PERIOD", "월간 통계는 정확한 월의 시작일(1일)과 마지막일을 입력해야 합니다."),
     INVALID_YEAR_PERIOD(HttpStatus.BAD_REQUEST, "INVALID_YEAR_PERIOD", "연간 통계는 정확한 연도의 시작일(1월 1일)과 마지막일(12월 31일)을 입력해야 합니다."),
+    INVALID_GPS_LOG_COORDINATES(HttpStatus.BAD_REQUEST, "INVALID_GPS_LOG_COORDINATES", "GPS 로그의 좌표와 시간은 필수입니다."),
     ;
 
     private final HttpStatus status;
