@@ -470,7 +470,10 @@ public class RouteService {
             // 경로 개인정보 마스킹 및 삭제 처리 (통합)
             route.maskPersonalDataForDeletion();
             
-            log.debug("경로 사용자 정보 마스킹: routeId={}, title={}", 
+            // 경로 소프트 삭제 처리
+            route.markAsDeleted();
+            
+            log.debug("경로 사용자 정보 마스킹 및 소프트 삭제: routeId={}, title={}", 
                 route.getId(), route.getTitle());
         }
         

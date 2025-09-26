@@ -95,6 +95,9 @@ public class Route extends BaseTimeEntity {
     @OneToOne(mappedBy = "route", cascade = CascadeType.ALL)
     private Recommendation recommendation;
 
+    @Column(name = "is_delete", nullable = false)
+    private Boolean isDelete = false;
+
 
     @Builder
     private Route(User user, String title, String description, Double distance, Duration duration, Double elevationGain,
@@ -205,5 +208,19 @@ public class Route extends BaseTimeEntity {
         this.minLat = null;
         this.minLon = null;
         this.routeLine = null;
+    }
+
+    /**
+     * 경로 소프트 삭제 처리
+     */
+    public void markAsDeleted() {
+        this.isDelete = true;
+    }
+
+    /**
+     * 경로 삭제 여부 확인
+     */
+    public boolean isDeleted() {
+        return this.isDelete;
     }
 }
