@@ -54,4 +54,8 @@ public class TerraUser extends BaseTimeEntity {
     public void setActive(){
         isActive = true;
     }
+
+    public void setInactive(){
+        isActive = false;
+    }
 }
