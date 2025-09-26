@@ -4,6 +4,7 @@ import com.ridingmate.api_server.domain.auth.exception.AuthErrorCode;
 import com.ridingmate.api_server.domain.auth.exception.AuthException;
 import com.ridingmate.api_server.domain.route.dto.projection.RouteFilterRangeProjection;
 import com.ridingmate.api_server.domain.route.dto.request.AddRouteToMyRoutesRequest;
+import com.ridingmate.api_server.domain.route.dto.request.CopyRecommendedRouteRequest;
 import com.ridingmate.api_server.domain.route.dto.request.CreateRouteRequest;
 import com.ridingmate.api_server.domain.route.dto.request.RecommendationListRequest;
 import com.ridingmate.api_server.domain.route.dto.FilterRangeInfo;
@@ -537,6 +538,85 @@ public class RouteService {
         userRouteRepository.save(userRoute);
         
         log.info("내 경로에 추가 완료: userId={}, routeId={}", user.getId(), request.getRouteId());
+    }
+
+    /**
+     * 추천 코스 복사 (깊은 복사)
+     */
+    @Transactional
+    public Route copyRecommendedRoute(User user, CopyRecommendedRouteRequest request) {
+        log.info("추천 코스 복사 시작: userId={}, originalRouteId={}", user.getId(), request.getRouteId());
+        
+        // 1. 원본 경로 조회
+        Route originalRoute = routeRepository.findByRouteId(request.getRouteId())
+                .orElseThrow(() -> new RouteException(RouteCommonErrorCode.ROUTE_NOT_FOUND));
+        
+        // 2. 새로운 경로 생성 (깊은 복사)
+        Route newRoute = createRouteCopy(user, originalRoute, request.getNewTitle());
+        Route savedRoute = routeRepository.save(newRoute);
+        
+        // 3. GPS 로그 복사
+        copyRouteGpsLogs(originalRoute, savedRoute);
+        
+        // 4. UserRoute 생성 (OWNER 타입)
+        UserRoute userRoute = UserRoute.builder()
+                .user(user)
+                .route(savedRoute)
+                .relationType(RouteRelationType.OWNER)
+                .lastViewedAt(LocalDateTime.now())
+                .build();
+        userRouteRepository.save(userRoute);
+        
+        log.info("추천 코스 복사 완료: userId={}, newRouteId={}", user.getId(), savedRoute.getId());
+        return savedRoute;
+    }
+
+    /**
+     * 경로 깊은 복사 생성
+     */
+    private Route createRouteCopy(User user, Route originalRoute, String newTitle) {
+        String finalTitle = newTitle != null && !newTitle.trim().isEmpty() 
+                ? newTitle.trim() 
+                : originalRoute.getTitle() + " (복사본)";
+        
+        return Route.builder()
+                .user(user)
+                .title(finalTitle)
+                .description(originalRoute.getDescription())
+                .distance(originalRoute.getDistance())
+                .duration(originalRoute.getDuration())
+                .elevationGain(originalRoute.getElevationGain())
+                .maxLat(originalRoute.getMaxLat())
+                .maxLon(originalRoute.getMaxLon())
+                .minLat(originalRoute.getMinLat())
+                .minLon(originalRoute.getMinLon())
+                .routeLine(originalRoute.getRouteLine())
+                .build();
+    }
+
+    /**
+     * GPS 로그 복사
+     */
+    private void copyRouteGpsLogs(Route originalRoute, Route newRoute) {
+        log.debug("GPS 로그 복사 시작: originalRouteId={}, newRouteId={}", 
+                originalRoute.getId(), newRoute.getId());
+        
+        List<RouteGpsLog> originalGpsLogs = routeGpsLogRepository.findByRouteIdOrderByLogTimeAsc(originalRoute.getId());
+        
+        for (RouteGpsLog originalLog : originalGpsLogs) {
+            RouteGpsLog newGpsLog = RouteGpsLog.builder()
+                    .route(newRoute)
+                    .longitude(originalLog.getLongitude())
+                    .latitude(originalLog.getLatitude())
+                    .elevation(originalLog.getElevation())
+                    .logTime(originalLog.getLogTime())
+                    .build();
+            
+            routeGpsLogRepository.save(newGpsLog);
+        }
+        
+        log.debug("GPS 로그 복사 완료: originalRouteId={}, newRouteId={}, count={}", 
+                originalRoute.getId(), newRoute.getId(), originalGpsLogs.size());
     }
 
 }

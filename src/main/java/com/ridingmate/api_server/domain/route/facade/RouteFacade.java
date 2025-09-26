@@ -4,6 +4,7 @@ import com.ggalmazor.ltdownsampling.Point;
 import com.ridingmate.api_server.domain.auth.security.AuthUser;
 import com.ridingmate.api_server.domain.route.dto.FilterRangeInfo;
 import com.ridingmate.api_server.domain.route.dto.request.AddRouteToMyRoutesRequest;
+import com.ridingmate.api_server.domain.route.dto.request.CopyRecommendedRouteRequest;
 import com.ridingmate.api_server.domain.route.dto.request.CreateRouteRequest;
 import com.ridingmate.api_server.domain.route.dto.request.RouteSegmentRequest;
 import com.ridingmate.api_server.domain.route.dto.request.RouteListRequest;
@@ -136,6 +137,15 @@ public class RouteFacade {
     public void addRouteToMyRoutes(Long userId, AddRouteToMyRoutesRequest request) {
         User user = userService.getUser(userId);
         routeService.addRouteToMyRoutes(user, request);
+    }
+
+    /**
+     * 추천 코스 복사 (깊은 복사)
+     */
+    public CreateRouteResponse copyRecommendedRoute(Long userId, CopyRecommendedRouteRequest request) {
+        User user = userService.getUser(userId);
+        Route route = routeService.copyRecommendedRoute(user, request);
+        return CreateRouteResponse.from(route);
     }
 
 }

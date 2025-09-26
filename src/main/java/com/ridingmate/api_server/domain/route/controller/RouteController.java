@@ -3,6 +3,7 @@ package com.ridingmate.api_server.domain.route.controller;
 import com.ridingmate.api_server.domain.auth.exception.AuthErrorCode;
 import com.ridingmate.api_server.domain.auth.security.AuthUser;
 import com.ridingmate.api_server.domain.route.dto.request.AddRouteToMyRoutesRequest;
+import com.ridingmate.api_server.domain.route.dto.request.CopyRecommendedRouteRequest;
 import com.ridingmate.api_server.domain.route.dto.request.CreateRouteRequest;
 import com.ridingmate.api_server.domain.route.dto.request.RouteListRequest;
 import com.ridingmate.api_server.domain.route.dto.request.RouteSegmentRequest;
@@ -131,5 +132,20 @@ public class RouteController implements RouteApi{
         return ResponseEntity
                 .status(RouteSuccessCode.ROUTE_ADDED_TO_MY_ROUTES.getStatus())
                 .body(CommonResponse.success(RouteSuccessCode.ROUTE_ADDED_TO_MY_ROUTES, null));
+    }
+
+    @Override
+    @PostMapping("/copy")
+    @ApiErrorCodeExample(RouteCommonErrorCode.class)
+    @ApiErrorCodeExample(AuthErrorCode.class)
+    public ResponseEntity<CommonResponse<CreateRouteResponse>> copyRecommendedRoute(
+            @AuthenticationPrincipal AuthUser authUser,
+            @Valid @RequestBody CopyRecommendedRouteRequest request) {
+
+        CreateRouteResponse response = routeFacade.copyRecommendedRoute(authUser.id(), request);
+        
+        return ResponseEntity
+                .status(RouteSuccessCode.ROUTE_COPIED.getStatus())
+                .body(CommonResponse.success(RouteSuccessCode.ROUTE_COPIED, response));
     }
 }
