@@ -14,6 +14,9 @@ public enum RouteSuccessCode implements SuccessCode {
     ROUTE_LIST_FETCHED(HttpStatus.OK, "경로 목록이 조회되었습니다."),
     MAP_SEARCH_FETCHED(HttpStatus.OK, "장소 검색 결과 목록이 조회되었습니다."),
     ROUTE_DETAIL_FETCHED(HttpStatus.OK, "경로 세부 정보가 조회되었습니다."),
+    ROUTE_ADDED_TO_MY_ROUTES(HttpStatus.OK, "내 경로에 추가되었습니다."),
+    RECOMMENDED_ROUTE_COPIED(HttpStatus.CREATED, "추천 코스가 나의 경로에 저장되었습니다."),
+    RECOMMENDED_ROUTES_FETCHED(HttpStatus.OK, "추천 경로 목록이 조회되었습니다."),
     ;
     private final HttpStatus status;
     private final String message;

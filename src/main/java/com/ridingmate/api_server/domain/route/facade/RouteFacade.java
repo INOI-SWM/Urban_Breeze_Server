@@ -3,6 +3,7 @@ package com.ridingmate.api_server.domain.route.facade;
 import com.ggalmazor.ltdownsampling.Point;
 import com.ridingmate.api_server.domain.auth.security.AuthUser;
 import com.ridingmate.api_server.domain.route.dto.FilterRangeInfo;
+import com.ridingmate.api_server.domain.route.dto.request.AddRouteToMyRoutesRequest;
 import com.ridingmate.api_server.domain.route.dto.request.CreateRouteRequest;
 import com.ridingmate.api_server.domain.route.dto.request.RouteSegmentRequest;
 import com.ridingmate.api_server.domain.route.dto.request.RouteListRequest;
@@ -56,7 +57,9 @@ public class RouteFacade {
 
         // 썸네일 이미지 S3 업로드
         byte[] thumbnailBytes = geoapifyClient.getStaticMap(routeLine);
-        s3Manager.uploadByteFiles(route.getThumbnailImagePath(), thumbnailBytes, "image/png");
+        String thumbnailImagePath =  routeService.createThumbnailImagePath(route.getRouteId().toString());
+        s3Manager.uploadByteFiles(thumbnailImagePath ,thumbnailBytes, "image/png");
+
 
         // GPX 파일 생성 및 S3 업로드
         try {
@@ -64,7 +67,7 @@ public class RouteFacade {
             Coordinate[] coordinates = routeService.getRouteDetailList(route.getId());
             byte[] gpxBytes = GpxGenerator.generateGpxBytesFromCoordinates(coordinates, route.getTitle());
             s3Manager.uploadByteFiles(gpxFilePath, gpxBytes, "application/gpx+xml");
-            routeService.updateGpxFilePath(route.getId(), gpxFilePath);
+            routeService.updateGpxFilePath(route, gpxFilePath);
         } catch (IOException e) {
             throw new RuntimeException("GPX 파일 생성 중 오류가 발생했습니다: " + e.getMessage(), e);
         }
@@ -127,6 +130,14 @@ public class RouteFacade {
         String fileName = routeService.generateGpxFileName(route);
         
         return GpxDownloadInfo.of(content, fileName);
+    }
+
+    /**
+     * 내 경로에 추가
+     */
+    public void addRouteToMyRoutes(Long userId, AddRouteToMyRoutesRequest request) {
+        User user = userService.getUser(userId);
+        routeService.addRouteToMyRoutes(user, request);
     }
 
 }
