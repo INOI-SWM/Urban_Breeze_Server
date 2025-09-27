@@ -46,7 +46,7 @@ public class ActivityController implements ActivityApi {
     @GetMapping("/{activityId}")
     @Override
     public ResponseEntity<CommonResponse<ActivityDetailResponse>> getActivityDetail(
-            @PathVariable Long activityId
+            @PathVariable String activityId
     ) {
         ActivityDetailResponse response = activityFacade.getActivityDetail(activityId);
         return ResponseEntity
@@ -72,7 +72,7 @@ public class ActivityController implements ActivityApi {
     @Override
     public ResponseEntity<CommonResponse<UploadActivityImagesResponse>> uploadActivityImages(
             @AuthenticationPrincipal AuthUser authUser,
-            @PathVariable Long activityId,
+            @PathVariable String activityId,
             @RequestPart List<MultipartFile> files
     ) {
         UploadActivityImagesResponse response = activityFacade.uploadActivityImages(authUser, activityId, files);
@@ -85,7 +85,7 @@ public class ActivityController implements ActivityApi {
     @Override
     public ResponseEntity<CommonResponse<DeleteActivityImageResponse>> deleteActivityImage(
             @AuthenticationPrincipal AuthUser authUser,
-            @PathVariable Long activityId,
+            @PathVariable String activityId,
             @PathVariable Long imageId
     ) {
         DeleteActivityImageResponse response = activityFacade.deleteActivityImage(authUser, activityId, imageId);
@@ -98,12 +98,24 @@ public class ActivityController implements ActivityApi {
     @Override
     public ResponseEntity<CommonResponse<UpdateActivityTitleResponse>> updateActivityTitle(
             @AuthenticationPrincipal AuthUser authUser,
-            @PathVariable Long activityId,
+            @PathVariable String activityId,
             @RequestBody @Valid UpdateActivityTitleRequest request
     ) {
         UpdateActivityTitleResponse response = activityFacade.updateActivityTitle(authUser, activityId, request);
         return ResponseEntity
                 .status(ActivitySuccessCode.ACTIVITY_TITLE_UPDATED.getStatus())
                 .body(CommonResponse.success(ActivitySuccessCode.ACTIVITY_TITLE_UPDATED, response));
+    }
+
+    @DeleteMapping("/{activityId}")
+    @Override
+    public ResponseEntity<CommonResponse<Void>> deleteActivity(
+            @AuthenticationPrincipal AuthUser authUser,
+            @PathVariable String activityId
+    ) {
+        activityFacade.deleteActivity(authUser, activityId);
+        return ResponseEntity
+                .status(ActivitySuccessCode.ACTIVITY_DELETED.getStatus())
+                .body(CommonResponse.success(ActivitySuccessCode.ACTIVITY_DELETED));
     }
 }

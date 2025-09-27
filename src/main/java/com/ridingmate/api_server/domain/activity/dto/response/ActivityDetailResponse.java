@@ -15,8 +15,8 @@ import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
 public record ActivityDetailResponse(
-        @Schema(description = "활동 ID", example = "1")
-        Long id,
+        @Schema(description = "활동 ID", example = "123e4567-e89b-12d3-a456-426614174000")
+        String activityId,
 
         @Schema(description = "활동 제목", example = "일요일 야간 라이딩")
         String title,
@@ -179,7 +179,7 @@ public record ActivityDetailResponse(
         UserInfo userInfo = UserInfo.from(activity.getUser(), profileImageUrl);
 
         return new ActivityDetailResponse(
-                activity.getId(),
+                activity.getActivityId().toString(),
                 activity.getTitle(),
                 activity.getStartedAt(),
                 activity.getEndedAt(),

@@ -10,7 +10,7 @@ import java.time.LocalDate;
 @ParameterObject
 public record ActivityStatsRequest(
         @Parameter(
-                description = "통계 기간 타입 (WEEK, MONTH, YEAR)",
+                description = "통계 기간 타입 (WEEK, MONTH, YEAR, ALL)",
                 example = "WEEK",
                 schema = @Schema(defaultValue = "WEEK")
         )

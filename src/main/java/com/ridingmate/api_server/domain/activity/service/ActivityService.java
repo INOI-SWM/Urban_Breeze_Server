@@ -1,13 +1,12 @@
 package com.ridingmate.api_server.domain.activity.service;
 
-import com.ridingmate.api_server.domain.activity.dto.projection.ActivityDateRangeProjection;
 import com.ridingmate.api_server.domain.activity.dto.projection.ActivityStatsProjection;
 import com.ridingmate.api_server.domain.activity.dto.projection.GpsLogProjection;
+import com.ridingmate.api_server.domain.activity.dto.projection.YearlyStatsProjection;
 import com.ridingmate.api_server.domain.activity.dto.request.ActivityListRequest;
 import com.ridingmate.api_server.domain.activity.dto.request.ActivityStatsRequest;
 import com.ridingmate.api_server.domain.activity.dto.response.ActivityStatsResponse;
 import com.ridingmate.api_server.domain.activity.dto.response.DeleteActivityImageResponse;
-import com.ridingmate.api_server.domain.activity.dto.response.UploadActivityImagesResponse;
 import com.ridingmate.api_server.domain.activity.entity.Activity;
 import com.ridingmate.api_server.domain.activity.entity.ActivityGpsLog;
 import com.ridingmate.api_server.domain.activity.entity.ActivityImage;
@@ -37,6 +36,7 @@ import org.springframework.web.multipart.MultipartFile;
 
 import java.time.Duration;
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
@@ -130,6 +130,17 @@ public class ActivityService {
     }
 
     /**
+     * activityId로 활동 조회 (User 정보 함께)
+     * @param activityId UUID 기반 활동 ID
+     * @return Activity with User
+     */
+    @Transactional(readOnly = true)
+    public Activity getActivityWithUserByActivityId(String activityId) {
+        return activityRepository.findByActivityId(UUID.fromString(activityId))
+                .orElseThrow(() -> new ActivityException(ActivityCommonErrorCode.ACTIVITY_NOT_FOUND));
+    }
+
+    /**
      * 특정 활동의 모든 이미지를 순서대로 조회
      * @param activityId 활동 ID
      * @return 순서대로 정렬된 이미지 목록
@@ -164,12 +175,11 @@ public class ActivityService {
 
         /**
          * 특정 활동의 GPS 좌표와 상세 정보를 한 번에 조회 (최적화된 방법)
-         * @param activityId 활동 ID
+         * @param activity 활동
          * @return GPS 로그 Projection 리스트
          */
         @Transactional(readOnly = true)
-        public List<GpsLogProjection> getActivityGpsLogProjections(Long activityId) {
-            Activity activity = getActivityWithUser(activityId);
+        public List<GpsLogProjection> getActivityGpsLogProjections(Activity activity) {
             return activityGpsLogRepository.findGpsLogProjectionsByActivity(activity);
         }
 
@@ -208,7 +218,11 @@ public class ActivityService {
         // 일별 상세 데이터 생성
         List<ActivityStatsResponse.DetailInfo> details = generateDailyDetails(user, request);
 
-        return new ActivityStatsResponse(periodInfo, summaryInfo, details);
+        // 가장 오래된 활동 날짜 조회
+        LocalDateTime oldestActivityDateTime = activityRepository.findOldestActivityDate(user);
+        LocalDate oldestActivityDate = oldestActivityDateTime != null ? oldestActivityDateTime.toLocalDate() : null;
+
+        return ActivityStatsResponse.of(periodInfo, summaryInfo, details, oldestActivityDate);
     }
 
     /**
@@ -240,6 +254,9 @@ public class ActivityService {
             case WEEK -> {
                 // 주간 통계는 유연하게 허용 (요청된 기간 그대로 사용)
             }
+            case ALL -> {
+                // 전체 통계는 유연하게 허용 (요청된 기간 그대로 사용)
+            }
         }
     }
 
@@ -266,6 +283,7 @@ public class ActivityService {
             case WEEK -> String.format("%d년 %d월", startDate.getYear() % 100, startDate.getMonthValue());
             case MONTH -> String.format("%d년 %d월", startDate.getYear() % 100, startDate.getMonthValue());
             case YEAR -> String.format("%d년", startDate.getYear());
+            case ALL -> "전체";
         };
     }
 
@@ -276,6 +294,7 @@ public class ActivityService {
         return switch (request.period()) {
             case WEEK, MONTH -> generateDailyDetailsForWeekOrMonth(user, request);
             case YEAR -> generateMonthlyDetailsForYear(user, request);
+            case ALL -> generateYearlyStats(user);
         };
     }
 
@@ -361,6 +380,7 @@ public class ActivityService {
         return switch (period) {
             case WEEK, MONTH -> String.valueOf(date.getDayOfMonth());
             case YEAR -> String.valueOf(date.getMonthValue());
+            case ALL -> String.valueOf(date.getYear());
         };
     }
 
@@ -448,7 +468,7 @@ public class ActivityService {
      * @return 업로드 결과
      */
     @Transactional
-    public UploadActivityImagesResponse uploadActivityImages(Long userId, Long activityId, List<MultipartFile> files) {
+    public List<ActivityImage> uploadActivityImages(Long userId, Long activityId, List<MultipartFile> files) {
         // Activity 존재 및 소유권 확인
         Activity activity = getActivityWithUser(activityId);
         if (!activity.getUser().getId().equals(userId)) {
@@ -483,7 +503,7 @@ public class ActivityService {
             uploadedImages.add(savedImage);
         }
 
-        return UploadActivityImagesResponse.from(uploadedImages);
+        return uploadedImages;
     }
 
     /**
@@ -630,15 +650,7 @@ public class ActivityService {
         for (Activity activity : activities) {
             try {
                 // 활동의 모든 GPS 로그 조회
-                List<ActivityGpsLog> activityGpsLogs = activityGpsLogRepository.findByActivityIdOrderByLogTimeAsc(activity.getId());
-                
-                log.debug("활동 GPS 로그 삭제 시작: activityId={}, count={}", activity.getId(), activityGpsLogs.size());
-                
-                // DB에서 모든 GPS 로그 하드 삭제
-                activityGpsLogRepository.deleteByActivityId(activity.getId());
-                
-                log.debug("활동 GPS 로그 하드 삭제 완료: activityId={}", activity.getId());
-                
+                deleteAllActivityGpsLogs(activity);
             } catch (Exception e) {
                 log.warn("활동 GPS 로그 처리 중 오류: activityId={}", activity.getId(), e);
             }
@@ -647,4 +659,59 @@ public class ActivityService {
         log.info("활동 GPS 로그 처리 완료: count={}", activities.size());
     }
 
+    /**
+     * 주행 기록 삭제 (개별 삭제)
+     * @param activity 삭제할 주행 기록
+     */
+    @Transactional
+    public void deleteActivity(Activity activity) {
+        log.info("주행 기록 삭제 시작: activityId={}", activity.getId());
+        
+        try {
+            deleteAllActivityImages(activity);
+            deleteAllActivityGpsLogs(activity);
+
+            activity.maskPersonalDataForDeletion();
+
+            log.info("주행 기록 삭제 완료: activityId={}", activity.getId());
+            
+        } catch (Exception e) {
+            log.error("주행 기록 삭제 중 오류 발생: activityId={}", activity.getId(), e);
+            throw new ActivityException(ActivityCommonErrorCode.ACTIVITY_DELETE_FAILED);
+        }
+    }
+
+    private void deleteAllActivityGpsLogs(Activity activity){
+        List<ActivityGpsLog> activityGpsLogs = activityGpsLogRepository.findByActivityIdOrderByLogTimeAsc(activity.getId());
+
+        log.debug("주행 기록 GPS 로그 삭제 시작: activityId={}, count={}", activity.getId(), activityGpsLogs.size());
+
+        // DB에서 모든 GPS 로그 하드 삭제
+        activityGpsLogRepository.deleteByActivityId(activity.getId());
+
+        log.debug("주행 기록 GPS 로그 하드 삭제 완료: activityId={}", activity.getId());
+    }
+
+    /**
+     * 연별 통계 데이터 생성 (ALL 기간용)
+     */
+    private List<ActivityStatsResponse.DetailInfo> generateYearlyStats(User user) {
+        List<YearlyStatsProjection> yearlyProjections = activityRepository.findYearlyActivityStats(user.getId());
+        
+        return yearlyProjections.stream()
+                .map(yearlyProjection -> {
+                    // 연도 라벨 생성 (예: "2025")
+                    String yearLabel = yearlyProjection.getYear().toString();
+                    
+                    // 연도별 통계 값 생성
+                    ActivityStatsResponse.DetailValue yearValue = new ActivityStatsResponse.DetailValue(
+                            yearlyProjection.getTotalDistance() / 1000.0, // 미터를 킬로미터로 변환
+                            yearlyProjection.getTotalElevation(),
+                            yearlyProjection.getTotalDurationSeconds()
+                    );
+                    
+                    return new ActivityStatsResponse.DetailInfo(yearLabel, yearValue);
+                })
+                .toList();
+    }
 }

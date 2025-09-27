@@ -18,11 +18,8 @@ public class UploadActivityImagesResponse {
     @Schema(description = "업로드된 이미지 개수")
     private final int uploadedCount;
 
-    public static UploadActivityImagesResponse from(List<ActivityImage> activityImages) {
-        List<ActivityImageResponse> imageResponses = activityImages.stream()
-                .map(ActivityImageResponse::from)
-                .toList();
-        
-        return new UploadActivityImagesResponse(imageResponses, imageResponses.size());
+
+    public static UploadActivityImagesResponse from(List<ActivityImageResponse> images) {
+        return new UploadActivityImagesResponse(images, images.size());
     }
 }

@@ -64,13 +64,26 @@ public interface ActivityApi {
             ),
     })
     ResponseEntity<CommonResponse<ActivityDetailResponse>> getActivityDetail(
-            @Parameter(description = "조회할 주행 기록 ID", example = "1")
-            @PathVariable Long activityId
+            @Parameter(description = "조회할 주행 기록 ID", example = "123e4567-e89b-12d3-a456-426614174000")
+            @PathVariable String activityId
     );
 
     @Operation(
             summary = "주행 기록 통계 조회",
-            description = "사용자의 주행 기록 통계를 기간별(주간/월간/연간)로 조회합니다. 첫 번째 주행 기록부터 현재까지의 통계를 제공합니다."
+            description = """
+            사용자의 주행 기록 통계를 기간별로 조회합니다.
+            
+            **지원 기간:**
+            - 주간: 특정 주의 통계 (일별 세부 데이터)
+            - 월간: 특정 월의 통계 (일별 세부 데이터)
+            - 연간: 특정 연도의 통계 (월별 세부 데이터)
+            - 전체: 모든 기간의 통계 (연별 세부 데이터)
+            
+            **각 기간별 상세 데이터:**
+            - 주간/월간: 일별 통계
+            - 연간: 월별 통계  
+            - 전체: 연별 통계
+            """
     )
     @ApiResponses(value = {
             @ApiResponse(
@@ -99,8 +112,8 @@ public interface ActivityApi {
     })
     ResponseEntity<CommonResponse<UpdateActivityTitleResponse>> updateActivityTitle(
             @AuthenticationPrincipal AuthUser authUser,
-            @Parameter(description = "주행 기록 ID", example = "1")
-            @PathVariable Long activityId,
+            @Parameter(description = "주행 기록 ID", example = "123e4567-e89b-12d3-a456-426614174000")
+            @PathVariable String activityId,
             @Parameter(description = "제목 변경 요청")
             @RequestBody UpdateActivityTitleRequest request
     );
@@ -118,8 +131,8 @@ public interface ActivityApi {
     })
     ResponseEntity<CommonResponse<UploadActivityImagesResponse>> uploadActivityImages(
             @AuthenticationPrincipal AuthUser authUser,
-            @Parameter(description = "주행 기록 ID", example = "1")
-            @PathVariable Long activityId,
+            @Parameter(description = "주행 기록 ID", example = "123e4567-e89b-12d3-a456-426614174000")
+            @PathVariable String activityId,
             @Parameter(description = "업로드할 이미지 파일들 (표시 순서는 업로드 순서대로 자동 할당)")
             @RequestPart List<MultipartFile> files
     );
@@ -137,9 +150,24 @@ public interface ActivityApi {
     })
     ResponseEntity<CommonResponse<DeleteActivityImageResponse>> deleteActivityImage(
             @AuthenticationPrincipal AuthUser authUser,
-            @Parameter(description = "주행 기록 ID", example = "1")
-            @PathVariable Long activityId,
+            @Parameter(description = "주행 기록 ID", example = "123e4567-e89b-12d3-a456-426614174000")
+            @PathVariable String activityId,
             @Parameter(description = "삭제할 이미지 ID", example = "1")
             @PathVariable Long imageId
+    );
+
+    @Operation(
+            summary = "주행 기록 삭제",
+            description = "특정 주행 기록을 삭제합니다. 관련된 모든 데이터(이미지, GPS 로그)도 함께 삭제됩니다."
+    )
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "성공: 주행 기록 삭제 완료"),
+            @ApiResponse(responseCode = "404", description = "주행 기록을 찾을 수 없습니다."),
+            @ApiResponse(responseCode = "403", description = "해당 주행 기록에 대한 권한이 없습니다."),
+    })
+    ResponseEntity<CommonResponse<Void>> deleteActivity(
+            @AuthenticationPrincipal AuthUser authUser,
+            @Parameter(description = "삭제할 주행 기록 ID", example = "123e4567-e89b-12d3-a456-426614174000")
+            @PathVariable String activityId
     );
 }
