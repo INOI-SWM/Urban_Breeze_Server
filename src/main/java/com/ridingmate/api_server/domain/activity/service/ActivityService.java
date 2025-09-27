@@ -36,6 +36,7 @@ import org.springframework.web.multipart.MultipartFile;
 
 import java.time.Duration;
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
@@ -217,7 +218,11 @@ public class ActivityService {
         // 일별 상세 데이터 생성
         List<ActivityStatsResponse.DetailInfo> details = generateDailyDetails(user, request);
 
-        return new ActivityStatsResponse(periodInfo, summaryInfo, details);
+        // 가장 오래된 활동 날짜 조회
+        LocalDateTime oldestActivityDateTime = activityRepository.findOldestActivityDate(user);
+        LocalDate oldestActivityDate = oldestActivityDateTime != null ? oldestActivityDateTime.toLocalDate() : null;
+
+        return ActivityStatsResponse.of(periodInfo, summaryInfo, details, oldestActivityDate);
     }
 
     /**

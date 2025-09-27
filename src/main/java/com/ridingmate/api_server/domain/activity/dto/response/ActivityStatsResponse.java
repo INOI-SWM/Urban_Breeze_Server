@@ -14,7 +14,10 @@ public record ActivityStatsResponse(
         SummaryInfo summary,
 
         @Schema(description = "일별 상세 통계 데이터")
-        List<DetailInfo> details
+        List<DetailInfo> details,
+
+        @Schema(description = "가장 오래된 운동 기록 일자", example = "2023-01-15")
+        LocalDate oldestActivityDate
 ) {
 
     @Schema(description = "통계 기간 정보")
@@ -67,5 +70,12 @@ public record ActivityStatsResponse(
             @Schema(description = "운동 시간 (초)", example = "3600")
             Long durationSec
     ) {}
+
+    /**
+     * ActivityStatsResponse 생성
+     */
+    public static ActivityStatsResponse of(PeriodInfo period, SummaryInfo summary, List<DetailInfo> details, LocalDate oldestActivityDate) {
+        return new ActivityStatsResponse(period, summary, details, oldestActivityDate);
+    }
 
 }

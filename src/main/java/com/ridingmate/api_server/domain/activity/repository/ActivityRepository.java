@@ -146,4 +146,10 @@ public interface ActivityRepository extends JpaRepository<Activity, Long> {
      */
     List<Activity> findByUserAndIsDeleteFalse(User user);
 
+    /**
+     * 사용자의 가장 오래된 활동 날짜 조회
+     */
+    @Query("SELECT MIN(a.startedAt) FROM Activity a WHERE a.user = :user AND a.isDelete = false")
+    LocalDateTime findOldestActivityDate(@Param("user") User user);
+
 }
