@@ -47,29 +47,25 @@ public record RecommendationListRequest(
     
     @Parameter(
             description = "최소 거리 (km)",
-            example = "0.0",
-            required = true
+            example = "0.0"
     )
     Double minDistanceKm,
     
     @Parameter(
             description = "최대 거리 (km)",
-            example = "200.0",
-            required = true
+            example = "200.0"
     )
     Double maxDistanceKm,
     
     @Parameter(
             description = "최소 고도 상승 (미터)",
-            example = "0.0",
-            required = true
+            example = "0.0"
     )
     Double minElevationGain,
     
     @Parameter(
             description = "최대 고도 상승 (미터)",
-            example = "1000.0",
-            required = true
+            example = "1000.0"
     )
     Double maxElevationGain,
     
