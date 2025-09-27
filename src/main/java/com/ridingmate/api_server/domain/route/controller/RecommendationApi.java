@@ -1,14 +1,19 @@
 package com.ridingmate.api_server.domain.route.controller;
 
+import com.ridingmate.api_server.domain.auth.security.AuthUser;
 import com.ridingmate.api_server.domain.route.dto.request.RecommendationListRequest;
+import com.ridingmate.api_server.domain.route.dto.response.CreateRouteResponse;
 import com.ridingmate.api_server.domain.route.dto.response.RecommendationListResponse;
 import com.ridingmate.api_server.global.exception.CommonResponse;
 import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.ModelAttribute;
+import org.springframework.web.bind.annotation.PathVariable;
 
 @Tag(name = "Recommendation API", description = "추천 코스 기능 API")
 public interface RecommendationApi {
@@ -37,5 +42,19 @@ public interface RecommendationApi {
     @ApiResponses({
             @ApiResponse(responseCode = "200", description = "성공: 추천 코스 목록 조회 완료"),
     })
-    ResponseEntity<CommonResponse<RecommendationListResponse>> getRecommendationList(@ModelAttribute RecommendationListRequest request);
+     ResponseEntity<CommonResponse<RecommendationListResponse>> getRecommendationList(@ModelAttribute RecommendationListRequest request);
+
+     @Operation(
+             summary = "추천 코스 나의 경로에 저장",
+             description = "추천받은 코스를 내 경로로 복사하여 저장합니다. 새로운 경로가 생성되며 모든 GPS 로그가 복사됩니다."
+     )
+     @ApiResponses({
+             @ApiResponse(responseCode = "201", description = "성공: 추천 코스가 내 경로로 저장되었습니다."),
+             @ApiResponse(responseCode = "404", description = "경로를 찾을 수 없습니다."),
+     })
+     ResponseEntity<CommonResponse<CreateRouteResponse>> copyRecommendedRouteToMyRoutes(
+             @AuthenticationPrincipal AuthUser authUser,
+             @Parameter(description = "복사할 경로 ID")
+             @PathVariable String routeId
+     );
 }

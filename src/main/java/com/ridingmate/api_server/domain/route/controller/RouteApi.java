@@ -2,7 +2,6 @@ package com.ridingmate.api_server.domain.route.controller;
 
 import com.ridingmate.api_server.domain.auth.security.AuthUser;
 import com.ridingmate.api_server.domain.route.dto.request.AddRouteToMyRoutesRequest;
-import com.ridingmate.api_server.domain.route.dto.request.CopyRecommendedRouteRequest;
 import com.ridingmate.api_server.domain.route.dto.request.CreateRouteRequest;
 import com.ridingmate.api_server.domain.route.dto.request.RouteListRequest;
 import com.ridingmate.api_server.domain.route.dto.request.RouteSegmentRequest;
@@ -168,18 +167,5 @@ public interface RouteApi {
     ResponseEntity<CommonResponse<Void>> addRouteToMyRoutes(
             @AuthenticationPrincipal AuthUser authUser,
             @Valid @RequestBody AddRouteToMyRoutesRequest request
-    );
-
-    @Operation(
-            summary = "추천 코스 복사",
-            description = "추천 코스를 내 경로로 복사합니다. 새로운 경로가 생성되며 모든 GPS 로그가 복사됩니다."
-    )
-    @ApiResponses({
-            @ApiResponse(responseCode = "201", description = "성공: 경로 복사 완료"),
-            @ApiResponse(responseCode = "404", description = "경로를 찾을 수 없습니다."),
-    })
-    ResponseEntity<CommonResponse<CreateRouteResponse>> copyRecommendedRoute(
-            @AuthenticationPrincipal AuthUser authUser,
-            @Valid @RequestBody CopyRecommendedRouteRequest request
     );
 }

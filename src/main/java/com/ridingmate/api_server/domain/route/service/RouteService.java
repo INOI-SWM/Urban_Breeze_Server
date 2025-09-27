@@ -4,7 +4,6 @@ import com.ridingmate.api_server.domain.auth.exception.AuthErrorCode;
 import com.ridingmate.api_server.domain.auth.exception.AuthException;
 import com.ridingmate.api_server.domain.route.dto.projection.RouteFilterRangeProjection;
 import com.ridingmate.api_server.domain.route.dto.request.AddRouteToMyRoutesRequest;
-import com.ridingmate.api_server.domain.route.dto.request.CopyRecommendedRouteRequest;
 import com.ridingmate.api_server.domain.route.dto.request.CreateRouteRequest;
 import com.ridingmate.api_server.domain.route.dto.request.RecommendationListRequest;
 import com.ridingmate.api_server.domain.route.dto.FilterRangeInfo;
@@ -69,7 +68,6 @@ public class RouteService {
                 .distance(request.distance())
                 .duration(Duration.ofSeconds(request.duration()))
                 .elevationGain(request.elevationGain())
-                .routeId(UUID.randomUUID())
                 .routeLine(routeLine)
                 .minLon(request.bbox().get(0))
                 .minLat(request.bbox().get(1))
@@ -79,9 +77,6 @@ public class RouteService {
 
         // Route 저장
         routeRepository.save(route);
-
-        // ID가 생성된 후 썸네일 경로 업데이트
-        route.updateThumbnailImagePath(createThumbnailImagePath(route.getId()));
 
         // 생성자와 경로 간의 OWNER 관계 생성
         createUserRouteRelation(user, route, RouteRelationType.OWNER);
@@ -99,7 +94,7 @@ public class RouteService {
         int sequence = 0;
 
         List<RouteGpsLog> routeGpsLogs = new ArrayList<>();
-        for (Coordinate coordinate: geometry){
+        for (Coordinate coordinate : geometry) {
             LocalDateTime virtualLogTime = baseTime.plusSeconds(sequence);
 
             RouteGpsLog routeGpsLog = RouteGpsLog.builder()
@@ -125,8 +120,8 @@ public class RouteService {
         }
 
         return routeGpsLogs.stream()
-            .map(routeGpsLog -> new Coordinate(routeGpsLog.getLongitude(), routeGpsLog.getLatitude(), routeGpsLog.getElevation()))
-            .toArray(Coordinate[]::new);
+                .map(routeGpsLog -> new Coordinate(routeGpsLog.getLongitude(), routeGpsLog.getLatitude(), routeGpsLog.getElevation()))
+                .toArray(Coordinate[]::new);
     }
 
     @Transactional(readOnly = true)
@@ -140,8 +135,9 @@ public class RouteService {
 
     /**
      * 사용자와 경로 간의 관계 생성
-     * @param user 사용자
-     * @param route 경로
+     *
+     * @param user         사용자
+     * @param route        경로
      * @param relationType 관계 타입
      */
     @Transactional
@@ -164,51 +160,52 @@ public class RouteService {
 
     /**
      * 사용자별 경로 목록을 정렬 타입과 필터에 따라 조회
-     * @param userId 사용자 ID
+     *
+     * @param userId  사용자 ID
      * @param request 경로 목록 조회 요청 정보
      * @return 정렬된 경로 페이지
      */
     @Transactional(readOnly = true)
     public Page<Route> getRoutesByUser(Long userId, RouteListRequest request) {
         User user = userRepository.findById(userId)
-            .orElseThrow(() -> new IllegalArgumentException("User not found"));
+                .orElseThrow(() -> new IllegalArgumentException("User not found"));
 
         Pageable pageable = PageRequest.of(request.page(), request.size(), request.sortType().getSort());
 
         if (request.relationTypes() == null || request.relationTypes().isEmpty()) {
             // 모든 관계 타입 조회
             return routeRepository.findByUserWithRelationsAndFilters(user,
-                request.getMinDistanceInMeter(), request.getMaxDistanceInMeter(),
-                request.getMinElevationGain(), request.getMaxElevationGain(), pageable);
+                    request.getMinDistanceInMeter(), request.getMaxDistanceInMeter(),
+                    request.getMinElevationGain(), request.getMaxElevationGain(), pageable);
         } else if (request.relationTypes().size() == 1) {
             // 단일 관계 타입 조회
             return routeRepository.findByUserAndRelationTypeWithFilters(user, request.relationTypes().get(0),
-                request.getMinDistanceInMeter(), request.getMaxDistanceInMeter(),
-                request.getMinElevationGain(), request.getMaxElevationGain(), pageable);
+                    request.getMinDistanceInMeter(), request.getMaxDistanceInMeter(),
+                    request.getMinElevationGain(), request.getMaxElevationGain(), pageable);
         } else {
             // 여러 관계 타입 조회
             return routeRepository.findByUserAndRelationTypesWithFilters(user, request.relationTypes(),
-                request.getMinDistanceInMeter(), request.getMaxDistanceInMeter(),
-                request.getMinElevationGain(), request.getMaxElevationGain(), pageable);
+                    request.getMinDistanceInMeter(), request.getMaxDistanceInMeter(),
+                    request.getMinElevationGain(), request.getMaxElevationGain(), pageable);
         }
     }
 
     @Transactional(readOnly = true)
-    public Route getRouteWithUser(Long routeId){
+    public Route getRouteWithUser(Long routeId) {
         return routeRepository.findRouteWithUser(routeId)
-            .orElseThrow(() -> new RouteException(RouteCommonErrorCode.ROUTE_NOT_FOUND));
+                .orElseThrow(() -> new RouteException(RouteCommonErrorCode.ROUTE_NOT_FOUND));
     }
 
     @Transactional(readOnly = true)
-    public Route getRouteWithUserByRouteId(String routeId){
+    public Route getRouteWithUserByRouteId(String routeId) {
         return routeRepository.findRouteWithUserByRouteId(UUID.fromString(routeId))
-            .orElseThrow(() -> new RouteException(RouteCommonErrorCode.ROUTE_NOT_FOUND));
+                .orElseThrow(() -> new RouteException(RouteCommonErrorCode.ROUTE_NOT_FOUND));
     }
 
     @Transactional(readOnly = true)
-    public Route getRouteByRouteId(String routeId){
+    public Route getRouteByRouteId(String routeId) {
         return routeRepository.findByRouteId(UUID.fromString(routeId))
-            .orElseThrow(() -> new RouteException(RouteCommonErrorCode.ROUTE_NOT_FOUND));
+                .orElseThrow(() -> new RouteException(RouteCommonErrorCode.ROUTE_NOT_FOUND));
     }
 
     private Route checkRouteAuth(Long userId, Route route) {
@@ -220,17 +217,22 @@ public class RouteService {
 
     private Route getRoute(Long routeId) {
         return routeRepository.findById(routeId)
-            .orElseThrow(() -> new RouteException(RouteCommonErrorCode.ROUTE_NOT_FOUND));
+                .orElseThrow(() -> new RouteException(RouteCommonErrorCode.ROUTE_NOT_FOUND));
     }
 
 
-    private String createThumbnailImagePath(Long routeId) {
+    public String createThumbnailImagePath(String routeId) {
         String uuid = UUID.randomUUID().toString();
-        return String.format("ridingmate/route-thumbnails/%d/%s.png", routeId, uuid);
+        return String.format("ridingmate/route-thumbnails/%s/%s.png", routeId, uuid);
+    }
+
+    public void updateThumbnailImagePath(Route route, String thumbnailImagePath){
+        route.updateThumbnailImagePath(thumbnailImagePath);
     }
 
     /**
      * 추천 코스 목록을 정렬 타입과 필터에 따라 조회
+     *
      * @param request 추천 코스 목록 조회 요청 정보
      * @return 정렬된 추천 코스 페이지
      */
@@ -249,35 +251,35 @@ public class RouteService {
                 request.recommendationTypes(),
                 request.regions(),
                 request.difficulties(),
-                request.getMinDistanceInMeter(), 
-                request.getMaxDistanceInMeter(), 
-                request.minElevationGain(), 
-                request.maxElevationGain(), 
+                request.getMinDistanceInMeter(),
+                request.getMaxDistanceInMeter(),
+                request.minElevationGain(),
+                request.maxElevationGain(),
                 pageable);
 
         // NEAREST 정렬인 경우 거리 계산 후 정렬
-        if (request.sortType() == com.ridingmate.api_server.domain.route.enums.RecommendationSortType.NEAREST 
-            && request.userLon() != null && request.userLat() != null) {
-            
+        if (request.sortType() == com.ridingmate.api_server.domain.route.enums.RecommendationSortType.NEAREST
+                && request.userLon() != null && request.userLat() != null) {
+
             List<Route> sortedRoutes = routePage.getContent().stream()
-                .sorted((a, b) -> {
-                    Double distanceA = calculateDistanceFromUser(a, request.userLon(), request.userLat());
-                    Double distanceB = calculateDistanceFromUser(b, request.userLon(), request.userLat());
-                    
-                    // null 거리는 맨 뒤로
-                    if (distanceA == null && distanceB == null) return 0;
-                    if (distanceA == null) return 1;
-                    if (distanceB == null) return -1;
-                    
-                    return Double.compare(distanceA, distanceB);
-                })
-                .toList();
+                    .sorted((a, b) -> {
+                        Double distanceA = calculateDistanceFromUser(a, request.userLon(), request.userLat());
+                        Double distanceB = calculateDistanceFromUser(b, request.userLon(), request.userLat());
+
+                        // null 거리는 맨 뒤로
+                        if (distanceA == null && distanceB == null) return 0;
+                        if (distanceA == null) return 1;
+                        if (distanceB == null) return -1;
+
+                        return Double.compare(distanceA, distanceB);
+                    })
+                    .toList();
 
             // 정렬된 결과로 새로운 Page 생성
             return new PageImpl<>(
-                sortedRoutes, 
-                pageable, 
-                routePage.getTotalElements()
+                    sortedRoutes,
+                    pageable,
+                    routePage.getTotalElements()
             );
         }
 
@@ -292,7 +294,7 @@ public class RouteService {
             Coordinate startCoord = route.getStartCoordinate();
             if (startCoord != null) {
                 return GeometryUtil.calculateDistance(
-                    userLon, userLat, startCoord.getX(), startCoord.getY());
+                        userLon, userLat, startCoord.getX(), startCoord.getY());
             }
         }
         return null;
@@ -304,16 +306,16 @@ public class RouteService {
     @Transactional(readOnly = true)
     public FilterRangeInfo getMaxDistanceAndElevationByUser(User user) {
         RouteFilterRangeProjection result = routeRepository.findMaxDistanceAndElevationByUser(user);
-        
+
         if (result == null || result.maxDistance() == null || result.maxElevationGain() == null) {
             return FilterRangeInfo.of(0.0, 0.0, 0.0, 0.0);
         }
-        
+
         return FilterRangeInfo.of(
-            result.getMinDistanceInKm(), 
-            result.getMaxDistanceInKm(), 
-            result.getRoundedMinElevationGain(), 
-            result.getRoundedMaxElevationGain()
+                result.getMinDistanceInKm(),
+                result.getMaxDistanceInKm(),
+                result.getRoundedMinElevationGain(),
+                result.getRoundedMaxElevationGain()
         );
     }
 
@@ -323,30 +325,27 @@ public class RouteService {
     @Transactional(readOnly = true)
     public FilterRangeInfo getMaxDistanceAndElevationForRecommendations() {
         RouteFilterRangeProjection result = routeRepository.findMaxDistanceAndElevationForRecommendations();
-        
+
         if (result == null || result.maxDistance() == null || result.maxElevationGain() == null) {
             return FilterRangeInfo.of(0.0, 0.0, 0.0, 0.0);
         }
-        
+
         return FilterRangeInfo.of(
-            result.getMinDistanceInKm(), 
-            result.getMaxDistanceInKm(), 
-            result.getRoundedMinElevationGain(), 
-            result.getRoundedMaxElevationGain()
+                result.getMinDistanceInKm(),
+                result.getMaxDistanceInKm(),
+                result.getRoundedMinElevationGain(),
+                result.getRoundedMaxElevationGain()
         );
     }
 
     /**
      * Route의 GPX 파일 경로를 업데이트합니다.
      *
-     * @param routeId     Route ID
+     * @param route    Route
      * @param gpxFilePath S3에 저장된 GPX 파일 경로
      */
     @Transactional
-    public void updateGpxFilePath(Long routeId, String gpxFilePath) {
-        Route route = routeRepository.findById(routeId)
-            .orElseThrow(() -> new RouteException(RouteCommonErrorCode.ROUTE_NOT_FOUND));
-        
+    public void updateGpxFilePath(Route route, String gpxFilePath) {
         route.updateGpxFilePath(gpxFilePath);
     }
 
@@ -372,9 +371,9 @@ public class RouteService {
         }
     }
 
-        /**
+    /**
      * 경로의 GPX 파일명을 생성합니다.
-     * 
+     *
      * @param route 경로
      * @return 안전한 파일명
      */
@@ -382,19 +381,19 @@ public class RouteService {
         if (route.getTitle() == null || route.getTitle().trim().isEmpty()) {
             return "route.gpx";
         }
-        
+
         // 파일명에 사용할 수 없는 문자들을 언더스코어로 대체
         String safeFileName = route.getTitle()
-            .replaceAll("[^a-zA-Z0-9가-힣\\s]", "_")  // 특수문자 제거
-            .replaceAll("\\s+", "_")                 // 공백을 언더스코어로
-            .replaceAll("_{2,}", "_")                // 연속된 언더스코어를 하나로
-            .replaceAll("^_|_$", "");                // 앞뒤 언더스코어 제거
-        
+                .replaceAll("[^a-zA-Z0-9가-힣\\s]", "_")  // 특수문자 제거
+                .replaceAll("\\s+", "_")                 // 공백을 언더스코어로
+                .replaceAll("_{2,}", "_")                // 연속된 언더스코어를 하나로
+                .replaceAll("^_|_$", "");                // 앞뒤 언더스코어 제거
+
         // 빈 문자열이거나 너무 긴 경우 처리
         if (safeFileName.isEmpty() || safeFileName.length() > 100) {
             return "route.gpx";
         }
-        
+
         return safeFileName + ".gpx";
     }
 
@@ -422,17 +421,17 @@ public class RouteService {
     @Transactional
     public void handleUserDeletion(User user) {
         log.info("경로 데이터 처리 시작: userId={}", user.getId());
-        
+
         try {
             // 1. 사용자-경로 관계 소프트 삭제 처리
             markUserRoutesAsDeleted(user);
-            
+
             // 2. 사용자가 생성한 경로들의 사용자 정보 마스킹
             maskRouteUserInfo(user);
-            
+
             // 3. 경로 GPS 로그 처리 (법정 보존 대상)
             handleRouteGpsLogs(user);
-            
+
             log.info("경로 데이터 처리 완료: userId={}", user.getId());
         } catch (Exception e) {
             log.error("경로 데이터 처리 중 오류 발생: userId={}", user.getId(), e);
@@ -445,18 +444,18 @@ public class RouteService {
      */
     private void markUserRoutesAsDeleted(User user) {
         log.info("사용자-경로 관계 소프트 삭제 처리 시작: userId={}", user.getId());
-        
+
         // 사용자의 모든 활성 경로 관계를 소프트 삭제
         List<UserRoute> activeUserRoutes = userRouteRepository.findByUserAndIsDeleteFalse(user);
-        
+
         for (UserRoute userRoute : activeUserRoutes) {
             userRoute.markAsDeleted();
-            log.debug("사용자-경로 관계 소프트 삭제: userRouteId={}, routeId={}", 
-                userRoute.getId(), userRoute.getRoute().getId());
+            log.debug("사용자-경로 관계 소프트 삭제: userRouteId={}, routeId={}",
+                    userRoute.getId(), userRoute.getRoute().getId());
         }
-        
-        log.info("사용자-경로 관계 소프트 삭제 처리 완료: userId={}, count={}", 
-            user.getId(), activeUserRoutes.size());
+
+        log.info("사용자-경로 관계 소프트 삭제 처리 완료: userId={}, count={}",
+                user.getId(), activeUserRoutes.size());
     }
 
     /**
@@ -466,16 +465,16 @@ public class RouteService {
         log.info("경로 사용자 정보 마스킹 처리 시작: userId={}", user.getId());
 
         List<Route> userRoutes = routeRepository.findByUser(user);
-        
+
         for (Route route : userRoutes) {
             // 모든 개인정보 필드 마스킹 및 소프트 삭제 처리 (통합)
             route.maskPersonalDataForDeletion();
-            
+
             log.debug("경로 사용자 정보 마스킹 및 소프트 삭제: routeId={}", route.getId());
         }
-        
-        log.info("경로 사용자 정보 마스킹 처리 완료: userId={}, count={}", 
-            user.getId(), userRoutes.size());
+
+        log.info("경로 사용자 정보 마스킹 처리 완료: userId={}, count={}",
+                user.getId(), userRoutes.size());
     }
 
     /**
@@ -485,25 +484,25 @@ public class RouteService {
      */
     private void handleRouteGpsLogs(User user) {
         log.info("경로 GPS 로그 처리 시작: userId={}", user.getId());
-        
+
         try {
             List<Route> userRoutes = routeRepository.findByUser(user);
-            
+
             for (Route route : userRoutes) {
                 // 경로의 모든 GPS 로그 조회
                 List<RouteGpsLog> routeGpsLogs = routeGpsLogRepository.findByRouteIdOrderByLogTimeAsc(route.getId());
-                
-                log.debug("경로 GPS 로그 마스킹 시작: routeId={}, count={}", 
-                    route.getId(), routeGpsLogs.size());
-                
+
+                log.debug("경로 GPS 로그 마스킹 시작: routeId={}, count={}",
+                        route.getId(), routeGpsLogs.size());
+
                 // DB에서 모든 GPS 로그 하드 삭제
                 routeGpsLogRepository.deleteByRouteId(route.getId());
-                
+
                 log.debug("경로 GPS 로그 하드 삭제 완료: routeId={}", route.getId());
             }
-            
-            log.info("경로 GPS 로그 처리 완료: userId={}, routeCount={}", 
-                user.getId(), userRoutes.size());
+
+            log.info("경로 GPS 로그 처리 완료: userId={}, routeCount={}",
+                    user.getId(), userRoutes.size());
         } catch (Exception e) {
             log.warn("경로 GPS 로그 처리 중 오류: userId={}", user.getId(), e);
         }
@@ -515,17 +514,17 @@ public class RouteService {
     @Transactional
     public void addRouteToMyRoutes(User user, AddRouteToMyRoutesRequest request) {
         log.info("내 경로에 추가 시작: userId={}, routeId={}", user.getId(), request.getRouteId());
-        
+
         // 2. 경로 조회
         Route route = routeRepository.findByRouteId(request.getRouteId())
                 .orElseThrow(() -> new RouteException(RouteCommonErrorCode.ROUTE_NOT_FOUND));
-        
+
         // 3. 이미 추가된 경로인지 확인
         boolean alreadyExists = userRouteRepository.existsByUserAndRouteAndIsDeleteFalse(user, route);
         if (alreadyExists) {
             throw new RouteException(RouteCommonErrorCode.ROUTE_ALREADY_ADDED);
         }
-        
+
         // 4. UserRoute 생성 (SHARED 타입으로)
         UserRoute userRoute = UserRoute.builder()
                 .user(user)
@@ -534,9 +533,9 @@ public class RouteService {
                 .lastViewedAt(LocalDateTime.now())
                 .sharedByUserId(route.getUser().getId())
                 .build();
-        
+
         userRouteRepository.save(userRoute);
-        
+
         log.info("내 경로에 추가 완료: userId={}, routeId={}", user.getId(), request.getRouteId());
     }
 
@@ -544,44 +543,39 @@ public class RouteService {
      * 추천 코스 복사 (깊은 복사)
      */
     @Transactional
-    public Route copyRecommendedRoute(User user, CopyRecommendedRouteRequest request) {
-        log.info("추천 코스 복사 시작: userId={}, originalRouteId={}", user.getId(), request.getRouteId());
-        
+    public Route copyRecommendedRoute(User user, String routeId) {
+        log.info("추천 코스 복사 시작: userId={}, originalRouteId={}", user.getId(), routeId);
+
         // 1. 원본 경로 조회
-        Route originalRoute = routeRepository.findByRouteId(request.getRouteId())
+        Route originalRoute = routeRepository.findByRouteId(UUID.fromString(routeId))
                 .orElseThrow(() -> new RouteException(RouteCommonErrorCode.ROUTE_NOT_FOUND));
-        
+
         // 2. 새로운 경로 생성 (깊은 복사)
-        Route newRoute = createRouteCopy(user, originalRoute, request.getNewTitle());
-        Route savedRoute = routeRepository.save(newRoute);
-        
+        Route copiedRoute = createRouteCopy(user, originalRoute);
+
         // 3. GPS 로그 복사
-        copyRouteGpsLogs(originalRoute, savedRoute);
-        
-        // 4. UserRoute 생성 (OWNER 타입)
+        copyRouteGpsLogs(originalRoute, copiedRoute);
+
+        // 4. UserRoute 생성 (RECOMMENDED 타입)
         UserRoute userRoute = UserRoute.builder()
                 .user(user)
-                .route(savedRoute)
-                .relationType(RouteRelationType.OWNER)
+                .route(copiedRoute)
+                .relationType(RouteRelationType.RECOMMENDED)
                 .lastViewedAt(LocalDateTime.now())
                 .build();
         userRouteRepository.save(userRoute);
-        
-        log.info("추천 코스 복사 완료: userId={}, newRouteId={}", user.getId(), savedRoute.getId());
-        return savedRoute;
+
+        log.info("추천 코스 복사 완료: userId={}, newRouteId={}", user.getId(), copiedRoute.getId());
+        return copiedRoute;
     }
 
     /**
      * 경로 깊은 복사 생성
      */
-    private Route createRouteCopy(User user, Route originalRoute, String newTitle) {
-        String finalTitle = newTitle != null && !newTitle.trim().isEmpty() 
-                ? newTitle.trim() 
-                : originalRoute.getTitle() + " (복사본)";
-        
-        return Route.builder()
+    private Route createRouteCopy(User user, Route originalRoute) {
+        Route recommendedRoute = Route.builder()
                 .user(user)
-                .title(finalTitle)
+                .title(originalRoute.getTitle())
                 .description(originalRoute.getDescription())
                 .distance(originalRoute.getDistance())
                 .duration(originalRoute.getDuration())
@@ -592,17 +586,21 @@ public class RouteService {
                 .minLon(originalRoute.getMinLon())
                 .routeLine(originalRoute.getRouteLine())
                 .build();
+
+        routeRepository.save(recommendedRoute);
+
+        return recommendedRoute;
     }
 
     /**
      * GPS 로그 복사
      */
     private void copyRouteGpsLogs(Route originalRoute, Route newRoute) {
-        log.debug("GPS 로그 복사 시작: originalRouteId={}, newRouteId={}", 
+        log.debug("GPS 로그 복사 시작: originalRouteId={}, newRouteId={}",
                 originalRoute.getId(), newRoute.getId());
-        
+
         List<RouteGpsLog> originalGpsLogs = routeGpsLogRepository.findByRouteIdOrderByLogTimeAsc(originalRoute.getId());
-        
+
         for (RouteGpsLog originalLog : originalGpsLogs) {
             RouteGpsLog newGpsLog = RouteGpsLog.builder()
                     .route(newRoute)
@@ -611,12 +609,11 @@ public class RouteService {
                     .elevation(originalLog.getElevation())
                     .logTime(originalLog.getLogTime())
                     .build();
-            
+
             routeGpsLogRepository.save(newGpsLog);
         }
-        
-        log.debug("GPS 로그 복사 완료: originalRouteId={}, newRouteId={}, count={}", 
+
+        log.debug("GPS 로그 복사 완료: originalRouteId={}, newRouteId={}, count={}",
                 originalRoute.getId(), newRoute.getId(), originalGpsLogs.size());
     }
-
 }
