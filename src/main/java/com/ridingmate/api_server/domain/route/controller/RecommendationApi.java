@@ -3,6 +3,7 @@ package com.ridingmate.api_server.domain.route.controller;
 import com.ridingmate.api_server.domain.auth.security.AuthUser;
 import com.ridingmate.api_server.domain.route.dto.request.RecommendationListRequest;
 import com.ridingmate.api_server.domain.route.dto.response.CreateRouteResponse;
+import com.ridingmate.api_server.domain.route.dto.response.RecommendationDetailResponse;
 import com.ridingmate.api_server.domain.route.dto.response.RecommendationListResponse;
 import com.ridingmate.api_server.global.exception.CommonResponse;
 import io.swagger.v3.oas.annotations.Operation;
@@ -55,6 +56,25 @@ public interface RecommendationApi {
      ResponseEntity<CommonResponse<CreateRouteResponse>> copyRecommendedRouteToMyRoutes(
              @AuthenticationPrincipal AuthUser authUser,
              @Parameter(description = "복사할 경로 ID")
+             @PathVariable String routeId
+     );
+
+     @Operation(
+             summary = "추천 코스 세부 정보 조회",
+             description = """
+                     특정 추천 코스의 상세 정보를 조회합니다.
+                                            
+                     - 추천 코스의 기본 정보(이름, 설명, 거리, 고도 등)
+                     - 추천 타입, 자연 경관 타입, 지역 정보
+                     - 경로를 구성하는 모든 GPS 좌표 목록 (위도, 경도, 고도)
+                     """
+     )
+     @ApiResponses({
+             @ApiResponse(responseCode = "200", description = "성공: 추천 코스 세부 정보 조회 완료"),
+             @ApiResponse(responseCode = "404", description = "존재하지 않는 추천 코스입니다."),
+     })
+     ResponseEntity<CommonResponse<RecommendationDetailResponse>> getRecommendationDetail(
+             @Parameter(description = "추천 코스 ID")
              @PathVariable String routeId
      );
 }
