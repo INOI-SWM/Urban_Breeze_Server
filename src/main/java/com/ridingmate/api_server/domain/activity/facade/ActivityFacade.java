@@ -193,7 +193,16 @@ public class ActivityFacade {
      */
     public UploadActivityImagesResponse uploadActivityImages(AuthUser authUser, String activityId, List<MultipartFile> files) {
         Activity activity = activityService.getActivityWithUserByActivityId(activityId);
-        return activityService.uploadActivityImages(authUser.id(), activity.getId(), files);
+        List<ActivityImage> uploadImages = activityService.uploadActivityImages(authUser.id(), activity.getId(), files);
+
+        List<ActivityImageResponse> responses = uploadImages.stream()
+                .map(activityImage -> ActivityImageResponse.of(
+                        activityImage,
+                        s3Manager.getPresignedUrl(activityImage.getImagePath())
+                ))
+                .toList();
+
+        return UploadActivityImagesResponse.from(responses);
     }
 
     /**

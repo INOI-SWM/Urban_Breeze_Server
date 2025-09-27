@@ -19,11 +19,7 @@ public class ActivityImageResponse {
     @Schema(description = "표시 순서", example = "1")
     private final Integer displayOrder;
 
-    public static ActivityImageResponse from(ActivityImage activityImage) {
-        return new ActivityImageResponse(
-                activityImage.getId(),
-                activityImage.getImageUrl(),
-                activityImage.getDisplayOrder()
-        );
+    public static ActivityImageResponse of(ActivityImage image, String imageUrl) {
+        return new ActivityImageResponse(image.getId(), imageUrl, image.getDisplayOrder());
     }
 }

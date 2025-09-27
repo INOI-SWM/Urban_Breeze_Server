@@ -175,7 +175,7 @@ public class ActivityService {
 
         /**
          * 특정 활동의 GPS 좌표와 상세 정보를 한 번에 조회 (최적화된 방법)
-         * @param activityId 활동 ID
+         * @param activity 활동
          * @return GPS 로그 Projection 리스트
          */
         @Transactional(readOnly = true)
@@ -458,7 +458,7 @@ public class ActivityService {
      * @return 업로드 결과
      */
     @Transactional
-    public UploadActivityImagesResponse uploadActivityImages(Long userId, Long activityId, List<MultipartFile> files) {
+    public List<ActivityImage> uploadActivityImages(Long userId, Long activityId, List<MultipartFile> files) {
         // Activity 존재 및 소유권 확인
         Activity activity = getActivityWithUser(activityId);
         if (!activity.getUser().getId().equals(userId)) {
@@ -493,7 +493,7 @@ public class ActivityService {
             uploadedImages.add(savedImage);
         }
 
-        return UploadActivityImagesResponse.from(uploadedImages);
+        return uploadedImages;
     }
 
     /**
