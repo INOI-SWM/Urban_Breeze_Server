@@ -1,9 +1,11 @@
 package com.ridingmate.api_server.domain.route.dto.response;
 
+import com.ridingmate.api_server.domain.route.dto.FilterRangeInfo;
 import com.ridingmate.api_server.domain.route.entity.Recommendation;
 import com.ridingmate.api_server.domain.route.entity.Route;
 import com.ridingmate.api_server.global.dto.PaginationResponse;
 import io.swagger.v3.oas.annotations.media.Schema;
+import org.springframework.data.domain.Page;
 
 import java.util.List;
 
@@ -12,8 +14,23 @@ public record RecommendationListResponse(
     List<RecommendationItemResponse> recommendations,
     
     @Schema(description = "페이지네이션 정보")
-    PaginationResponse pagination
+    PaginationResponse pagination,
+
+    @Schema(description = "필터링 범위 정보")
+    FilterRangeInfo filterRange
 ) {
+
+    /**
+     * RecommendationItemResponse 리스트, Route 페이지, 전체 데이터 기준 FilterRangeInfo로부터 RecommendationListResponse 생성
+     * @param recommendationItems 변환된 추천 코스 목록
+     * @param routePage Route 페이지 (페이지네이션 정보 추출용)
+     * @param filterRange 전체 데이터 기준 필터링 범위 정보
+     * @return RecommendationListResponse DTO
+     */
+    public static RecommendationListResponse of(List<RecommendationItemResponse> recommendationItems, Page<Route> routePage, FilterRangeInfo filterRange) {
+        PaginationResponse pagination = PaginationResponse.from(routePage);
+        return new RecommendationListResponse(recommendationItems, pagination, filterRange);
+    }
     
     @Schema(description = "추천 코스 아이템")
     public record RecommendationItemResponse(
