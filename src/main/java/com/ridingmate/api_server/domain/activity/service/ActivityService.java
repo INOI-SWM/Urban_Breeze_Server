@@ -1,13 +1,12 @@
 package com.ridingmate.api_server.domain.activity.service;
 
-import com.ridingmate.api_server.domain.activity.dto.projection.ActivityDateRangeProjection;
 import com.ridingmate.api_server.domain.activity.dto.projection.ActivityStatsProjection;
 import com.ridingmate.api_server.domain.activity.dto.projection.GpsLogProjection;
+import com.ridingmate.api_server.domain.activity.dto.projection.YearlyStatsProjection;
 import com.ridingmate.api_server.domain.activity.dto.request.ActivityListRequest;
 import com.ridingmate.api_server.domain.activity.dto.request.ActivityStatsRequest;
 import com.ridingmate.api_server.domain.activity.dto.response.ActivityStatsResponse;
 import com.ridingmate.api_server.domain.activity.dto.response.DeleteActivityImageResponse;
-import com.ridingmate.api_server.domain.activity.dto.response.UploadActivityImagesResponse;
 import com.ridingmate.api_server.domain.activity.entity.Activity;
 import com.ridingmate.api_server.domain.activity.entity.ActivityGpsLog;
 import com.ridingmate.api_server.domain.activity.entity.ActivityImage;
@@ -250,6 +249,9 @@ public class ActivityService {
             case WEEK -> {
                 // 주간 통계는 유연하게 허용 (요청된 기간 그대로 사용)
             }
+            case ALL -> {
+                // 전체 통계는 유연하게 허용 (요청된 기간 그대로 사용)
+            }
         }
     }
 
@@ -276,6 +278,7 @@ public class ActivityService {
             case WEEK -> String.format("%d년 %d월", startDate.getYear() % 100, startDate.getMonthValue());
             case MONTH -> String.format("%d년 %d월", startDate.getYear() % 100, startDate.getMonthValue());
             case YEAR -> String.format("%d년", startDate.getYear());
+            case ALL -> "전체";
         };
     }
 
@@ -286,6 +289,7 @@ public class ActivityService {
         return switch (request.period()) {
             case WEEK, MONTH -> generateDailyDetailsForWeekOrMonth(user, request);
             case YEAR -> generateMonthlyDetailsForYear(user, request);
+            case ALL -> generateYearlyStats(user);
         };
     }
 
@@ -371,6 +375,7 @@ public class ActivityService {
         return switch (period) {
             case WEEK, MONTH -> String.valueOf(date.getDayOfMonth());
             case YEAR -> String.valueOf(date.getMonthValue());
+            case ALL -> String.valueOf(date.getYear());
         };
     }
 
@@ -680,5 +685,28 @@ public class ActivityService {
         activityGpsLogRepository.deleteByActivityId(activity.getId());
 
         log.debug("주행 기록 GPS 로그 하드 삭제 완료: activityId={}", activity.getId());
+    }
+
+    /**
+     * 연별 통계 데이터 생성 (ALL 기간용)
+     */
+    private List<ActivityStatsResponse.DetailInfo> generateYearlyStats(User user) {
+        List<YearlyStatsProjection> yearlyProjections = activityRepository.findYearlyActivityStats(user.getId());
+        
+        return yearlyProjections.stream()
+                .map(yearlyProjection -> {
+                    // 연도 라벨 생성 (예: "2025")
+                    String yearLabel = yearlyProjection.getYear().toString();
+                    
+                    // 연도별 통계 값 생성
+                    ActivityStatsResponse.DetailValue yearValue = new ActivityStatsResponse.DetailValue(
+                            yearlyProjection.getTotalDistance() / 1000.0, // 미터를 킬로미터로 변환
+                            yearlyProjection.getTotalElevation(),
+                            yearlyProjection.getTotalDurationSeconds()
+                    );
+                    
+                    return new ActivityStatsResponse.DetailInfo(yearLabel, yearValue);
+                })
+                .toList();
     }
 }

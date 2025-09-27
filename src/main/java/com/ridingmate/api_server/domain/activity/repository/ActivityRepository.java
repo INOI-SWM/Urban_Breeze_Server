@@ -2,6 +2,8 @@ package com.ridingmate.api_server.domain.activity.repository;
 
 import com.ridingmate.api_server.domain.activity.dto.projection.ActivityDateRangeProjection;
 import com.ridingmate.api_server.domain.activity.dto.projection.ActivityStatsProjection;
+import com.ridingmate.api_server.domain.activity.dto.projection.MonthlyStatsProjection;
+import com.ridingmate.api_server.domain.activity.dto.projection.YearlyStatsProjection;
 import com.ridingmate.api_server.domain.activity.entity.Activity;
 import com.ridingmate.api_server.domain.user.entity.User;
 import org.springframework.data.domain.Page;
@@ -97,6 +99,42 @@ public interface ActivityRepository extends JpaRepository<Activity, Long> {
         WHERE user_id = :userId AND is_delete = false
         """, nativeQuery = true)
     ActivityStatsProjection findOverallActivityStats(@Param("userId") Long userId);
+
+    /**
+     * 연별 활동 통계 조회
+     */
+    @Query(value = """
+        SELECT 
+            EXTRACT(YEAR FROM started_at) as year,
+            CAST(COUNT(*) AS BIGINT) as count,
+            CAST(COALESCE(SUM(distance), 0.0) AS DOUBLE PRECISION) as totalDistance,
+            CAST(COALESCE(SUM(elevation_gain), 0.0) AS DOUBLE PRECISION) as totalElevation,
+            CAST(ROUND(COALESCE(SUM(duration), 0.0) / 1000000000.0) AS BIGINT) as totalDurationSeconds
+        FROM activities 
+        WHERE user_id = :userId AND is_delete = false
+        GROUP BY EXTRACT(YEAR FROM started_at)
+        ORDER BY year DESC
+        """, nativeQuery = true)
+    List<YearlyStatsProjection> findYearlyActivityStats(@Param("userId") Long userId);
+
+    /**
+     * 월별 활동 통계 조회 (특정 연도)
+     */
+    @Query(value = """
+        SELECT 
+            EXTRACT(MONTH FROM started_at) as month,
+            CAST(COUNT(*) AS BIGINT) as count,
+            CAST(COALESCE(SUM(distance), 0.0) AS DOUBLE PRECISION) as totalDistance,
+            CAST(COALESCE(SUM(elevation_gain), 0.0) AS DOUBLE PRECISION) as totalElevation,
+            CAST(ROUND(COALESCE(SUM(duration), 0.0) / 1000000000.0) AS BIGINT) as totalDurationSeconds
+        FROM activities 
+        WHERE user_id = :userId 
+        AND EXTRACT(YEAR FROM started_at) = :year 
+        AND is_delete = false
+        GROUP BY EXTRACT(MONTH FROM started_at)
+        ORDER BY month ASC
+        """, nativeQuery = true)
+    List<MonthlyStatsProjection> findMonthlyActivityStats(@Param("userId") Long userId, @Param("year") Integer year);
 
     /**
      * 특정 사용자의 모든 활동 조회 (삭제된 활동 포함)

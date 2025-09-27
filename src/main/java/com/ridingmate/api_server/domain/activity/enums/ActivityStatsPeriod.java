@@ -8,7 +8,8 @@ import lombok.RequiredArgsConstructor;
 public enum ActivityStatsPeriod {
     WEEK("주간", "주"),
     MONTH("월간", "월"), 
-    YEAR("연간", "년");
+    YEAR("연간", "년"),
+    ALL("전체", "전체");
 
     private final String description;
     private final String unit;

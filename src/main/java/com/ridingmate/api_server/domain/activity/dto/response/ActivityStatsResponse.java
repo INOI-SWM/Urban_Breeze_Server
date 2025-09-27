@@ -67,4 +67,5 @@ public record ActivityStatsResponse(
             @Schema(description = "운동 시간 (초)", example = "3600")
             Long durationSec
     ) {}
+
 }
