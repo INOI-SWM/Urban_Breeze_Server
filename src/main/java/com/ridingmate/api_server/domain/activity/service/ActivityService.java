@@ -130,6 +130,17 @@ public class ActivityService {
     }
 
     /**
+     * activityId로 활동 조회 (User 정보 함께)
+     * @param activityId UUID 기반 활동 ID
+     * @return Activity with User
+     */
+    @Transactional(readOnly = true)
+    public Activity getActivityWithUserByActivityId(String activityId) {
+        return activityRepository.findByActivityId(UUID.fromString(activityId))
+                .orElseThrow(() -> new ActivityException(ActivityCommonErrorCode.ACTIVITY_NOT_FOUND));
+    }
+
+    /**
      * 특정 활동의 모든 이미지를 순서대로 조회
      * @param activityId 활동 ID
      * @return 순서대로 정렬된 이미지 목록
@@ -168,8 +179,7 @@ public class ActivityService {
          * @return GPS 로그 Projection 리스트
          */
         @Transactional(readOnly = true)
-        public List<GpsLogProjection> getActivityGpsLogProjections(Long activityId) {
-            Activity activity = getActivityWithUser(activityId);
+        public List<GpsLogProjection> getActivityGpsLogProjections(Activity activity) {
             return activityGpsLogRepository.findGpsLogProjectionsByActivity(activity);
         }
 

@@ -13,6 +13,8 @@ import org.springframework.stereotype.Repository;
 
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Optional;
+import java.util.UUID;
 
 @Repository
 public interface ActivityRepository extends JpaRepository<Activity, Long> {
@@ -37,6 +39,16 @@ public interface ActivityRepository extends JpaRepository<Activity, Long> {
            "JOIN FETCH a.user " +
            "WHERE a.id = :activityId AND a.isDelete = false")
     Activity findActivityWithUser(@Param("activityId") Long activityId);
+
+    /**
+     * activityId로 활동 조회 (User 정보 함께 fetch)
+     * @param activityId UUID 기반 활동 ID
+     * @return Activity with User
+     */
+    @Query("SELECT a FROM Activity a " +
+           "JOIN FETCH a.user " +
+           "WHERE a.activityId = :activityId AND a.isDelete = false")
+    Optional<Activity> findByActivityId(@Param("activityId") UUID activityId);
 
     /**
      * 사용자의 첫 번째와 마지막 활동 날짜 조회

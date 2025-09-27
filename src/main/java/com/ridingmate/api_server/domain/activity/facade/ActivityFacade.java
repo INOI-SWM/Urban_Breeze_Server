@@ -128,10 +128,10 @@ public class ActivityFacade {
      * @param activityId 활동 ID
      * @return 활동 상세 응답
      */
-    public ActivityDetailResponse getActivityDetail(Long activityId) {
-        Activity activity = activityService.getActivityWithUser(activityId);
+    public ActivityDetailResponse getActivityDetail(String activityId) {
+        Activity activity = activityService.getActivityWithUserByActivityId(activityId);
 
-        List<GpsLogProjection> gpsLogProjections = activityService.getActivityGpsLogProjections(activityId);
+        List<GpsLogProjection> gpsLogProjections = activityService.getActivityGpsLogProjections(activity);
 
         Coordinate[] coordinates = gpsLogProjections.stream()
                 .map(GpsLogProjection::toCoordinate)
@@ -140,7 +140,7 @@ public class ActivityFacade {
         List<Point> elevationPoints =
                 GeometryUtil.downsampleElevationProfile(coordinates, activity.getDistance() / 1000.0);
 
-        List<ActivityImage> activityImages = activityService.getActivityImages(activityId);
+        List<ActivityImage> activityImages = activityService.getActivityImages(activity.getId());
         List<ActivityDetailResponse.ActivityImageResponse> imageResponses = activityImages.stream()
                 .map(image -> ActivityDetailResponse.ActivityImageResponse.from(
                         image,
@@ -191,8 +191,9 @@ public class ActivityFacade {
      * @param files 업로드할 이미지 파일들
      * @return 업로드 결과
      */
-    public UploadActivityImagesResponse uploadActivityImages(AuthUser authUser, Long activityId, List<MultipartFile> files) {
-        return activityService.uploadActivityImages(authUser.id(), activityId, files);
+    public UploadActivityImagesResponse uploadActivityImages(AuthUser authUser, String activityId, List<MultipartFile> files) {
+        Activity activity = activityService.getActivityWithUserByActivityId(activityId);
+        return activityService.uploadActivityImages(authUser.id(), activity.getId(), files);
     }
 
     /**
@@ -202,8 +203,9 @@ public class ActivityFacade {
      * @param imageId 삭제할 이미지 ID
      * @return 삭제 결과
      */
-    public DeleteActivityImageResponse deleteActivityImage(AuthUser authUser, Long activityId, Long imageId) {
-        return activityService.deleteActivityImage(authUser.id(), activityId, imageId);
+    public DeleteActivityImageResponse deleteActivityImage(AuthUser authUser, String activityId, Long imageId) {
+        Activity activity = activityService.getActivityWithUserByActivityId(activityId);
+        return activityService.deleteActivityImage(authUser.id(), activity.getId(), imageId);
     }
 
     /**
@@ -213,9 +215,10 @@ public class ActivityFacade {
      * @param request 제목 변경 요청
      * @return 제목 변경 결과
      */
-    public UpdateActivityTitleResponse updateActivityTitle(AuthUser authUser, Long activityId, UpdateActivityTitleRequest request) {
-        Activity updatedActivity = activityService.updateActivityTitle(authUser.id(), activityId, request.title());
-        return UpdateActivityTitleResponse.of(updatedActivity.getId(), updatedActivity.getTitle());
+    public UpdateActivityTitleResponse updateActivityTitle(AuthUser authUser, String activityId, UpdateActivityTitleRequest request) {
+        Activity activity = activityService.getActivityWithUserByActivityId(activityId);
+        Activity updatedActivity = activityService.updateActivityTitle(authUser.id(), activity.getId(), request.title());
+        return UpdateActivityTitleResponse.of(updatedActivity.getActivityId().toString(), updatedActivity.getTitle());
     }
 
     /**
@@ -223,11 +226,11 @@ public class ActivityFacade {
      * @param authUser 인증된 사용자
      * @param activityId 삭제할 주행 기록 ID
      */
-    public void deleteActivity(AuthUser authUser, Long activityId) {
+    public void deleteActivity(AuthUser authUser, String activityId) {
         log.info("주행 기록 삭제 시작: userId={}, activityId={}", authUser.id(), activityId);
         
         // 1. 주행 기록 조회 및 권한 확인
-        Activity activity = activityService.getActivityWithUser(activityId);
+        Activity activity = activityService.getActivityWithUserByActivityId(activityId);
         
         // 2. 소유자 확인
         if (!activity.getUser().getId().equals(authUser.id())) {

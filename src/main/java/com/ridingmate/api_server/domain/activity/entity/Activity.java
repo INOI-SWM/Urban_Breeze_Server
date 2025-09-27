@@ -10,6 +10,7 @@ import lombok.NoArgsConstructor;
 
 import java.time.Duration;
 import java.time.LocalDateTime;
+import java.util.UUID;
 
 @Entity
 @Getter
@@ -20,6 +21,9 @@ public class Activity extends BaseTimeEntity {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
+
+    @Column(name = "activity_id", unique = true, nullable = false)
+    private UUID activityId;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "user_id", nullable = false)
@@ -115,6 +119,7 @@ public class Activity extends BaseTimeEntity {
         this.maxHeartRate = maxHeartRate;
         this.averagePower = averagePower;
         this.maxPower = maxPower;
+        this.activityId = UUID.randomUUID();
     }
 
     /**

@@ -7,8 +7,8 @@ import java.time.LocalDateTime;
 
 @Schema(description = "활동 목록 항목 응답")
 public record ActivityListItemResponse(
-        @Schema(description = "활동 ID", example = "1")
-        Long id,
+        @Schema(description = "활동 ID", example = "123e4567-e89b-12d3-a456-426614174000")
+        String activityId,
 
         @Schema(description = "활동 제목", example = "한강 라이딩")
         String title,
@@ -48,7 +48,7 @@ public record ActivityListItemResponse(
                                                 String thumbnailImageUrl, 
                                                 String userProfileImageUrl) {
         return new ActivityListItemResponse(
-                activity.getId(),
+                activity.getActivityId().toString(),
                 activity.getTitle(),
                 activity.getStartedAt(),
                 activity.getEndedAt(),

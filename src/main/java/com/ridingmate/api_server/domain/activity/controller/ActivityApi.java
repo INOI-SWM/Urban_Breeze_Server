@@ -64,8 +64,8 @@ public interface ActivityApi {
             ),
     })
     ResponseEntity<CommonResponse<ActivityDetailResponse>> getActivityDetail(
-            @Parameter(description = "조회할 주행 기록 ID", example = "1")
-            @PathVariable Long activityId
+            @Parameter(description = "조회할 주행 기록 ID", example = "123e4567-e89b-12d3-a456-426614174000")
+            @PathVariable String activityId
     );
 
     @Operation(
@@ -99,8 +99,8 @@ public interface ActivityApi {
     })
     ResponseEntity<CommonResponse<UpdateActivityTitleResponse>> updateActivityTitle(
             @AuthenticationPrincipal AuthUser authUser,
-            @Parameter(description = "주행 기록 ID", example = "1")
-            @PathVariable Long activityId,
+            @Parameter(description = "주행 기록 ID", example = "123e4567-e89b-12d3-a456-426614174000")
+            @PathVariable String activityId,
             @Parameter(description = "제목 변경 요청")
             @RequestBody UpdateActivityTitleRequest request
     );
@@ -118,8 +118,8 @@ public interface ActivityApi {
     })
     ResponseEntity<CommonResponse<UploadActivityImagesResponse>> uploadActivityImages(
             @AuthenticationPrincipal AuthUser authUser,
-            @Parameter(description = "주행 기록 ID", example = "1")
-            @PathVariable Long activityId,
+            @Parameter(description = "주행 기록 ID", example = "123e4567-e89b-12d3-a456-426614174000")
+            @PathVariable String activityId,
             @Parameter(description = "업로드할 이미지 파일들 (표시 순서는 업로드 순서대로 자동 할당)")
             @RequestPart List<MultipartFile> files
     );
@@ -137,8 +137,8 @@ public interface ActivityApi {
     })
     ResponseEntity<CommonResponse<DeleteActivityImageResponse>> deleteActivityImage(
             @AuthenticationPrincipal AuthUser authUser,
-            @Parameter(description = "주행 기록 ID", example = "1")
-            @PathVariable Long activityId,
+            @Parameter(description = "주행 기록 ID", example = "123e4567-e89b-12d3-a456-426614174000")
+            @PathVariable String activityId,
             @Parameter(description = "삭제할 이미지 ID", example = "1")
             @PathVariable Long imageId
     );
@@ -154,7 +154,7 @@ public interface ActivityApi {
     })
     ResponseEntity<CommonResponse<Void>> deleteActivity(
             @AuthenticationPrincipal AuthUser authUser,
-            @Parameter(description = "삭제할 주행 기록 ID", example = "1")
-            @PathVariable Long activityId
+            @Parameter(description = "삭제할 주행 기록 ID", example = "123e4567-e89b-12d3-a456-426614174000")
+            @PathVariable String activityId
     );
 }
