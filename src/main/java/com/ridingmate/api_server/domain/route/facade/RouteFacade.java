@@ -140,4 +140,13 @@ public class RouteFacade {
         routeService.addRouteToMyRoutes(user, request);
     }
 
+    /**
+     * 경로 삭제
+     */
+    public void deleteRoute(Long userId, String routeId) {
+        User user = userService.getUser(userId);
+        Route route = routeService.getRouteByRouteId(routeId);
+        routeService.deleteRoute(user, route);
+    }
+
 }

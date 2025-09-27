@@ -576,6 +576,53 @@ public class RouteService {
     }
 
     /**
+     * 경로 삭제
+     * - OWNER/RECOMMENDED 관계: 경로 데이터 마스킹, GPS 로그 하드삭제
+     * - SHARED 관계: 사용자-경로 관계만 삭제
+     */
+    @Transactional
+    public void deleteRoute(User user, Route route) {
+        log.info("경로 삭제 시작: userId={}, routeId={}", user.getId(), route.getId());
+
+        UserRoute userRoute = userRouteRepository.findByUserAndRouteAndIsDeleteFalse(user, route)
+                .orElseThrow(() -> new RouteException(RouteCommonErrorCode.ROUTE_ACCESS_DENIED));
+
+        // 3. 관계 타입에 따른 삭제 처리
+        if (userRoute.getRelationType() == RouteRelationType.SHARED) {
+            // SHARED 관계: 사용자-경로 관계만 삭제
+            deleteSharedRoute(userRoute);
+        } else {
+            // OWNER/RECOMMENDED 관계: 경로 데이터 마스킹 및 GPS 로그 하드삭제
+            deleteOwnedRoute(route);
+        }
+
+        log.info("경로 삭제 완료: userId={}, routeId={}, relationType={}", 
+                user.getId(), route.getId(), userRoute.getRelationType());
+    }
+
+    /**
+     * SHARED 관계 경로 삭제 (관계만 삭제)
+     */
+    private void deleteSharedRoute(UserRoute userRoute) {
+        log.info("SHARED 관계 경로 삭제: userRouteId={}", userRoute.getId());
+        userRoute.markAsDeleted();
+    }
+
+    /**
+     * OWNER/RECOMMENDED 관계 경로 삭제 (데이터 마스킹 및 GPS 로그 하드삭제)
+     */
+    private void deleteOwnedRoute(Route route) {
+        log.info("OWNER/RECOMMENDED 관계 경로 삭제: routeId={}", route.getId());
+
+        // 1. 경로 데이터 마스킹 및 소프트 삭제
+        route.maskPersonalDataForDeletion();
+
+        // 2. GPS 로그 하드삭제
+        routeGpsLogRepository.deleteByRouteId(route.getId());
+        log.info("GPS 로그 하드삭제 완료: routeId={}", route.getId());
+    }
+
+    /**
      * 경로 깊은 복사 생성
      */
     private Route createRouteCopy(User user, Route originalRoute) {

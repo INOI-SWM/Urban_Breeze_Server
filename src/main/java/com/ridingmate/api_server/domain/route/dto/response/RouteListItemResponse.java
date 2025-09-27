@@ -26,8 +26,8 @@ public record RouteListItemResponse(
         @Schema(description = "총 상승 고도 (m)", example = "120.4")
         Double elevationGain,
 
-        @Schema(description = "사용자 ID", example = "1")
-        Long userId,
+        @Schema(description = "사용자 ID", example = "550e8400-e29b-41d4-a716-446655440000")
+        String userId,
 
         @Schema(description = "사용자 닉네임", example = "라이더123")
         String nickname,
@@ -51,7 +51,7 @@ public record RouteListItemResponse(
                 route.getCreatedAt(),
                 route.getDistanceInKm(),
                 route.getRoundedElevationGain(),
-                route.getUser().getId(),
+                route.getUser().getUuid().toString(),
                 route.getUser().getNickname(),
                 profileImageUrl
         );
