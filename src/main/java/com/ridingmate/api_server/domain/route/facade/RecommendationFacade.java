@@ -1,8 +1,10 @@
 package com.ridingmate.api_server.domain.route.facade;
 
+import com.ggalmazor.ltdownsampling.Point;
 import com.ridingmate.api_server.domain.route.dto.request.RecommendationListRequest;
 import com.ridingmate.api_server.domain.route.dto.FilterRangeInfo;
 import com.ridingmate.api_server.domain.route.dto.response.CreateRouteResponse;
+import com.ridingmate.api_server.domain.route.dto.response.RecommendationDetailResponse;
 import com.ridingmate.api_server.domain.route.dto.response.RecommendationListResponse;
 import com.ridingmate.api_server.domain.route.entity.Recommendation;
 import com.ridingmate.api_server.domain.route.entity.Route;
@@ -10,6 +12,7 @@ import com.ridingmate.api_server.domain.route.service.RouteService;
 import com.ridingmate.api_server.domain.user.entity.User;
 import com.ridingmate.api_server.domain.user.service.UserService;
 import com.ridingmate.api_server.global.dto.PaginationResponse;
+import com.ridingmate.api_server.global.util.GeometryUtil;
 import com.ridingmate.api_server.global.util.GpxGenerator;
 import com.ridingmate.api_server.infra.aws.s3.S3Manager;
 import com.ridingmate.api_server.infra.geoapify.GeoapifyClient;
@@ -82,6 +85,22 @@ public class RecommendationFacade {
         }
 
         return CreateRouteResponse.from(route);
+    }
+
+    /**
+     * 추천 코스 세부 정보 조회
+     * @param routeId 추천 코스 ID
+     * @return 추천 코스 세부 정보 응답
+     */
+    public RecommendationDetailResponse getRecommendationDetail(String routeId) {
+        Route route = routeService.getRecommendationRouteWithUserByRouteId(routeId);
+        Coordinate[] coordinates = routeService.getRouteDetailList(route.getId());
+
+        List<Point> elevationProfilePoints = GeometryUtil.downsampleElevationProfile(coordinates, route.getDistance());
+
+        String profileImageUrl = s3Manager.getPresignedUrl(route.getUser().getProfileImagePath());
+
+        return RecommendationDetailResponse.from(route, elevationProfilePoints, profileImageUrl);
     }
 
 } 

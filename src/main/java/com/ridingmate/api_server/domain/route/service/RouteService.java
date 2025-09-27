@@ -203,6 +203,12 @@ public class RouteService {
     }
 
     @Transactional(readOnly = true)
+    public Route getRecommendationRouteWithUserByRouteId(String routeId) {
+        return routeRepository.findRecommendationRouteWithUserByRouteId(UUID.fromString(routeId))
+                .orElseThrow(() -> new RouteException(RouteCommonErrorCode.ROUTE_NOT_FOUND));
+    }
+
+    @Transactional(readOnly = true)
     public Route getRouteByRouteId(String routeId) {
         return routeRepository.findByRouteId(UUID.fromString(routeId))
                 .orElseThrow(() -> new RouteException(RouteCommonErrorCode.ROUTE_NOT_FOUND));

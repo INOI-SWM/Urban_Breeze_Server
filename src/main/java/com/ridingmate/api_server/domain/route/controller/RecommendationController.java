@@ -4,6 +4,7 @@ import com.ridingmate.api_server.domain.auth.exception.AuthErrorCode;
 import com.ridingmate.api_server.domain.auth.security.AuthUser;
 import com.ridingmate.api_server.domain.route.dto.request.RecommendationListRequest;
 import com.ridingmate.api_server.domain.route.dto.response.CreateRouteResponse;
+import com.ridingmate.api_server.domain.route.dto.response.RecommendationDetailResponse;
 import com.ridingmate.api_server.domain.route.dto.response.RecommendationListResponse;
 import com.ridingmate.api_server.domain.route.exception.RouteSuccessCode;
 import com.ridingmate.api_server.domain.route.exception.code.RouteCommonErrorCode;
@@ -46,5 +47,17 @@ public class RecommendationController implements RecommendationApi {
         return ResponseEntity
                 .status(RouteSuccessCode.RECOMMENDED_ROUTE_COPIED.getStatus())
                 .body(CommonResponse.success(RouteSuccessCode.RECOMMENDED_ROUTE_COPIED, response));
+    }
+
+    @Override
+    @GetMapping("/{routeId}")
+    @ApiErrorCodeExample(RouteCommonErrorCode.class)
+    public ResponseEntity<CommonResponse<RecommendationDetailResponse>> getRecommendationDetail(
+            @PathVariable String routeId
+    ) {
+        RecommendationDetailResponse response = recommendationFacade.getRecommendationDetail(routeId);
+        return ResponseEntity
+                .status(RouteSuccessCode.ROUTE_DETAIL_FETCHED.getStatus())
+                .body(CommonResponse.success(RouteSuccessCode.ROUTE_DETAIL_FETCHED, response));
     }
 } 

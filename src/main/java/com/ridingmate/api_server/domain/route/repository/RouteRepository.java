@@ -47,6 +47,16 @@ public interface RouteRepository extends JpaRepository<Route, Long> {
         """)
     Optional<Route> findByRouteId(@Param("routeId") UUID routeId);
 
+    @Query("""
+        SELECT r
+        FROM Route r
+        JOIN FETCH r.user
+        JOIN FETCH r.recommendation
+        WHERE r.routeId = :routeId
+        AND r.isDelete = false
+        """)
+    Optional<Route> findRecommendationRouteWithUserByRouteId(@Param("routeId") UUID routeId);
+
     /**
      * 사용자별 특정 관계 타입의 경로 조회 (거리 및 고도 필터링 포함)
      */
