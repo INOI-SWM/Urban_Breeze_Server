@@ -168,4 +168,23 @@ public interface RouteApi {
             @AuthenticationPrincipal AuthUser authUser,
             @Valid @RequestBody AddRouteToMyRoutesRequest request
     );
+
+    @Operation(
+            summary = "경로 삭제",
+            description = """
+                    사용자의 경로를 삭제합니다.
+                    
+                    - OWNER/RECOMMENDED 관계: 경로 데이터 마스킹, GPS 로그 하드삭제
+                    - SHARED 관계: 사용자-경로 관계만 삭제
+                    """
+    )
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "성공: 경로 삭제 완료"),
+            @ApiResponse(responseCode = "404", description = "경로를 찾을 수 없습니다."),
+            @ApiResponse(responseCode = "403", description = "경로 삭제 권한이 없습니다."),
+    })
+    ResponseEntity<CommonResponse<Void>> deleteRoute(
+            @AuthenticationPrincipal AuthUser authUser,
+            @PathVariable String routeId
+    );
 }

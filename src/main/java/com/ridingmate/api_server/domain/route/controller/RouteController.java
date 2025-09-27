@@ -132,4 +132,19 @@ public class RouteController implements RouteApi{
                 .status(RouteSuccessCode.ROUTE_ADDED_TO_MY_ROUTES.getStatus())
                 .body(CommonResponse.success(RouteSuccessCode.ROUTE_ADDED_TO_MY_ROUTES, null));
     }
+
+    @Override
+    @DeleteMapping("/{routeId}")
+    @ApiErrorCodeExample(RouteCommonErrorCode.class)
+    @ApiErrorCodeExample(AuthErrorCode.class)
+    public ResponseEntity<CommonResponse<Void>> deleteRoute(
+            @AuthenticationPrincipal AuthUser authUser,
+            @PathVariable String routeId) {
+        
+        routeFacade.deleteRoute(authUser.id(), routeId);
+        
+        return ResponseEntity
+                .status(RouteSuccessCode.ROUTE_DELETED.getStatus())
+                .body(CommonResponse.success(RouteSuccessCode.ROUTE_DELETED, null));
+    }
 }
