@@ -9,6 +9,8 @@ import com.ridingmate.api_server.domain.activity.entity.Activity;
 import com.ridingmate.api_server.domain.activity.entity.ActivityGpsLog;
 import com.ridingmate.api_server.domain.activity.dto.projection.GpsLogProjection;
 import com.ridingmate.api_server.domain.activity.entity.ActivityImage;
+import com.ridingmate.api_server.domain.activity.exception.ActivityException;
+import com.ridingmate.api_server.domain.activity.exception.code.ActivityCommonErrorCode;
 import com.ridingmate.api_server.domain.activity.service.ActivityService;
 import com.ridingmate.api_server.domain.auth.security.AuthUser;
 import com.ridingmate.api_server.domain.user.entity.User;
@@ -214,5 +216,27 @@ public class ActivityFacade {
     public UpdateActivityTitleResponse updateActivityTitle(AuthUser authUser, Long activityId, UpdateActivityTitleRequest request) {
         Activity updatedActivity = activityService.updateActivityTitle(authUser.id(), activityId, request.title());
         return UpdateActivityTitleResponse.of(updatedActivity.getId(), updatedActivity.getTitle());
+    }
+
+    /**
+     * 주행 기록 삭제
+     * @param authUser 인증된 사용자
+     * @param activityId 삭제할 주행 기록 ID
+     */
+    public void deleteActivity(AuthUser authUser, Long activityId) {
+        log.info("주행 기록 삭제 시작: userId={}, activityId={}", authUser.id(), activityId);
+        
+        // 1. 주행 기록 조회 및 권한 확인
+        Activity activity = activityService.getActivityWithUser(activityId);
+        
+        // 2. 소유자 확인
+        if (!activity.getUser().getId().equals(authUser.id())) {
+            throw new ActivityException(ActivityCommonErrorCode.ACTIVITY_ACCESS_DENIED);
+        }
+        
+        // 3. 관련 데이터 삭제
+        activityService.deleteActivity(activity);
+        
+        log.info("주행 기록 삭제 완료: userId={}, activityId={}", authUser.id(), activityId);
     }
 }

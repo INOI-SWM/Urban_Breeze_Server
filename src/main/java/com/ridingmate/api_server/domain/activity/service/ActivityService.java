@@ -630,15 +630,7 @@ public class ActivityService {
         for (Activity activity : activities) {
             try {
                 // 활동의 모든 GPS 로그 조회
-                List<ActivityGpsLog> activityGpsLogs = activityGpsLogRepository.findByActivityIdOrderByLogTimeAsc(activity.getId());
-                
-                log.debug("활동 GPS 로그 삭제 시작: activityId={}, count={}", activity.getId(), activityGpsLogs.size());
-                
-                // DB에서 모든 GPS 로그 하드 삭제
-                activityGpsLogRepository.deleteByActivityId(activity.getId());
-                
-                log.debug("활동 GPS 로그 하드 삭제 완료: activityId={}", activity.getId());
-                
+                deleteAllActivityGpsLogs(activity);
             } catch (Exception e) {
                 log.warn("활동 GPS 로그 처리 중 오류: activityId={}", activity.getId(), e);
             }
@@ -647,4 +639,36 @@ public class ActivityService {
         log.info("활동 GPS 로그 처리 완료: count={}", activities.size());
     }
 
+    /**
+     * 주행 기록 삭제 (개별 삭제)
+     * @param activity 삭제할 주행 기록
+     */
+    @Transactional
+    public void deleteActivity(Activity activity) {
+        log.info("주행 기록 삭제 시작: activityId={}", activity.getId());
+        
+        try {
+            deleteAllActivityImages(activity);
+            deleteAllActivityGpsLogs(activity);
+
+            activity.maskPersonalDataForDeletion();
+
+            log.info("주행 기록 삭제 완료: activityId={}", activity.getId());
+            
+        } catch (Exception e) {
+            log.error("주행 기록 삭제 중 오류 발생: activityId={}", activity.getId(), e);
+            throw new ActivityException(ActivityCommonErrorCode.ACTIVITY_DELETE_FAILED);
+        }
+    }
+
+    private void deleteAllActivityGpsLogs(Activity activity){
+        List<ActivityGpsLog> activityGpsLogs = activityGpsLogRepository.findByActivityIdOrderByLogTimeAsc(activity.getId());
+
+        log.debug("주행 기록 GPS 로그 삭제 시작: activityId={}, count={}", activity.getId(), activityGpsLogs.size());
+
+        // DB에서 모든 GPS 로그 하드 삭제
+        activityGpsLogRepository.deleteByActivityId(activity.getId());
+
+        log.debug("주행 기록 GPS 로그 하드 삭제 완료: activityId={}", activity.getId());
+    }
 }

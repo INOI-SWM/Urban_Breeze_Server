@@ -142,4 +142,19 @@ public interface ActivityApi {
             @Parameter(description = "삭제할 이미지 ID", example = "1")
             @PathVariable Long imageId
     );
+
+    @Operation(
+            summary = "주행 기록 삭제",
+            description = "특정 주행 기록을 삭제합니다. 관련된 모든 데이터(이미지, GPS 로그)도 함께 삭제됩니다."
+    )
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "성공: 주행 기록 삭제 완료"),
+            @ApiResponse(responseCode = "404", description = "주행 기록을 찾을 수 없습니다."),
+            @ApiResponse(responseCode = "403", description = "해당 주행 기록에 대한 권한이 없습니다."),
+    })
+    ResponseEntity<CommonResponse<Void>> deleteActivity(
+            @AuthenticationPrincipal AuthUser authUser,
+            @Parameter(description = "삭제할 주행 기록 ID", example = "1")
+            @PathVariable Long activityId
+    );
 }

@@ -106,4 +106,16 @@ public class ActivityController implements ActivityApi {
                 .status(ActivitySuccessCode.ACTIVITY_TITLE_UPDATED.getStatus())
                 .body(CommonResponse.success(ActivitySuccessCode.ACTIVITY_TITLE_UPDATED, response));
     }
+
+    @DeleteMapping("/{activityId}")
+    @Override
+    public ResponseEntity<CommonResponse<Void>> deleteActivity(
+            @AuthenticationPrincipal AuthUser authUser,
+            @PathVariable Long activityId
+    ) {
+        activityFacade.deleteActivity(authUser, activityId);
+        return ResponseEntity
+                .status(ActivitySuccessCode.ACTIVITY_DELETED.getStatus())
+                .body(CommonResponse.success(ActivitySuccessCode.ACTIVITY_DELETED));
+    }
 }
