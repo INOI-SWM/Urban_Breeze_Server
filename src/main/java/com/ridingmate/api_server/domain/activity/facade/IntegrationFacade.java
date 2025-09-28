@@ -1,8 +1,8 @@
 package com.ridingmate.api_server.domain.activity.facade;
 
-import com.ridingmate.api_server.domain.activity.dto.request.IntegrationProviderAuthRequest;
 import com.ridingmate.api_server.domain.activity.dto.response.IntegrationAuthenticateResponse;
 import com.ridingmate.api_server.domain.activity.dto.response.IntegrationProviderAuthResponse;
+import com.ridingmate.api_server.domain.activity.dto.response.TerraAuthTokenResponse;
 import com.ridingmate.api_server.domain.activity.service.TerraService;
 import com.ridingmate.api_server.domain.auth.security.AuthUser;
 import com.ridingmate.api_server.domain.user.entity.TerraUser;
@@ -18,7 +18,9 @@ import com.ridingmate.api_server.infra.terra.dto.request.TerraGenerateAuthLinkRe
 import com.ridingmate.api_server.infra.terra.dto.request.TerraProviderAuthRequest;
 import com.ridingmate.api_server.infra.terra.dto.response.TerraGenerateAuthLinkResponse;
 import com.ridingmate.api_server.infra.terra.dto.response.TerraProviderAuthResponse;
+import com.ridingmate.api_server.infra.terra.dto.response.TerraAuthTokenApiResponse;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 
 import java.time.LocalDate;
@@ -26,6 +28,7 @@ import java.util.List;
 
 @Component
 @RequiredArgsConstructor
+@Slf4j
 public class IntegrationFacade {
 
     private final TerraClient terraClient;
@@ -60,6 +63,33 @@ public class IntegrationFacade {
             LocalDate startDate = terraService.determineActivityStartDate(terraUser);
             terraClient.retrieveActivity(terraUser.getTerraUserId(), startDate);
             terraService.updateLastSyncDate(terraUser);
+        }
+    }
+
+    /**
+     * Terra SDK용 인증 토큰 발급
+     * @param authUser 인증된 사용자
+     * @return 발급된 Terra 인증 토큰
+     */
+    public TerraAuthTokenResponse generateTerraAuthToken(AuthUser authUser) {
+        try {
+
+            log.info("Terra SDK 인증 토큰 발급 시작: userId={}", authUser.id());
+            TerraAuthTokenApiResponse terraResponse = terraClient.generateAuthToken();
+
+            log.info("Terra SDK 인증 토큰 발급 성공: userId={}, token={}",
+                    authUser.id(), terraResponse.token());
+
+            return TerraAuthTokenResponse.from(
+                    terraResponse.token(),
+                    terraResponse.expiresIn(),
+                    terraResponse.status()
+            );
+
+        } catch (Exception e) {
+            log.error("Terra SDK 인증 토큰 발급 실패: userId={}, error={}",
+                    authUser.id(), e.getMessage(), e);
+            throw new RuntimeException("Terra 인증 토큰 발급에 실패했습니다: " + e.getMessage(), e);
         }
     }
 }

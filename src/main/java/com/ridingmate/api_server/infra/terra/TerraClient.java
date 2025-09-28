@@ -5,6 +5,7 @@ import com.ridingmate.api_server.infra.terra.dto.request.TerraGenerateAuthLinkRe
 import com.ridingmate.api_server.infra.terra.dto.request.TerraProviderAuthRequest;
 import com.ridingmate.api_server.infra.terra.dto.response.TerraGenerateAuthLinkResponse;
 import com.ridingmate.api_server.infra.terra.dto.response.TerraProviderAuthResponse;
+import com.ridingmate.api_server.infra.terra.dto.response.TerraAuthTokenApiResponse;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.core.codec.CodecException;
@@ -153,6 +154,42 @@ public class TerraClient {
                         }
                 )
                 .doOnSuccess(response -> log.info("Terra 사용자 연동 해제 완료: terraUserId={}", terraUserId))
+                .block();
+    }
+
+    /**
+     * Terra SDK용 인증 토큰 발급
+     * @return 발급된 인증 토큰
+     */
+    public TerraAuthTokenApiResponse generateAuthToken() {
+        
+        return terraWebClient.post()
+                .uri(uriBuilder -> uriBuilder
+                        .path("/v2/auth/generateAuthToken")
+                        .build())
+                .retrieve()
+                .onStatus(
+                        status -> status.is4xxClientError() || status.is5xxServerError(),
+                        response -> response.bodyToMono(String.class)
+                                .flatMap(errorBody -> {
+                                    log.error("Terra SDK 인증 토큰 발급 실패: status={}, body={}", 
+                                        response.statusCode(), errorBody);
+                                    if (response.statusCode().is4xxClientError()) {
+                                        return Mono.error(new TerraException(TerraErrorCode.TERRA_REQUEST_FAILED));
+                                    }
+                                    return Mono.error(new TerraException(TerraErrorCode.TERRA_SERVER_ERROR));
+                                })
+                )
+                .bodyToMono(TerraAuthTokenApiResponse.class)
+                .onErrorMap(
+                        throwable -> !(throwable instanceof BusinessException),
+                        throwable -> {
+                            if (throwable instanceof CodecException) {
+                                return new TerraException(TerraErrorCode.TERRA_MAPPING_FAILED);
+                            }
+                            return new TerraException(TerraErrorCode.TERRA_CONNECTION_FAILED);
+                        }
+                )
                 .block();
     }
 }

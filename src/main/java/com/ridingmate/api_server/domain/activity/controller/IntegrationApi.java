@@ -3,6 +3,7 @@ package com.ridingmate.api_server.domain.activity.controller;
 import com.ridingmate.api_server.domain.activity.dto.request.IntegrationProviderAuthRequest;
 import com.ridingmate.api_server.domain.activity.dto.response.IntegrationAuthenticateResponse;
 import com.ridingmate.api_server.domain.activity.dto.response.IntegrationProviderAuthResponse;
+import com.ridingmate.api_server.domain.activity.dto.response.TerraAuthTokenResponse;
 import com.ridingmate.api_server.domain.auth.security.AuthUser;
 import com.ridingmate.api_server.global.exception.CommonResponse;
 import com.ridingmate.api_server.infra.terra.TerraProvider;
@@ -72,4 +73,22 @@ public interface IntegrationApi {
             @ApiResponse(responseCode = "404", description = "실패: 사용자에게 연동된 서비스가 하나도 없음")
     })
     ResponseEntity<CommonResponse<Void>> getActivities(@AuthenticationPrincipal AuthUser authUser);
+
+    @Operation(
+            summary = "Terra SDK 인증 토큰 발급",
+            description = """
+                    Terra SDK를 사용하여 삼성 헬스, Apple Health 등과 연동하기 위한 인증 토큰을 발급합니다.
+                    
+                    - **Terra API 호출**: Terra의 `/v2/auth/generateAuthToken` 엔드포인트를 호출하여 SDK용 토큰을 발급받습니다.
+                    - **3분 유효**: 발급된 토큰은 3분(180초) 동안만 유효합니다.
+                    - **SDK 연동**: 클라이언트는 이 토큰을 사용하여 Terra SDK의 `initConnection()` 함수를 호출할 수 있습니다.
+                    - **자동 갱신**: 토큰이 만료되면 새로운 토큰을 발급받아야 합니다.
+                    """
+    )
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "성공: Terra SDK 인증 토큰 발급 완료"),
+            @ApiResponse(responseCode = "401", description = "인증 실패 - 유효하지 않은 토큰"),
+            @ApiResponse(responseCode = "500", description = "Terra API 호출 실패 - 서버 내부 오류")
+    })
+    ResponseEntity<CommonResponse<TerraAuthTokenResponse>> getTerraAuthToken(@AuthenticationPrincipal AuthUser authUser);
 }
