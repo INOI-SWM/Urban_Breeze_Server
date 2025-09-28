@@ -3,6 +3,7 @@ package com.ridingmate.api_server.domain.activity.controller;
 import com.ridingmate.api_server.domain.activity.dto.request.IntegrationProviderAuthRequest;
 import com.ridingmate.api_server.domain.activity.dto.response.IntegrationAuthenticateResponse;
 import com.ridingmate.api_server.domain.activity.dto.response.IntegrationProviderAuthResponse;
+import com.ridingmate.api_server.domain.activity.dto.response.TerraAuthTokenResponse;
 import com.ridingmate.api_server.domain.activity.exception.IntegrationSuccessCode;
 import com.ridingmate.api_server.domain.activity.facade.IntegrationFacade;
 import com.ridingmate.api_server.domain.auth.security.AuthUser;
@@ -20,7 +21,6 @@ import org.springframework.web.bind.annotation.*;
 @RequestMapping("/api/integration")
 @RequiredArgsConstructor
 public class IntegrationController implements IntegrationApi{
-
 
     private final IntegrationFacade integrationFacade;
 
@@ -62,5 +62,19 @@ public class IntegrationController implements IntegrationApi{
         return ResponseEntity
                 .status(IntegrationSuccessCode.INTEGRATION_RETRIEVE_ACTIVITY_SUCCESS.getStatus())
                 .body(CommonResponse.success(IntegrationSuccessCode.INTEGRATION_RETRIEVE_ACTIVITY_SUCCESS));
+    }
+
+    @Override
+    @PostMapping("/terra/auth-token")
+    @ApiErrorCodeExample(UserErrorCode.class)
+    @ApiErrorCodeExample(TerraErrorCode.class)
+    public ResponseEntity<CommonResponse<TerraAuthTokenResponse>> getTerraAuthToken(
+            @AuthenticationPrincipal AuthUser authUser
+    ) {
+        TerraAuthTokenResponse response = integrationFacade.generateTerraAuthToken(authUser);
+
+        return ResponseEntity
+                .status(IntegrationSuccessCode.INTEGRATION_TERRA_AUTH_TOKEN_SUCCESS.getStatus())
+                .body(CommonResponse.success(IntegrationSuccessCode.INTEGRATION_TERRA_AUTH_TOKEN_SUCCESS, response));
     }
 }
