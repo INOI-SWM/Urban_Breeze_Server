@@ -80,6 +80,27 @@ public class ActivityGpsLog {
     }
 
     /**
+     * 심박수 업데이트
+     */
+    public void updateHeartRate(Double heartRate) {
+        this.heartRate = heartRate;
+    }
+
+    /**
+     * 케이던스 업데이트
+     */
+    public void updateCadence(Double cadence) {
+        this.cadence = cadence;
+    }
+
+    /**
+     * 파워 업데이트
+     */
+    public void updatePower(Double power) {
+        this.power = power;
+    }
+
+    /**
      * GPS 로그 개인정보 마스킹 처리
      * - 좌표 데이터: 즉시 파기 (원본 위치)
      * - 시간 정보: 즉시 파기 (동선 복원 가능)
