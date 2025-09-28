@@ -228,8 +228,7 @@ public class RouteService {
 
 
     public String createThumbnailImagePath(String routeId) {
-        String uuid = UUID.randomUUID().toString();
-        return String.format("ridingmate/route-thumbnails/%s/%s.png", routeId, uuid);
+        return String.format("/route-thumbnails/%s/thumbnail.png", routeId);
     }
 
     public void updateThumbnailImagePath(Route route, String thumbnailImagePath){

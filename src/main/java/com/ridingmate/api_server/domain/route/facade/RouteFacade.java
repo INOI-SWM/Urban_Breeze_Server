@@ -59,7 +59,7 @@ public class RouteFacade {
         byte[] thumbnailBytes = geoapifyClient.getStaticMap(routeLine);
         String thumbnailImagePath =  routeService.createThumbnailImagePath(route.getRouteId().toString());
         s3Manager.uploadByteFiles(thumbnailImagePath ,thumbnailBytes, "image/png");
-
+        routeService.updateThumbnailImagePath(route, thumbnailImagePath);
 
         // GPX 파일 생성 및 S3 업로드
         try {
