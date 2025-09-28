@@ -5,7 +5,11 @@ import com.ridingmate.api_server.domain.activity.dto.projection.GpsLogProjection
 import com.ridingmate.api_server.domain.activity.dto.projection.YearlyStatsProjection;
 import com.ridingmate.api_server.domain.activity.dto.request.ActivityListRequest;
 import com.ridingmate.api_server.domain.activity.dto.request.ActivityStatsRequest;
+import com.ridingmate.api_server.domain.activity.dto.request.AppleWorkoutImportRequest;
+import com.ridingmate.api_server.domain.activity.dto.request.AppleWorkoutsImportRequest;
 import com.ridingmate.api_server.domain.activity.dto.response.ActivityStatsResponse;
+import com.ridingmate.api_server.domain.activity.dto.response.AppleWorkoutImportResponse;
+import com.ridingmate.api_server.domain.activity.dto.response.AppleWorkoutsImportResponse;
 import com.ridingmate.api_server.domain.activity.dto.response.DeleteActivityImageResponse;
 import com.ridingmate.api_server.domain.activity.entity.Activity;
 import com.ridingmate.api_server.domain.activity.entity.ActivityGpsLog;
@@ -714,4 +718,131 @@ public class ActivityService {
                 })
                 .toList();
     }
+
+    /**
+     * Apple HealthKit 운동 기록 업로드
+     * @param userId 사용자 ID
+     * @param request Apple 운동 기록 업로드 요청
+     * @return 업로드된 운동 기록 목록
+     */
+    @Transactional
+    public AppleWorkoutsImportResponse importAppleWorkouts(Long userId, AppleWorkoutsImportRequest request) {
+        log.info("Apple 운동 기록 업로드 시작: userId={}, count={}", userId, request.workouts().size());
+
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new AuthException(AuthErrorCode.AUTHENTICATION_USER_NOT_FOUND));
+
+        List<AppleWorkoutImportResponse> importedActivities = new ArrayList<>();
+
+        for (AppleWorkoutImportRequest workoutRequest : request.workouts()) {
+            try {
+                // 1. Activity 먼저 생성 및 저장
+                Activity activity = createActivityFromAppleWorkout(user, workoutRequest);
+                Activity savedActivity = activityRepository.save(activity);
+                
+                // 2. GPS 로그 생성 및 저장
+                List<ActivityGpsLog> gpsLogs = createActivityGpsLogsFromAppleWorkout(savedActivity, workoutRequest);
+                
+                if (!gpsLogs.isEmpty()) {
+                    activityGpsLogRepository.saveAll(gpsLogs);
+                }
+                
+
+                AppleWorkoutImportResponse response = AppleWorkoutImportResponse.from(savedActivity, gpsLogs.size());
+                importedActivities.add(response);
+
+                log.info("Apple 운동 기록 업로드 성공: activityId={}, title={}", 
+                        savedActivity.getActivityId(), savedActivity.getTitle());
+
+            } catch (Exception e) {
+                log.error("Apple 운동 기록 업로드 실패: userId={}, title={}", 
+                        userId, workoutRequest.title(), e);
+                // 개별 실패는 로그만 남기고 계속 진행
+            }
+        }
+
+        log.info("Apple 운동 기록 업로드 완료: userId={}, successCount={}", 
+                userId, importedActivities.size());
+
+        return AppleWorkoutsImportResponse.of(importedActivities);
+    }
+
+    /**
+     * Apple HealthKit 운동 데이터로부터 Activity 생성
+     */
+    private Activity createActivityFromAppleWorkout(User user, AppleWorkoutImportRequest request) {
+        return Activity.builder()
+                .user(user)
+                .title(request.title())
+                .startedAt(request.startTime())
+                .endedAt(request.endTime())
+                .distance(request.distance())
+                .duration(request.getDuration())
+                .elevationGain(null) // Apple HealthKit에서는 elevationGain을 별도로 제공하지 않음
+                .cadence(null) // Apple HealthKit에서는 cadence를 별도로 제공하지 않음
+                .averageHeartRate(null) // Apple HealthKit에서는 평균 심박수를 별도로 제공하지 않음
+                .maxHeartRate(null) // Apple HealthKit에서는 최대 심박수를 별도로 제공하지 않음
+                .averagePower(null) // Apple HealthKit에서는 파워를 별도로 제공하지 않음
+                .maxPower(null) // Apple HealthKit에서는 파워를 별도로 제공하지 않음
+                .build();
+    }
+
+    /**
+     * Apple HealthKit 운동 데이터로부터 GPS 로그 생성
+     */
+    private List<ActivityGpsLog> createActivityGpsLogsFromAppleWorkout(Activity activity, AppleWorkoutImportRequest request) {
+        List<ActivityGpsLog> gpsLogs = new ArrayList<>();
+
+        // 위치 데이터 처리
+        if (request.locationData() != null && !request.locationData().isEmpty()) {
+            for (AppleWorkoutImportRequest.LocationData locationData : request.locationData()) {
+                ActivityGpsLog gpsLog = ActivityGpsLog.builder()
+                        .activity(activity)
+                        .logTime(locationData.timestamp())
+                        .latitude(locationData.latitude())
+                        .longitude(locationData.longitude())
+                        .elevation(locationData.altitude())
+                        .speed(locationData.speed())
+                        .distance(null) // Apple HealthKit에서는 누적 거리를 별도로 제공하지 않음
+                        .build();
+                gpsLogs.add(gpsLog);
+            }
+        }
+
+        // 심박수 데이터를 GPS 로그에 병합
+        if (request.heartRateData() != null && !request.heartRateData().isEmpty()) {
+            mergeHeartRateData(gpsLogs, request.heartRateData());
+        }
+
+        return gpsLogs;
+    }
+
+    /**
+     * 심박수 데이터를 GPS 로그에 병합
+     */
+    private void mergeHeartRateData(List<ActivityGpsLog> gpsLogs, List<AppleWorkoutImportRequest.HeartRateSample> heartRateData) {
+        for (ActivityGpsLog gpsLog : gpsLogs) {
+            // 가장 가까운 시간의 심박수 데이터 찾기
+            AppleWorkoutImportRequest.HeartRateSample closestHeartRate = findClosestHeartRateSample(
+                    gpsLog.getLogTime(), heartRateData);
+            if (closestHeartRate != null) {
+                gpsLog.updateHeartRate(closestHeartRate.heartRate().doubleValue());
+            }
+        }
+    }
+
+    /**
+     * 가장 가까운 시간의 심박수 샘플 찾기
+     */
+    private AppleWorkoutImportRequest.HeartRateSample findClosestHeartRateSample(
+            LocalDateTime targetTime, List<AppleWorkoutImportRequest.HeartRateSample> heartRateData) {
+        return heartRateData.stream()
+                .min((a, b) -> {
+                    long diffA = Math.abs(java.time.Duration.between(targetTime, a.timestamp()).toSeconds());
+                    long diffB = Math.abs(java.time.Duration.between(targetTime, b.timestamp()).toSeconds());
+                    return Long.compare(diffA, diffB);
+                })
+                .orElse(null);
+    }
+
 }

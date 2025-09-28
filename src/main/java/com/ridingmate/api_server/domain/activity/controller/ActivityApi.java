@@ -2,13 +2,9 @@ package com.ridingmate.api_server.domain.activity.controller;
 
 import com.ridingmate.api_server.domain.activity.dto.request.ActivityListRequest;
 import com.ridingmate.api_server.domain.activity.dto.request.ActivityStatsRequest;
+import com.ridingmate.api_server.domain.activity.dto.request.AppleWorkoutsImportRequest;
 import com.ridingmate.api_server.domain.activity.dto.request.UpdateActivityTitleRequest;
-import com.ridingmate.api_server.domain.activity.dto.response.ActivityDetailResponse;
-import com.ridingmate.api_server.domain.activity.dto.response.ActivityListResponse;
-import com.ridingmate.api_server.domain.activity.dto.response.ActivityStatsResponse;
-import com.ridingmate.api_server.domain.activity.dto.response.DeleteActivityImageResponse;
-import com.ridingmate.api_server.domain.activity.dto.response.UpdateActivityTitleResponse;
-import com.ridingmate.api_server.domain.activity.dto.response.UploadActivityImagesResponse;
+import com.ridingmate.api_server.domain.activity.dto.response.*;
 import com.ridingmate.api_server.domain.auth.security.AuthUser;
 import com.ridingmate.api_server.global.exception.CommonResponse;
 import io.swagger.v3.oas.annotations.Operation;
@@ -18,6 +14,7 @@ import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.validation.Valid;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.ModelAttribute;
@@ -169,5 +166,26 @@ public interface ActivityApi {
             @AuthenticationPrincipal AuthUser authUser,
             @Parameter(description = "삭제할 주행 기록 ID", example = "123e4567-e89b-12d3-a456-426614174000")
             @PathVariable String activityId
+    );
+
+    @Operation(
+            summary = "Apple HealthKit 운동 기록 업로드",
+            description = """
+                    Apple HealthKit에서 가져온 운동 기록들을 업로드합니다.
+                    
+                    - 여러 개의 운동 기록을 한 번에 업로드 가능 (최대 100개)
+                    - GPS 경로, 심박수 데이터 포함
+                    - 자동으로 Activity와 ActivityGpsLog 생성
+                    """
+    )
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "성공: Apple 운동 기록 업로드 완료"),
+            @ApiResponse(responseCode = "400", description = "잘못된 요청 - 필수 파라미터 누락 또는 형식 오류"),
+            @ApiResponse(responseCode = "401", description = "인증 실패 - 유효하지 않은 토큰"),
+    })
+    ResponseEntity<CommonResponse<AppleWorkoutsImportResponse>> importAppleWorkouts(
+            @AuthenticationPrincipal AuthUser authUser,
+            @Parameter(description = "Apple 운동 기록 업로드 요청")
+            @Valid @RequestBody AppleWorkoutsImportRequest request
     );
 }

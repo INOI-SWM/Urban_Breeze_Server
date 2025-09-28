@@ -2,10 +2,12 @@ package com.ridingmate.api_server.domain.activity.controller;
 
 import com.ridingmate.api_server.domain.activity.dto.request.ActivityListRequest;
 import com.ridingmate.api_server.domain.activity.dto.request.ActivityStatsRequest;
+import com.ridingmate.api_server.domain.activity.dto.request.AppleWorkoutsImportRequest;
 import com.ridingmate.api_server.domain.activity.dto.request.UpdateActivityTitleRequest;
 import com.ridingmate.api_server.domain.activity.dto.response.ActivityDetailResponse;
 import com.ridingmate.api_server.domain.activity.dto.response.ActivityListResponse;
 import com.ridingmate.api_server.domain.activity.dto.response.ActivityStatsResponse;
+import com.ridingmate.api_server.domain.activity.dto.response.AppleWorkoutsImportResponse;
 import com.ridingmate.api_server.domain.activity.dto.response.DeleteActivityImageResponse;
 import com.ridingmate.api_server.domain.activity.dto.response.UpdateActivityTitleResponse;
 import com.ridingmate.api_server.domain.activity.dto.response.UploadActivityImagesResponse;
@@ -117,5 +119,17 @@ public class ActivityController implements ActivityApi {
         return ResponseEntity
                 .status(ActivitySuccessCode.ACTIVITY_DELETED.getStatus())
                 .body(CommonResponse.success(ActivitySuccessCode.ACTIVITY_DELETED));
+    }
+
+    @PostMapping("/import/apple")
+    @Override
+    public ResponseEntity<CommonResponse<AppleWorkoutsImportResponse>> importAppleWorkouts(
+            @AuthenticationPrincipal AuthUser authUser,
+            @RequestBody @Valid AppleWorkoutsImportRequest request
+    ) {
+        AppleWorkoutsImportResponse response = activityFacade.importAppleWorkouts(authUser, request);
+        return ResponseEntity
+                .status(ActivitySuccessCode.ACTIVITY_IMPORTED.getStatus())
+                .body(CommonResponse.success(ActivitySuccessCode.ACTIVITY_IMPORTED, response));
     }
 }

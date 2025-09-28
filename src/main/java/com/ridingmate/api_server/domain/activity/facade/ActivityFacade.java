@@ -3,6 +3,7 @@ package com.ridingmate.api_server.domain.activity.facade;
 import com.ggalmazor.ltdownsampling.Point;
 import com.ridingmate.api_server.domain.activity.dto.request.ActivityListRequest;
 import com.ridingmate.api_server.domain.activity.dto.request.ActivityStatsRequest;
+import com.ridingmate.api_server.domain.activity.dto.request.AppleWorkoutsImportRequest;
 import com.ridingmate.api_server.domain.activity.dto.request.UpdateActivityTitleRequest;
 import com.ridingmate.api_server.domain.activity.dto.response.*;
 import com.ridingmate.api_server.domain.activity.entity.Activity;
@@ -250,5 +251,81 @@ public class ActivityFacade {
         activityService.deleteActivity(activity);
         
         log.info("주행 기록 삭제 완료: userId={}, activityId={}", authUser.id(), activityId);
+    }
+
+    /**
+     * Apple HealthKit 운동 기록 업로드
+     * @param authUser 인증된 사용자
+     * @param request Apple 운동 기록 업로드 요청
+     * @return 업로드된 운동 기록 목록
+     */
+    public AppleWorkoutsImportResponse importAppleWorkouts(AuthUser authUser, AppleWorkoutsImportRequest request) {
+        log.info("Apple 운동 기록 업로드 시작: userId={}, count={}", authUser.id(), request.workouts().size());
+        
+        AppleWorkoutsImportResponse response = activityService.importAppleWorkouts(authUser.id(), request);
+        
+        // 업로드된 각 운동 기록에 대해 썸네일 생성 시도
+        for (var activityResponse : response.activities()) {
+            try {
+                generateThumbnailForAppleActivity(activityResponse.activityId());
+            } catch (Exception e) {
+                log.error("Apple 운동 기록 썸네일 생성 실패: activityId={}, error={}", 
+                        activityResponse.activityId(), e.getMessage(), e);
+            }
+        }
+        
+        log.info("Apple 운동 기록 업로드 완료: userId={}, successCount={}", 
+                authUser.id(), response.successCount());
+        
+        return response;
+    }
+
+    /**
+     * Apple 운동 기록을 위한 썸네일 생성
+     */
+    private void generateThumbnailForAppleActivity(String activityId) {
+        try {
+            // Activity와 GPS 로그 조회
+            Activity activity = activityService.getActivityWithUserByActivityId(activityId);
+            List<ActivityGpsLog> gpsLogs = activityService.getActivityGpsLogs(activity.getId());
+            
+            if (gpsLogs == null || gpsLogs.isEmpty()) {
+                log.warn("Apple 운동 기록 썸네일 생성 건너뜀: activityId={}, gpsLogs가 비어있음", activityId);
+                return;
+            }
+
+            // GPS 좌표를 Coordinate 배열로 변환
+            Coordinate[] coordinates = gpsLogs.stream()
+                    .map(gpsLog -> new Coordinate(gpsLog.getLongitude(), gpsLog.getLatitude()))
+                    .toArray(Coordinate[]::new);
+
+            if (coordinates.length < 2) {
+                log.warn("Apple 운동 기록 썸네일 생성 건너뜀: activityId={}, 좌표 부족 (count={})", 
+                        activityId, coordinates.length);
+                return;
+            }
+
+            // LineString 생성
+            LineString routeLine = GeometryUtil.createLineStringFromCoordinates(coordinates);
+
+            // Geoapify를 통해 썸네일 생성
+            byte[] thumbnailBytes = geoapifyClient.getStaticMap(routeLine);
+
+            // 썸네일 경로 생성 및 S3 업로드
+            String thumbnailPath = createThumbnailImagePath(activity.getId());
+            activity.updateThumbnailImagePath(thumbnailPath);
+            s3Manager.uploadByteFiles(thumbnailPath, thumbnailBytes, "image/png");
+            
+            // 썸네일을 activity_images 테이블에도 추가
+            activityService.addThumbnailToActivityImages(activity, thumbnailPath);
+            
+            log.info("Apple 운동 기록 썸네일 생성 성공: activityId={}, path={}, coordCount={}", 
+                    activityId, thumbnailPath, coordinates.length);
+
+        } catch (Exception e) {
+            log.error("Apple 운동 기록 썸네일 생성 실패: activityId={}, error={}", 
+                    activityId, e.getMessage(), e);
+            throw e; // 상위로 예외 전파
+        }
     }
 }
