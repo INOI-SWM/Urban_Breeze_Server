@@ -3,7 +3,10 @@ package com.ridingmate.api_server.domain.activity.facade;
 import com.ridingmate.api_server.domain.activity.dto.response.IntegrationAuthenticateResponse;
 import com.ridingmate.api_server.domain.activity.dto.response.IntegrationProviderAuthResponse;
 import com.ridingmate.api_server.domain.activity.dto.response.TerraAuthTokenResponse;
+import com.ridingmate.api_server.domain.activity.dto.response.ApiUsageResponse;
+import com.ridingmate.api_server.domain.activity.entity.UserApiUsage;
 import com.ridingmate.api_server.domain.activity.service.TerraService;
+import com.ridingmate.api_server.domain.activity.service.UserApiUsageService;
 import com.ridingmate.api_server.domain.auth.security.AuthUser;
 import com.ridingmate.api_server.domain.user.entity.TerraUser;
 import com.ridingmate.api_server.domain.user.entity.User;
@@ -37,6 +40,7 @@ public class IntegrationFacade {
     private final TerraUserService terraUserService;
     private final UserService userService;
     private final TerraService terraService;
+    private final UserApiUsageService userApiUsageService;
 
     public IntegrationAuthenticateResponse authenticateTerra(AuthUser authUser){
         String providers = String.join(",", terraProperty.supportedProviders());
@@ -91,5 +95,24 @@ public class IntegrationFacade {
                     authUser.id(), e.getMessage(), e);
             throw new RuntimeException("Terra 인증 토큰 발급에 실패했습니다: " + e.getMessage(), e);
         }
+    }
+
+    /**
+     * 현재 월 API 사용량 조회
+     * @param authUser 인증된 사용자
+     * @return API 사용량 정보
+     */
+    public ApiUsageResponse getCurrentMonthUsage(AuthUser authUser) {
+        log.info("현재 월 API 사용량 조회: userId={}", authUser.id());
+        
+        User user = userService.getUser(authUser.id());
+        UserApiUsage currentMonthUsage = userApiUsageService.getOrCreateCurrentMonthUsage(user);
+        int monthlyLimit = userApiUsageService.getMonthlyLimit();
+
+        log.info("현재 월 API 사용량 조회 완료: userId={}, currentUsage={}, remaining={}", 
+                authUser.id(), currentMonthUsage.getActivitySyncCount(),
+                monthlyLimit - currentMonthUsage.getActivitySyncCount());
+        
+        return ApiUsageResponse.of(currentMonthUsage.getActivitySyncCount(), monthlyLimit);
     }
 }

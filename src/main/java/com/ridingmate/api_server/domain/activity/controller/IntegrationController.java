@@ -4,6 +4,7 @@ import com.ridingmate.api_server.domain.activity.dto.request.IntegrationProvider
 import com.ridingmate.api_server.domain.activity.dto.response.IntegrationAuthenticateResponse;
 import com.ridingmate.api_server.domain.activity.dto.response.IntegrationProviderAuthResponse;
 import com.ridingmate.api_server.domain.activity.dto.response.TerraAuthTokenResponse;
+import com.ridingmate.api_server.domain.activity.dto.response.ApiUsageResponse;
 import com.ridingmate.api_server.domain.activity.exception.IntegrationSuccessCode;
 import com.ridingmate.api_server.domain.activity.facade.IntegrationFacade;
 import com.ridingmate.api_server.domain.auth.security.AuthUser;
@@ -76,5 +77,18 @@ public class IntegrationController implements IntegrationApi{
         return ResponseEntity
                 .status(IntegrationSuccessCode.INTEGRATION_TERRA_AUTH_TOKEN_SUCCESS.getStatus())
                 .body(CommonResponse.success(IntegrationSuccessCode.INTEGRATION_TERRA_AUTH_TOKEN_SUCCESS, response));
+    }
+
+    @Override
+    @GetMapping("/usage")
+    @ApiErrorCodeExample(UserErrorCode.class)
+    public ResponseEntity<CommonResponse<ApiUsageResponse>> getApiUsage(
+            @AuthenticationPrincipal AuthUser authUser
+    ) {
+        ApiUsageResponse response = integrationFacade.getCurrentMonthUsage(authUser);
+        
+        return ResponseEntity
+                .status(IntegrationSuccessCode.INTEGRATION_API_USAGE_SUCCESS.getStatus())
+                .body(CommonResponse.success(IntegrationSuccessCode.INTEGRATION_API_USAGE_SUCCESS, response));
     }
 }

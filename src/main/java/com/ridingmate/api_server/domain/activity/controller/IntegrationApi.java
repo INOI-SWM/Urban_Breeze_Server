@@ -4,6 +4,7 @@ import com.ridingmate.api_server.domain.activity.dto.request.IntegrationProvider
 import com.ridingmate.api_server.domain.activity.dto.response.IntegrationAuthenticateResponse;
 import com.ridingmate.api_server.domain.activity.dto.response.IntegrationProviderAuthResponse;
 import com.ridingmate.api_server.domain.activity.dto.response.TerraAuthTokenResponse;
+import com.ridingmate.api_server.domain.activity.dto.response.ApiUsageResponse;
 import com.ridingmate.api_server.domain.auth.security.AuthUser;
 import com.ridingmate.api_server.global.exception.CommonResponse;
 import com.ridingmate.api_server.infra.terra.TerraProvider;
@@ -91,4 +92,22 @@ public interface IntegrationApi {
             @ApiResponse(responseCode = "500", description = "Terra API 호출 실패 - 서버 내부 오류")
     })
     ResponseEntity<CommonResponse<TerraAuthTokenResponse>> getTerraAuthToken(@AuthenticationPrincipal AuthUser authUser);
+
+    @Operation(
+            summary = "API 사용량 조회",
+            description = """
+                    현재 사용자의 이번달 API 사용량을 조회합니다.
+                    
+                    - **현재 사용량**: 이번달 사용한 API 호출 횟수
+                    - **월별 제한**: 30회 (운동 기록 동기화만 제한)
+                    - **남은 사용량**: 사용 가능한 횟수
+                    - **사용률**: 현재 사용량의 비율
+                    - **제한 초과 여부**: 제한을 초과했는지 여부
+                    """
+    )
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "성공: API 사용량 조회 완료"),
+            @ApiResponse(responseCode = "401", description = "인증 실패 - 유효하지 않은 토큰"),
+    })
+    ResponseEntity<CommonResponse<ApiUsageResponse>> getApiUsage(@AuthenticationPrincipal AuthUser authUser);
 }
