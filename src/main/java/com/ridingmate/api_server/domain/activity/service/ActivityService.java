@@ -202,14 +202,10 @@ public class ActivityService {
         validatePeriod(request);
 
         // 기간 정보 생성
-        ActivityStatsResponse.PeriodInfo periodInfo = createPeriodInfo(request);
+        ActivityStatsResponse.PeriodInfo periodInfo = createPeriodInfo(request, user);
 
         // 전체 기간 통계 조회
-        ActivityStatsProjection summaryStats = activityRepository.findActivityStatsByPeriod(
-                user.getId(), 
-                request.startDate().atStartOfDay(), 
-                request.endDate().plusDays(1).atStartOfDay()
-        );
+        ActivityStatsProjection summaryStats = getSummaryStats(user, request);
 
         // 요약 정보 생성
         ActivityStatsResponse.SummaryInfo summaryInfo = new ActivityStatsResponse.SummaryInfo(
@@ -227,6 +223,32 @@ public class ActivityService {
         LocalDate oldestActivityDate = oldestActivityDateTime != null ? oldestActivityDateTime.toLocalDate() : null;
 
         return ActivityStatsResponse.of(periodInfo, summaryInfo, details, oldestActivityDate);
+    }
+
+    /**
+     * 기간별 요약 통계 조회
+     */
+    private ActivityStatsProjection getSummaryStats(User user, ActivityStatsRequest request) {
+        return switch (request.period()) {
+            case WEEK, MONTH, YEAR -> activityRepository.findActivityStatsByPeriod(
+                    user.getId(), 
+                    request.startDate().atStartOfDay(), 
+                    request.endDate().plusDays(1).atStartOfDay()
+            );
+            case ALL -> {
+                // ALL 기간일 때: 가장 오래된 기록부터 오늘까지
+                LocalDateTime oldestActivityDateTime = activityRepository.findOldestActivityDate(user);
+                LocalDateTime startDateTime = oldestActivityDateTime != null ? 
+                        oldestActivityDateTime : LocalDateTime.now().minusYears(1);
+                LocalDateTime endDateTime = LocalDateTime.now();
+                
+                yield activityRepository.findActivityStatsByPeriod(
+                        user.getId(), 
+                        startDateTime, 
+                        endDateTime
+                );
+            }
+        };
     }
 
     /**
@@ -267,14 +289,28 @@ public class ActivityService {
     /**
      * 기간 정보 생성
      */
-    private ActivityStatsResponse.PeriodInfo createPeriodInfo(ActivityStatsRequest request) {
+    private ActivityStatsResponse.PeriodInfo createPeriodInfo(ActivityStatsRequest request, User user) {
         String type = request.period().name().toLowerCase();
-        String displayTitle = generateDisplayTitle(request.period(), request.startDate(), request.endDate());
+        
+        // ALL 기간일 때는 실제 날짜 범위 계산
+        LocalDate startDate, endDate;
+        if (request.period() == ActivityStatsPeriod.ALL) {
+            // ALL 기간일 때: 가장 오래된 기록부터 오늘까지
+            LocalDateTime oldestActivityDateTime = activityRepository.findOldestActivityDate(user);
+            startDate = oldestActivityDateTime != null ? 
+                    oldestActivityDateTime.toLocalDate() : LocalDate.now().minusYears(1);
+            endDate = LocalDate.now();
+        } else {
+            startDate = request.startDate();
+            endDate = request.endDate();
+        }
+        
+        String displayTitle = generateDisplayTitle(request.period(), startDate, endDate);
         
         return new ActivityStatsResponse.PeriodInfo(
                 type,
-                request.startDate(),
-                request.endDate(),
+                startDate,
+                endDate,
                 displayTitle
         );
     }
