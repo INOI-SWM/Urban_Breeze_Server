@@ -102,9 +102,9 @@ public class User extends BaseTimeEntity {
                 .email(email)
                 .nickname(nickname)
                 .profileImagePath(DEFAULT_PROFILE_IMAGE_PATH)
-                .termsOfServiceAgreed(true)      // 서비스 이용약관 동의 (필수)
-                .privacyPolicyAgreed(true)       // 개인정보 처리방침 동의 (필수)
-                .locationServiceAgreed(true)     // 위치기반 서비스 이용약관 동의 (필수)
+                .termsOfServiceAgreed(false)      // 서비스 이용약관 동의 (필수)
+                .privacyPolicyAgreed(false)       // 개인정보 처리방침 동의 (필수)
+                .locationServiceAgreed(false)     // 위치기반 서비스 이용약관 동의 (필수)
                 .build();
     }
 
