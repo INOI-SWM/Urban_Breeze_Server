@@ -1,10 +1,7 @@
 package com.ridingmate.api_server.domain.activity.controller;
 
 import com.ridingmate.api_server.domain.activity.dto.request.IntegrationProviderAuthRequest;
-import com.ridingmate.api_server.domain.activity.dto.response.IntegrationAuthenticateResponse;
-import com.ridingmate.api_server.domain.activity.dto.response.IntegrationProviderAuthResponse;
-import com.ridingmate.api_server.domain.activity.dto.response.TerraAuthTokenResponse;
-import com.ridingmate.api_server.domain.activity.dto.response.ApiUsageResponse;
+import com.ridingmate.api_server.domain.activity.dto.response.*;
 import com.ridingmate.api_server.domain.auth.security.AuthUser;
 import com.ridingmate.api_server.global.exception.CommonResponse;
 import com.ridingmate.api_server.infra.terra.TerraProvider;
@@ -110,4 +107,21 @@ public interface IntegrationApi {
             @ApiResponse(responseCode = "401", description = "인증 실패 - 유효하지 않은 토큰"),
     })
     ResponseEntity<CommonResponse<ApiUsageResponse>> getApiUsage(@AuthenticationPrincipal AuthUser authUser);
+
+    @Operation(
+            summary = "API 사용량 증가",
+            description = """
+                    현재 사용자의 API 사용량을 1회 증가시킵니다.
+                    
+                    - **월별 제한**: 30회 (운동 기록 동기화만 제한)
+                    - **제한 초과 시**: HTTP 429 (Too Many Requests) 에러 발생
+                    - **사용 목적**: Terra API 호출 시 사용량 추적
+                    """
+    )
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "성공: API 사용량 증가 완료"),
+            @ApiResponse(responseCode = "401", description = "인증 실패 - 유효하지 않은 토큰"),
+            @ApiResponse(responseCode = "429", description = "API 사용량 제한 초과 - 월별 제한(30회) 초과")
+    })
+    ResponseEntity<CommonResponse<ApiUsageIncrementResponse>> incrementApiUsage(@AuthenticationPrincipal AuthUser authUser);
 }

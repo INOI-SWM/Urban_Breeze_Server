@@ -8,7 +8,7 @@ import com.ridingmate.api_server.global.exception.BusinessException;
  */
 public class ApiUsageLimitExceededException extends BusinessException {
     
-    public ApiUsageLimitExceededException() {
-        super(ApiUsageErrorCode.API_USAGE_LIMIT_EXCEEDED);
+    public ApiUsageLimitExceededException(ApiUsageErrorCode errorCode) {
+        super(errorCode);
     }
 }

@@ -1,11 +1,9 @@
 package com.ridingmate.api_server.domain.activity.controller;
 
 import com.ridingmate.api_server.domain.activity.dto.request.IntegrationProviderAuthRequest;
-import com.ridingmate.api_server.domain.activity.dto.response.IntegrationAuthenticateResponse;
-import com.ridingmate.api_server.domain.activity.dto.response.IntegrationProviderAuthResponse;
-import com.ridingmate.api_server.domain.activity.dto.response.TerraAuthTokenResponse;
-import com.ridingmate.api_server.domain.activity.dto.response.ApiUsageResponse;
+import com.ridingmate.api_server.domain.activity.dto.response.*;
 import com.ridingmate.api_server.domain.activity.exception.IntegrationSuccessCode;
+import com.ridingmate.api_server.domain.activity.exception.code.ApiUsageErrorCode;
 import com.ridingmate.api_server.domain.activity.facade.IntegrationFacade;
 import com.ridingmate.api_server.domain.auth.security.AuthUser;
 import com.ridingmate.api_server.domain.user.exception.UserErrorCode;
@@ -90,5 +88,19 @@ public class IntegrationController implements IntegrationApi{
         return ResponseEntity
                 .status(IntegrationSuccessCode.INTEGRATION_API_USAGE_SUCCESS.getStatus())
                 .body(CommonResponse.success(IntegrationSuccessCode.INTEGRATION_API_USAGE_SUCCESS, response));
+    }
+
+    @Override
+    @PostMapping("/usage/increment")
+    @ApiErrorCodeExample(UserErrorCode.class)
+    @ApiErrorCodeExample(ApiUsageErrorCode.class)
+    public ResponseEntity<CommonResponse<ApiUsageIncrementResponse>> incrementApiUsage(
+            @AuthenticationPrincipal AuthUser authUser
+    ) {
+        ApiUsageIncrementResponse response = integrationFacade.incrementApiUsageWithResponse(authUser);
+        
+        return ResponseEntity
+                .status(IntegrationSuccessCode.INTEGRATION_API_USAGE_INCREMENT_SUCCESS.getStatus())
+                .body(CommonResponse.success(IntegrationSuccessCode.INTEGRATION_API_USAGE_INCREMENT_SUCCESS, response));
     }
 }

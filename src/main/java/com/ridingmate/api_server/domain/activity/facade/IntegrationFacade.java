@@ -118,4 +118,39 @@ public class IntegrationFacade {
         
         return ApiUsageResponse.of(usage.getActivitySyncCount(), limit, providerSyncInfos);
     }
+
+    /**
+     * API 사용량 1회 증가
+     * @param authUser 인증된 사용자
+     */
+    public void incrementApiUsage(AuthUser authUser) {
+        log.info("API 사용량 증가: userId={}", authUser.id());
+        
+        User user = userService.getUser(authUser.id());
+        userApiUsageService.incrementApiUsage(user);
+        
+        log.info("API 사용량 증가 완료: userId={}", authUser.id());
+    }
+
+    /**
+     * API 사용량 1회 증가 (응답 포함)
+     * @param authUser 인증된 사용자
+     * @return 증가된 사용량 정보
+     */
+    public ApiUsageIncrementResponse incrementApiUsageWithResponse(AuthUser authUser) {
+        log.info("API 사용량 증가 (응답 포함): userId={}", authUser.id());
+        
+        User user = userService.getUser(authUser.id());
+        UserApiUsage usage = userApiUsageService.incrementApiUsageWithResponse(user);
+        int limit = userApiUsageService.getMonthlyLimit();
+        ApiUsageIncrementResponse response = ApiUsageIncrementResponse.of(
+                usage.getActivitySyncCount(),
+                limit
+        );
+        
+        log.info("API 사용량 증가 완료 (응답 포함): userId={}, currentUsage={}, remaining={}", 
+                authUser.id(), response.currentUsage(), response.remainingUsage());
+        
+        return response;
+    }
 }
