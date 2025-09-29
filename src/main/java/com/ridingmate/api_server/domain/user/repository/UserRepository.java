@@ -16,7 +16,7 @@ public interface UserRepository extends JpaRepository<User, Long> {
     /**
      * 소셜 provider와 social ID로 사용자 조회
      */
-    Optional<User> findBySocialProviderAndSocialId(SocialProvider socialProvider, String socialId);
+    Optional<User> findBySocialProviderAndSocialIdAndDeletedAtIsNull(SocialProvider socialProvider, String socialId);
 
     /**
      * 이메일로 사용자 조회

@@ -33,7 +33,7 @@ public class UserService {
     @Transactional
     public User findOrCreateUser(SocialUserInfo socialUserInfo) {
         // 기존 사용자 조회
-        return userRepository.findBySocialProviderAndSocialId(
+        return userRepository.findBySocialProviderAndSocialIdAndDeletedAtIsNull(
                 socialUserInfo.getProvider(),
                 socialUserInfo.getSocialId()
         ).orElseGet(() -> {

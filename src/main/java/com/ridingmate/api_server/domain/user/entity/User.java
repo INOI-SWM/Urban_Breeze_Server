@@ -37,7 +37,7 @@ public class User extends BaseTimeEntity {
     @Column(name = "social_id")
     private String socialId;
 
-    @Column(name = "email", unique = true)
+    @Column(name = "email")
     private String email;
 
     @Column(name = "nickname")
