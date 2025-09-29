@@ -153,4 +153,18 @@ public class IntegrationFacade {
         
         return response;
     }
+
+    /**
+     * 특정 제공자 연동 해제
+     * @param authUser 인증된 사용자
+     * @param providerName 제공자 이름
+     */
+    public void disconnectProvider(AuthUser authUser, String providerName) {
+        log.info("특정 제공자 연동 해제: userId={}, providerName={}", authUser.id(), providerName);
+        
+        User user = userService.getUser(authUser.id());
+        terraUserService.disconnectProvider(user, providerName);
+        
+        log.info("특정 제공자 연동 해제 완료: userId={}, providerName={}", authUser.id(), providerName);
+    }
 }

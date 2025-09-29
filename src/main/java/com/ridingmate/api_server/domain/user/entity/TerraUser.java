@@ -12,9 +12,7 @@ import java.time.LocalDateTime;
 import java.util.UUID;
 
 @Entity
-@Table(name = "terra_users", uniqueConstraints = {
-        @UniqueConstraint(name = "user_provider", columnNames = {"user_id", "provider"})
-})
+@Table(name = "terra_users")
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 public class TerraUser extends BaseTimeEntity {
@@ -37,8 +35,11 @@ public class TerraUser extends BaseTimeEntity {
     @Column
     private LocalDateTime lastSyncDate;
 
-    @Column(nullable = false)
+    @Column(name = "is_active", nullable = false)
     private boolean isActive = false;
+
+    @Column(name = "deleted_at")
+    private LocalDateTime deletedAt;  // ← 연동 해제 시간
 
     @Builder
     public TerraUser(UUID terraUserId, TerraProvider provider, User user) {
@@ -56,6 +57,11 @@ public class TerraUser extends BaseTimeEntity {
     }
 
     public void setInactive(){
+        isActive = false;
+    }
+
+    public void delete() {
+        deletedAt = LocalDateTime.now();
         isActive = false;
     }
 }

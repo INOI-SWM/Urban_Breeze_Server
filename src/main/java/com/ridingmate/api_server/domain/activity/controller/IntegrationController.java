@@ -103,4 +103,19 @@ public class IntegrationController implements IntegrationApi{
                 .status(IntegrationSuccessCode.INTEGRATION_API_USAGE_INCREMENT_SUCCESS.getStatus())
                 .body(CommonResponse.success(IntegrationSuccessCode.INTEGRATION_API_USAGE_INCREMENT_SUCCESS, response));
     }
+
+    @Override
+    @DeleteMapping("/provider/{providerName}")
+    @ApiErrorCodeExample(UserErrorCode.class)
+    @ApiErrorCodeExample(TerraErrorCode.class)
+    public ResponseEntity<CommonResponse<Void>> disconnectProvider(
+            @AuthenticationPrincipal AuthUser authUser,
+            @PathVariable String providerName
+    ) {
+        integrationFacade.disconnectProvider(authUser, providerName);
+        
+        return ResponseEntity
+                .status(IntegrationSuccessCode.INTEGRATION_PROVIDER_DISCONNECT_SUCCESS.getStatus())
+                .body(CommonResponse.success(IntegrationSuccessCode.INTEGRATION_PROVIDER_DISCONNECT_SUCCESS));
+    }
 }

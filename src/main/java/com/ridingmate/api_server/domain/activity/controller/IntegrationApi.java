@@ -11,6 +11,7 @@ import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestParam;
@@ -124,4 +125,26 @@ public interface IntegrationApi {
             @ApiResponse(responseCode = "429", description = "API 사용량 제한 초과 - 월별 제한(30회) 초과")
     })
     ResponseEntity<CommonResponse<ApiUsageIncrementResponse>> incrementApiUsage(@AuthenticationPrincipal AuthUser authUser);
+
+    @Operation(
+            summary = "특정 제공자 연동 해제",
+            description = """
+                    특정 서비스 제공자(Samsung Health, Apple Health 등)와의 연동을 해제합니다.
+                    
+                    - **제공자 지정**: path variable로 제공자 이름 지정
+                    - **연동 해제**: Terra API를 통한 실제 연동 해제
+                    - **로컬 비활성화**: DB에서 isActive를 false로 설정
+                    - **복구 불가**: 연동 해제 후 재연동 필요
+                    """
+    )
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "성공: 제공자 연동 해제 완료"),
+            @ApiResponse(responseCode = "401", description = "인증 실패 - 유효하지 않은 토큰"),
+            @ApiResponse(responseCode = "404", description = "연동된 제공자를 찾을 수 없습니다."),
+            @ApiResponse(responseCode = "500", description = "Terra API 호출 실패 - 서버 내부 오류")
+    })
+    ResponseEntity<CommonResponse<Void>> disconnectProvider(
+            @AuthenticationPrincipal AuthUser authUser,
+            @PathVariable String providerName
+    );
 }
