@@ -26,11 +26,9 @@ public record AppleWorkoutImportRequest(
         LocalDateTime endTime,
 
         @Schema(description = "운동 소요 시간 (초)", example = "3600")
-        @Positive(message = "운동 소요 시간은 양수여야 합니다.")
         Long duration,
 
         @Schema(description = "운동 거리 (미터)", example = "15000.0")
-        @Positive(message = "운동 거리는 양수여야 합니다.")
         Double distance,
 
         @Schema(description = "소모 칼로리", example = "450.0")
