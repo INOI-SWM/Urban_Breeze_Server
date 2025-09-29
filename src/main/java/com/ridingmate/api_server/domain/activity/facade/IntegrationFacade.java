@@ -1,9 +1,9 @@
 package com.ridingmate.api_server.domain.activity.facade;
 
-import com.ridingmate.api_server.domain.activity.dto.response.IntegrationAuthenticateResponse;
-import com.ridingmate.api_server.domain.activity.dto.response.IntegrationProviderAuthResponse;
-import com.ridingmate.api_server.domain.activity.dto.response.TerraAuthTokenResponse;
+import com.ridingmate.api_server.domain.activity.dto.response.*;
+import com.ridingmate.api_server.domain.activity.entity.UserApiUsage;
 import com.ridingmate.api_server.domain.activity.service.TerraService;
+import com.ridingmate.api_server.domain.activity.service.UserApiUsageService;
 import com.ridingmate.api_server.domain.auth.security.AuthUser;
 import com.ridingmate.api_server.domain.user.entity.TerraUser;
 import com.ridingmate.api_server.domain.user.entity.User;
@@ -25,6 +25,7 @@ import org.springframework.stereotype.Component;
 
 import java.time.LocalDate;
 import java.util.List;
+import java.util.stream.Collectors;
 
 @Component
 @RequiredArgsConstructor
@@ -37,6 +38,7 @@ public class IntegrationFacade {
     private final TerraUserService terraUserService;
     private final UserService userService;
     private final TerraService terraService;
+    private final UserApiUsageService userApiUsageService;
 
     public IntegrationAuthenticateResponse authenticateTerra(AuthUser authUser){
         String providers = String.join(",", terraProperty.supportedProviders());
@@ -91,5 +93,78 @@ public class IntegrationFacade {
                     authUser.id(), e.getMessage(), e);
             throw new RuntimeException("Terra 인증 토큰 발급에 실패했습니다: " + e.getMessage(), e);
         }
+    }
+
+    /**
+     * 현재 월 API 사용량 조회
+     * @param authUser 인증된 사용자
+     * @return API 사용량 정보
+     */
+    public ApiUsageResponse getCurrentMonthUsage(AuthUser authUser) {
+        log.info("현재 월 API 사용량 조회: userId={}", authUser.id());
+        
+        User user = userService.getUser(authUser.id());
+        UserApiUsage usage = userApiUsageService.getOrCreateCurrentMonthUsage(user);
+        int limit = userApiUsageService.getMonthlyLimit();
+
+        List<TerraUser> terraUsers = terraUserService.getActiveTerraUsers(user);
+        List<ProviderSyncInfo> providerSyncInfos = terraUsers.stream()
+                .map(ProviderSyncInfo::from)
+                .toList();
+        
+        log.info("현재 월 API 사용량 조회 완료: userId={}, currentUsage={}, remaining={}, providerCount={}", 
+                authUser.id(), usage.getActivitySyncCount(), limit - usage.getActivitySyncCount(),
+                terraUsers.size());
+        
+        return ApiUsageResponse.of(usage.getActivitySyncCount(), limit, providerSyncInfos);
+    }
+
+    /**
+     * API 사용량 1회 증가
+     * @param authUser 인증된 사용자
+     */
+    public void incrementApiUsage(AuthUser authUser) {
+        log.info("API 사용량 증가: userId={}", authUser.id());
+        
+        User user = userService.getUser(authUser.id());
+        userApiUsageService.incrementApiUsage(user);
+        
+        log.info("API 사용량 증가 완료: userId={}", authUser.id());
+    }
+
+    /**
+     * API 사용량 1회 증가 (응답 포함)
+     * @param authUser 인증된 사용자
+     * @return 증가된 사용량 정보
+     */
+    public ApiUsageIncrementResponse incrementApiUsageWithResponse(AuthUser authUser) {
+        log.info("API 사용량 증가 (응답 포함): userId={}", authUser.id());
+        
+        User user = userService.getUser(authUser.id());
+        UserApiUsage usage = userApiUsageService.incrementApiUsageWithResponse(user);
+        int limit = userApiUsageService.getMonthlyLimit();
+        ApiUsageIncrementResponse response = ApiUsageIncrementResponse.of(
+                usage.getActivitySyncCount(),
+                limit
+        );
+        
+        log.info("API 사용량 증가 완료 (응답 포함): userId={}, currentUsage={}, remaining={}", 
+                authUser.id(), response.currentUsage(), response.remainingUsage());
+        
+        return response;
+    }
+
+    /**
+     * 특정 제공자 연동 해제
+     * @param authUser 인증된 사용자
+     * @param providerName 제공자 이름
+     */
+    public void disconnectProvider(AuthUser authUser, String providerName) {
+        log.info("특정 제공자 연동 해제: userId={}, providerName={}", authUser.id(), providerName);
+        
+        User user = userService.getUser(authUser.id());
+        terraUserService.disconnectProvider(user, providerName);
+        
+        log.info("특정 제공자 연동 해제 완료: userId={}, providerName={}", authUser.id(), providerName);
     }
 }

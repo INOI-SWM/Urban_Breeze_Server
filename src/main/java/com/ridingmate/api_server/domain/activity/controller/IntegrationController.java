@@ -1,10 +1,9 @@
 package com.ridingmate.api_server.domain.activity.controller;
 
 import com.ridingmate.api_server.domain.activity.dto.request.IntegrationProviderAuthRequest;
-import com.ridingmate.api_server.domain.activity.dto.response.IntegrationAuthenticateResponse;
-import com.ridingmate.api_server.domain.activity.dto.response.IntegrationProviderAuthResponse;
-import com.ridingmate.api_server.domain.activity.dto.response.TerraAuthTokenResponse;
+import com.ridingmate.api_server.domain.activity.dto.response.*;
 import com.ridingmate.api_server.domain.activity.exception.IntegrationSuccessCode;
+import com.ridingmate.api_server.domain.activity.exception.code.ApiUsageErrorCode;
 import com.ridingmate.api_server.domain.activity.facade.IntegrationFacade;
 import com.ridingmate.api_server.domain.auth.security.AuthUser;
 import com.ridingmate.api_server.domain.user.exception.UserErrorCode;
@@ -76,5 +75,47 @@ public class IntegrationController implements IntegrationApi{
         return ResponseEntity
                 .status(IntegrationSuccessCode.INTEGRATION_TERRA_AUTH_TOKEN_SUCCESS.getStatus())
                 .body(CommonResponse.success(IntegrationSuccessCode.INTEGRATION_TERRA_AUTH_TOKEN_SUCCESS, response));
+    }
+
+    @Override
+    @GetMapping("/usage")
+    @ApiErrorCodeExample(UserErrorCode.class)
+    public ResponseEntity<CommonResponse<ApiUsageResponse>> getApiUsage(
+            @AuthenticationPrincipal AuthUser authUser
+    ) {
+        ApiUsageResponse response = integrationFacade.getCurrentMonthUsage(authUser);
+        
+        return ResponseEntity
+                .status(IntegrationSuccessCode.INTEGRATION_API_USAGE_SUCCESS.getStatus())
+                .body(CommonResponse.success(IntegrationSuccessCode.INTEGRATION_API_USAGE_SUCCESS, response));
+    }
+
+    @Override
+    @PostMapping("/usage/increment")
+    @ApiErrorCodeExample(UserErrorCode.class)
+    @ApiErrorCodeExample(ApiUsageErrorCode.class)
+    public ResponseEntity<CommonResponse<ApiUsageIncrementResponse>> incrementApiUsage(
+            @AuthenticationPrincipal AuthUser authUser
+    ) {
+        ApiUsageIncrementResponse response = integrationFacade.incrementApiUsageWithResponse(authUser);
+        
+        return ResponseEntity
+                .status(IntegrationSuccessCode.INTEGRATION_API_USAGE_INCREMENT_SUCCESS.getStatus())
+                .body(CommonResponse.success(IntegrationSuccessCode.INTEGRATION_API_USAGE_INCREMENT_SUCCESS, response));
+    }
+
+    @Override
+    @DeleteMapping("/provider/{providerName}")
+    @ApiErrorCodeExample(UserErrorCode.class)
+    @ApiErrorCodeExample(TerraErrorCode.class)
+    public ResponseEntity<CommonResponse<Void>> disconnectProvider(
+            @AuthenticationPrincipal AuthUser authUser,
+            @PathVariable String providerName
+    ) {
+        integrationFacade.disconnectProvider(authUser, providerName);
+        
+        return ResponseEntity
+                .status(IntegrationSuccessCode.INTEGRATION_PROVIDER_DISCONNECT_SUCCESS.getStatus())
+                .body(CommonResponse.success(IntegrationSuccessCode.INTEGRATION_PROVIDER_DISCONNECT_SUCCESS));
     }
 }

@@ -32,7 +32,7 @@ public class TerraService {
     }
 
     public List<TerraUser> getTerraUsers(User user){
-        return terraUserRepository.findAllByUserAndIsActiveTrue(user);
+        return terraUserRepository.findAllByUserAndIsActiveTrueAndDeletedAtIsNull(user);
     }
 
     @Transactional

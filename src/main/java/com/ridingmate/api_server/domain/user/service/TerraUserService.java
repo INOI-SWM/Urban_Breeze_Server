@@ -50,7 +50,7 @@ public class TerraUserService {
         
         try {
             // 1. 사용자의 모든 활성 Terra 연동 조회
-            List<TerraUser> activeTerraUsers = terraUserRepository.findAllByUserAndIsActiveTrue(user);
+            List<TerraUser> activeTerraUsers = terraUserRepository.findAllByUserAndIsActiveTrueAndDeletedAtIsNull(user);
             
             // 2. Terra 연동 비활성화 처리
             deactivateTerraUsers(activeTerraUsers);
@@ -74,7 +74,7 @@ public class TerraUserService {
                 deactivateTerraConnection(terraUser);
                 
                 // 2. 로컬 DB에서 isActive를 false로 설정
-                terraUser.setInactive();
+                terraUser.delete();
                 
                 log.debug("Terra 연동 비활성화 완료: terraUserId={}, provider={}", 
                     terraUser.getTerraUserId(), terraUser.getProvider());
@@ -84,7 +84,7 @@ public class TerraUserService {
                     terraUser.getTerraUserId(), terraUser.getProvider(), e);
                 
                 // Terra 연동 해제 실패해도 로컬 DB는 비활성화
-                terraUser.setInactive();
+                terraUser.delete();
             }
         }
         
@@ -107,6 +107,58 @@ public class TerraUserService {
         } catch (Exception e) {
             log.error("Terra 서비스 연동 해제 실패: terraUserId={}", terraUser.getTerraUserId(), e);
             throw e; // 상위 메서드에서 처리하도록 예외 전파
+        }
+    }
+
+    /**
+     * 특정 사용자의 활성 Terra User 정보만 조회
+     * @param user 사용자
+     * @return 해당 사용자의 활성 Terra User 목록
+     */
+    @Transactional(readOnly = true)
+    public List<TerraUser> getActiveTerraUsers(User user) {
+        log.info("사용자 활성 Terra User 조회: userId={}", user.getId());
+        
+        List<TerraUser> activeTerraUsers = terraUserRepository.findAllByUserAndIsActiveTrueAndDeletedAtIsNull(user);
+        
+        log.info("사용자 활성 Terra User 조회 완료: userId={}, count={}", user.getId(), activeTerraUsers.size());
+        
+        return activeTerraUsers;
+    }
+
+    /**
+     * 특정 제공자와의 연동 해제
+     * @param user 사용자
+     * @param providerName 제공자 이름 (SAMSUNG_HEALTH, APPLE_HEALTH 등)
+     * @throws UserException 연동된 제공자를 찾을 수 없을 때
+     */
+    @Transactional
+    public void disconnectProvider(User user, String providerName) {
+        log.info("특정 제공자 연동 해제 시작: userId={}, providerName={}", user.getId(), providerName);
+        
+        try {
+            // 1. 제공자 이름을 TerraProvider enum으로 변환
+            TerraProvider terraProvider = TerraProvider.fromProviderName(providerName);
+            
+            // 2. 해당 사용자의 특정 제공자 Terra User 조회
+            TerraUser terraUser = terraUserRepository.findByUserAndProviderAndIsActiveTrueAndDeletedAtIsNull(user, terraProvider)
+                    .orElseThrow(() -> new UserException(UserErrorCode.USER_NOT_FOUND));
+            
+            // 3. Terra API를 통한 실제 연동 해제
+            deactivateTerraConnection(terraUser);
+            
+            // 4. 로컬 DB에서 isActive를 false로 설정
+            terraUser.delete();
+            
+            log.info("특정 제공자 연동 해제 완료: userId={}, providerName={}, terraUserId={}", 
+                    user.getId(), providerName, terraUser.getTerraUserId());
+                    
+        } catch (IllegalArgumentException e) {
+            log.error("잘못된 제공자 이름: userId={}, providerName={}", user.getId(), providerName, e);
+            throw new UserException(UserErrorCode.USER_NOT_FOUND);
+        } catch (Exception e) {
+            log.error("특정 제공자 연동 해제 실패: userId={}, providerName={}", user.getId(), providerName, e);
+            throw new UserException(UserErrorCode.USER_NOT_FOUND);
         }
     }
 }
