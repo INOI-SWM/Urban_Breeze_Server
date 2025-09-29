@@ -109,4 +109,20 @@ public class TerraUserService {
             throw e; // 상위 메서드에서 처리하도록 예외 전파
         }
     }
+
+    /**
+     * 특정 사용자의 활성 Terra User 정보만 조회
+     * @param user 사용자
+     * @return 해당 사용자의 활성 Terra User 목록
+     */
+    @Transactional(readOnly = true)
+    public List<TerraUser> getActiveTerraUsers(User user) {
+        log.info("사용자 활성 Terra User 조회: userId={}", user.getId());
+        
+        List<TerraUser> activeTerraUsers = terraUserRepository.findAllByUserAndIsActiveTrue(user);
+        
+        log.info("사용자 활성 Terra User 조회 완료: userId={}, count={}", user.getId(), activeTerraUsers.size());
+        
+        return activeTerraUsers;
+    }
 }

@@ -1,9 +1,6 @@
 package com.ridingmate.api_server.domain.activity.facade;
 
-import com.ridingmate.api_server.domain.activity.dto.response.IntegrationAuthenticateResponse;
-import com.ridingmate.api_server.domain.activity.dto.response.IntegrationProviderAuthResponse;
-import com.ridingmate.api_server.domain.activity.dto.response.TerraAuthTokenResponse;
-import com.ridingmate.api_server.domain.activity.dto.response.ApiUsageResponse;
+import com.ridingmate.api_server.domain.activity.dto.response.*;
 import com.ridingmate.api_server.domain.activity.entity.UserApiUsage;
 import com.ridingmate.api_server.domain.activity.service.TerraService;
 import com.ridingmate.api_server.domain.activity.service.UserApiUsageService;
@@ -28,6 +25,7 @@ import org.springframework.stereotype.Component;
 
 import java.time.LocalDate;
 import java.util.List;
+import java.util.stream.Collectors;
 
 @Component
 @RequiredArgsConstructor
@@ -106,13 +104,18 @@ public class IntegrationFacade {
         log.info("현재 월 API 사용량 조회: userId={}", authUser.id());
         
         User user = userService.getUser(authUser.id());
-        UserApiUsage currentMonthUsage = userApiUsageService.getOrCreateCurrentMonthUsage(user);
-        int monthlyLimit = userApiUsageService.getMonthlyLimit();
+        UserApiUsage usage = userApiUsageService.getOrCreateCurrentMonthUsage(user);
+        int limit = userApiUsageService.getMonthlyLimit();
 
-        log.info("현재 월 API 사용량 조회 완료: userId={}, currentUsage={}, remaining={}", 
-                authUser.id(), currentMonthUsage.getActivitySyncCount(),
-                monthlyLimit - currentMonthUsage.getActivitySyncCount());
+        List<TerraUser> terraUsers = terraUserService.getActiveTerraUsers(user);
+        List<ProviderSyncInfo> providerSyncInfos = terraUsers.stream()
+                .map(ProviderSyncInfo::from)
+                .toList();
         
-        return ApiUsageResponse.of(currentMonthUsage.getActivitySyncCount(), monthlyLimit);
+        log.info("현재 월 API 사용량 조회 완료: userId={}, currentUsage={}, remaining={}, providerCount={}", 
+                authUser.id(), usage.getActivitySyncCount(), limit - usage.getActivitySyncCount(),
+                terraUsers.size());
+        
+        return ApiUsageResponse.of(usage.getActivitySyncCount(), limit, providerSyncInfos);
     }
 }
