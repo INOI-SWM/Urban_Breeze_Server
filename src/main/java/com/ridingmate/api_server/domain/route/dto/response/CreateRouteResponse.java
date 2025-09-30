@@ -10,8 +10,8 @@ public record CreateRouteResponse(
         @Schema(description = "경로 제목", example = "한강 라이딩")
         String title,
 
-        @Schema(description = "예상 소요 시간 (분)", example = "60")
-        long totalDuration,
+        @Schema(description = "예상 소요 시간 (초)", example = "3600")
+        long totalDurationSeconds,
 
         @Schema(description = "총 거리 (km)", example = "13.2")
         double totalDistance,
@@ -24,7 +24,7 @@ public record CreateRouteResponse(
         return new CreateRouteResponse(
                 route.getRouteId().toString(),
                 route.getTitle(),
-                route.getDuration().toMinutes(),
+                route.getDuration().toSeconds(),
                 route.getDistanceInKm(),
                 route.getElevationGain()
         );

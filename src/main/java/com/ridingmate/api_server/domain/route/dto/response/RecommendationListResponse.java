@@ -46,8 +46,8 @@ public record RecommendationListResponse(
         @Schema(description = "총 거리 (km)", example = "13.2")
         Double distanceKm,
         
-        @Schema(description = "총 소요 시간 (분)", example = "60")
-        Long durationMinutes,
+        @Schema(description = "총 소요 시간 (초)", example = "3600")
+        Long durationSeconds,
         
         @Schema(description = "총 상승 고도 (m)", example = "120.4")
         Double elevationGain,
@@ -71,7 +71,7 @@ public record RecommendationListResponse(
                 route.getTitle(),
                 route.getDescription(),
                 route.getDistanceInKm(),
-                route.getDuration().toMinutes(),
+                route.getDuration().toSeconds(),
                 route.getRoundedElevationGain(),
                 route.getRegion().getDisplayName(),
                 route.getDifficulty().getDisplayName(),

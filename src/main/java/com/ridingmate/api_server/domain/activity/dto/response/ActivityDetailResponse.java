@@ -29,11 +29,11 @@ public record ActivityDetailResponse(
         @JsonFormat(pattern = "yyyy-MM-dd'T'HH:mm:ss")
         LocalDateTime endedAt,
 
-        @Schema(description = "운동 시간 (분)", example = "14")
-        Long activeDurationMinutes,
+        @Schema(description = "운동 시간 (초)", example = "840")
+        Long activeDurationSeconds,
 
-        @Schema(description = "전체 시간 (분)", example = "20")
-        Long totalDurationMinutes,
+        @Schema(description = "전체 시간 (초)", example = "1200")
+        Long totalDurationSeconds,
 
         @Schema(description = "이동 거리 (km)", example = "3.14")
         Double distance,
@@ -171,8 +171,8 @@ public record ActivityDetailResponse(
         Duration activeDuration = activity.getDuration();
 
         // 평균 속도 계산 (km/h)
-        double averageSpeed = activeDuration.toMinutes() > 0 
-                ? (activity.getDistance() / 1000.0) / (activeDuration.toMinutes() / 60.0)
+        double averageSpeed = activeDuration.toSeconds() > 0 
+                ? (activity.getDistance() / 1000.0) / (activeDuration.toSeconds() / 3600.0)
                 : 0.0;
 
         // 사용자 정보 생성
@@ -183,8 +183,8 @@ public record ActivityDetailResponse(
                 activity.getTitle(),
                 activity.getStartedAt(),
                 activity.getEndedAt(),
-                activeDuration.toMinutes(),
-                totalDuration.toMinutes(),
+                activeDuration.toSeconds(),
+                totalDuration.toSeconds(),
                 activity.getDistance() / 1000.0, // 미터를 킬로미터로 변환
                 Math.round(averageSpeed * 100.0) / 100.0, // 소수점 2자리 반올림
                 activity.getElevationGain(),
