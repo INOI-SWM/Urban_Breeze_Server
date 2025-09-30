@@ -5,8 +5,10 @@ import com.ridingmate.api_server.domain.activity.entity.UserApiUsage;
 import com.ridingmate.api_server.domain.activity.service.TerraService;
 import com.ridingmate.api_server.domain.activity.service.UserApiUsageService;
 import com.ridingmate.api_server.domain.auth.security.AuthUser;
+import com.ridingmate.api_server.domain.user.entity.AppleUser;
 import com.ridingmate.api_server.domain.user.entity.TerraUser;
 import com.ridingmate.api_server.domain.user.entity.User;
+import com.ridingmate.api_server.domain.user.service.AppleUserService;
 import com.ridingmate.api_server.domain.user.service.TerraUserService;
 import com.ridingmate.api_server.domain.user.service.UserService;
 import com.ridingmate.api_server.global.config.AppConfigProperties;
@@ -24,6 +26,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 
 import java.time.LocalDate;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -36,6 +39,7 @@ public class IntegrationFacade {
     private final TerraProperty terraProperty;
     private final AppConfigProperties appConfigProperties;
     private final TerraUserService terraUserService;
+    private final AppleUserService appleUserService;
     private final UserService userService;
     private final TerraService terraService;
     private final UserApiUsageService userApiUsageService;
@@ -107,14 +111,25 @@ public class IntegrationFacade {
         UserApiUsage usage = userApiUsageService.getOrCreateCurrentMonthUsage(user);
         int limit = userApiUsageService.getMonthlyLimit();
 
+        // Terra 연동 정보 조회
         List<TerraUser> terraUsers = terraUserService.getActiveTerraUsers(user);
-        List<ProviderSyncInfo> providerSyncInfos = terraUsers.stream()
+        List<ProviderSyncInfo> terraProviderInfos = terraUsers.stream()
                 .map(ProviderSyncInfo::from)
                 .toList();
+
+        // Apple 연동 정보 조회
+        List<ProviderSyncInfo> appleProviderInfos = appleUserService.getActiveAppleUsers(user).stream()
+                .map(appleUser -> ProviderSyncInfo.fromAppleUser(appleUser))
+                .toList();
+
+        // 모든 제공자 정보 합치기
+        List<ProviderSyncInfo> providerSyncInfos = new ArrayList<>();
+        providerSyncInfos.addAll(terraProviderInfos);
+        providerSyncInfos.addAll(appleProviderInfos);
         
         log.info("현재 월 API 사용량 조회 완료: userId={}, currentUsage={}, remaining={}, providerCount={}", 
                 authUser.id(), usage.getActivitySyncCount(), limit - usage.getActivitySyncCount(),
-                terraUsers.size());
+                providerSyncInfos.size());
         
         return ApiUsageResponse.of(usage.getActivitySyncCount(), limit, providerSyncInfos);
     }
