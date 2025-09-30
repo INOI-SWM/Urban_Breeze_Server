@@ -757,16 +757,13 @@ public class ActivityService {
 
     /**
      * Apple HealthKit 운동 기록 업로드
-     * @param userId 사용자 ID
+     * @param user 사용자
      * @param request Apple 운동 기록 업로드 요청
      * @return 업로드된 운동 기록 목록
      */
     @Transactional
-    public AppleWorkoutsImportResponse importAppleWorkouts(Long userId, AppleWorkoutsImportRequest request) {
-        log.info("Apple 운동 기록 업로드 시작: userId={}, count={}", userId, request.workouts().size());
-
-        User user = userRepository.findById(userId)
-                .orElseThrow(() -> new AuthException(AuthErrorCode.AUTHENTICATION_USER_NOT_FOUND));
+    public AppleWorkoutsImportResponse importAppleWorkouts(User user, AppleWorkoutsImportRequest request) {
+        log.info("Apple 운동 기록 업로드 시작: userId={}, count={}", user.getId(), request.workouts().size());
 
         List<AppleWorkoutImportResponse> importedActivities = new ArrayList<>();
 
@@ -792,13 +789,13 @@ public class ActivityService {
 
             } catch (Exception e) {
                 log.error("Apple 운동 기록 업로드 실패: userId={}, title={}", 
-                        userId, workoutRequest.title(), e);
+                        user.getId(), workoutRequest.title(), e);
                 // 개별 실패는 로그만 남기고 계속 진행
             }
         }
 
         log.info("Apple 운동 기록 업로드 완료: userId={}, successCount={}", 
-                userId, importedActivities.size());
+                user.getId(), importedActivities.size());
 
         return AppleWorkoutsImportResponse.of(importedActivities);
     }

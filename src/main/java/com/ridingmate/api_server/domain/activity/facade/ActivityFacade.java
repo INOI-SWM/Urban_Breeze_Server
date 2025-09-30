@@ -14,7 +14,10 @@ import com.ridingmate.api_server.domain.activity.exception.ActivityException;
 import com.ridingmate.api_server.domain.activity.exception.code.ActivityCommonErrorCode;
 import com.ridingmate.api_server.domain.activity.service.ActivityService;
 import com.ridingmate.api_server.domain.auth.security.AuthUser;
+import com.ridingmate.api_server.domain.user.entity.AppleUser;
 import com.ridingmate.api_server.domain.user.entity.User;
+import com.ridingmate.api_server.domain.user.service.AppleUserService;
+import com.ridingmate.api_server.domain.user.service.UserService;
 import com.ridingmate.api_server.global.util.GeometryUtil;
 import com.ridingmate.api_server.infra.aws.s3.S3Manager;
 import com.ridingmate.api_server.infra.geoapify.GeoapifyClient;
@@ -40,6 +43,8 @@ public class ActivityFacade {
     private final S3Manager s3Manager;
     private final GeoapifyClient geoapifyClient;
     private final TerraMapper terraMapper;
+    private final AppleUserService appleUserService;
+    private final UserService userService;
 
     /**
      * Terra 웹훅 데이터로부터 Activity 생성 (썸네일 포함)
@@ -261,8 +266,9 @@ public class ActivityFacade {
      */
     public AppleWorkoutsImportResponse importAppleWorkouts(AuthUser authUser, AppleWorkoutsImportRequest request) {
         log.info("Apple 운동 기록 업로드 시작: userId={}, count={}", authUser.id(), request.workouts().size());
-        
-        AppleWorkoutsImportResponse response = activityService.importAppleWorkouts(authUser.id(), request);
+        User user = userService.getUser(authUser.id());
+
+        AppleWorkoutsImportResponse response = activityService.importAppleWorkouts(user, request);
         
         // 업로드된 각 운동 기록에 대해 썸네일 생성 시도
         for (var activityResponse : response.activities()) {
@@ -273,6 +279,10 @@ public class ActivityFacade {
                         activityResponse.activityId(), e.getMessage(), e);
             }
         }
+
+        AppleUser appleUser = appleUserService.getOrCreateAppleUser(user);
+        appleUserService.updateLastSyncDate(appleUser);
+
         
         log.info("Apple 운동 기록 업로드 완료: userId={}, successCount={}", 
                 authUser.id(), response.successCount());
