@@ -804,6 +804,40 @@ public class ActivityService {
      * Apple HealthKit 운동 데이터로부터 Activity 생성
      */
     private Activity createActivityFromAppleWorkout(User user, AppleWorkoutImportRequest request) {
+        // 심박수 데이터에서 평균/최대값 계산
+        Integer averageHeartRate = null;
+        Integer maxHeartRate = null;
+        if (request.heartRateData() != null && !request.heartRateData().isEmpty()) {
+            List<Integer> heartRates = request.heartRateData().stream()
+                    .map(AppleWorkoutImportRequest.HeartRateSample::heartRate)
+                    .toList();
+            
+            averageHeartRate = (int) heartRates.stream()
+                    .mapToInt(Integer::intValue)
+                    .average()
+                    .orElse(0.0);
+            
+            maxHeartRate = heartRates.stream()
+                    .mapToInt(Integer::intValue)
+                    .max()
+                    .orElse(0);
+        }
+
+        // 위치 데이터에서 고도 변화 계산 (elevationGain)
+        Double elevationGain = null;
+        if (request.locationData() != null && !request.locationData().isEmpty()) {
+            List<Double> altitudes = request.locationData().stream()
+                    .filter(location -> location.altitude() != null)
+                    .map(AppleWorkoutImportRequest.LocationData::altitude)
+                    .toList();
+            
+            if (!altitudes.isEmpty()) {
+                double minAltitude = altitudes.stream().mapToDouble(Double::doubleValue).min().orElse(0.0);
+                double maxAltitude = altitudes.stream().mapToDouble(Double::doubleValue).max().orElse(0.0);
+                elevationGain = Math.max(0.0, maxAltitude - minAltitude);
+            }
+        }
+
         return Activity.builder()
                 .user(user)
                 .title(request.title())
@@ -811,10 +845,10 @@ public class ActivityService {
                 .endedAt(request.endTime())
                 .distance(request.distance())
                 .duration(request.getDuration())
-                .elevationGain(null) // Apple HealthKit에서는 elevationGain을 별도로 제공하지 않음
+                .elevationGain(elevationGain)
                 .cadence(null) // Apple HealthKit에서는 cadence를 별도로 제공하지 않음
-                .averageHeartRate(null) // Apple HealthKit에서는 평균 심박수를 별도로 제공하지 않음
-                .maxHeartRate(null) // Apple HealthKit에서는 최대 심박수를 별도로 제공하지 않음
+                .averageHeartRate(averageHeartRate)
+                .maxHeartRate(maxHeartRate)
                 .averagePower(null) // Apple HealthKit에서는 파워를 별도로 제공하지 않음
                 .maxPower(null) // Apple HealthKit에서는 파워를 별도로 제공하지 않음
                 .build();
