@@ -127,6 +127,31 @@ public interface IntegrationApi {
     ResponseEntity<CommonResponse<ApiUsageIncrementResponse>> incrementApiUsage(@AuthenticationPrincipal AuthUser authUser);
 
     @Operation(
+            summary = "Apple HealthKit 연동",
+            description = "Apple HealthKit과 연동하여 운동 데이터를 동기화할 수 있도록 설정합니다."
+    )
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "성공: Apple HealthKit 연동 완료"),
+            @ApiResponse(responseCode = "400", description = "잘못된 요청 - 이미 연동된 상태"),
+            @ApiResponse(responseCode = "401", description = "인증 실패 - 유효하지 않은 토큰"),
+    })
+    ResponseEntity<CommonResponse<AppleConnectResponse>> connectApple(
+            @AuthenticationPrincipal AuthUser authUser
+    );
+
+    @Operation(
+            summary = "Apple HealthKit 연동 상태 조회",
+            description = "현재 Apple HealthKit 연동 상태와 마지막 동기화 시간을 조회합니다."
+    )
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "성공: Apple HealthKit 연동 상태 조회 완료"),
+            @ApiResponse(responseCode = "401", description = "인증 실패 - 유효하지 않은 토큰"),
+    })
+    ResponseEntity<CommonResponse<AppleStatusResponse>> getAppleStatus(
+            @AuthenticationPrincipal AuthUser authUser
+    );
+
+    @Operation(
             summary = "특정 제공자 연동 해제",
             description = """
                     특정 서비스 제공자(Samsung Health, Apple Health 등)와의 연동을 해제합니다.

@@ -23,7 +23,7 @@ public record ActivityListItemResponse(
         Double distance,
 
         @Schema(description = "소요 시간 (초)", example = "9000")
-        Long duration,
+        Long durationSeconds,
 
         @Schema(description = "상승 고도 (m)", example = "150.0")
         Double elevationGain,

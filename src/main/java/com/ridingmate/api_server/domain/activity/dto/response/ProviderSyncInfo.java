@@ -1,5 +1,6 @@
 package com.ridingmate.api_server.domain.activity.dto.response;
 
+import com.ridingmate.api_server.domain.user.entity.AppleUser;
 import com.ridingmate.api_server.domain.user.entity.TerraUser;
 import io.swagger.v3.oas.annotations.media.Schema;
 
@@ -20,6 +21,14 @@ public record ProviderSyncInfo(
                 terraUser.getProvider().toString(),
                 terraUser.getLastSyncDate(),
                 terraUser.isActive()
+        );
+    }
+
+    public static ProviderSyncInfo fromAppleUser(AppleUser appleUser){
+        return new ProviderSyncInfo(
+                "Apple HealthKit",
+                appleUser.getLastSyncDate(),
+                appleUser.isActive()
         );
     }
 }

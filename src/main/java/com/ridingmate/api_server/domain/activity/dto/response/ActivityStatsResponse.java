@@ -44,7 +44,7 @@ public record ActivityStatsResponse(
             Double totalElevationGain,
 
             @Schema(description = "총 운동 시간 (초)", example = "10860")
-            Long totalDuration,
+            Long totalDurationSeconds,
 
             @Schema(description = "총 활동 횟수", example = "3")
             Integer totalActivityCount
@@ -68,7 +68,7 @@ public record ActivityStatsResponse(
             Double elevationGainM,
 
             @Schema(description = "운동 시간 (초)", example = "3600")
-            Long durationSec
+            Long durationSeconds
     ) {}
 
     /**

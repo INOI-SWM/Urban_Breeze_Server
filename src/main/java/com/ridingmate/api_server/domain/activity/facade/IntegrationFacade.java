@@ -5,8 +5,10 @@ import com.ridingmate.api_server.domain.activity.entity.UserApiUsage;
 import com.ridingmate.api_server.domain.activity.service.TerraService;
 import com.ridingmate.api_server.domain.activity.service.UserApiUsageService;
 import com.ridingmate.api_server.domain.auth.security.AuthUser;
+import com.ridingmate.api_server.domain.user.entity.AppleUser;
 import com.ridingmate.api_server.domain.user.entity.TerraUser;
 import com.ridingmate.api_server.domain.user.entity.User;
+import com.ridingmate.api_server.domain.user.service.AppleUserService;
 import com.ridingmate.api_server.domain.user.service.TerraUserService;
 import com.ridingmate.api_server.domain.user.service.UserService;
 import com.ridingmate.api_server.global.config.AppConfigProperties;
@@ -24,7 +26,9 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 
 import java.time.LocalDate;
+import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 import java.util.stream.Collectors;
 
 @Component
@@ -36,6 +40,7 @@ public class IntegrationFacade {
     private final TerraProperty terraProperty;
     private final AppConfigProperties appConfigProperties;
     private final TerraUserService terraUserService;
+    private final AppleUserService appleUserService;
     private final UserService userService;
     private final TerraService terraService;
     private final UserApiUsageService userApiUsageService;
@@ -107,14 +112,25 @@ public class IntegrationFacade {
         UserApiUsage usage = userApiUsageService.getOrCreateCurrentMonthUsage(user);
         int limit = userApiUsageService.getMonthlyLimit();
 
+        // Terra 연동 정보 조회
         List<TerraUser> terraUsers = terraUserService.getActiveTerraUsers(user);
-        List<ProviderSyncInfo> providerSyncInfos = terraUsers.stream()
+        List<ProviderSyncInfo> terraProviderInfos = terraUsers.stream()
                 .map(ProviderSyncInfo::from)
                 .toList();
+
+        // Apple 연동 정보 조회
+        List<ProviderSyncInfo> appleProviderInfos = appleUserService.getActiveAppleUsers(user).stream()
+                .map(appleUser -> ProviderSyncInfo.fromAppleUser(appleUser))
+                .toList();
+
+        // 모든 제공자 정보 합치기
+        List<ProviderSyncInfo> providerSyncInfos = new ArrayList<>();
+        providerSyncInfos.addAll(terraProviderInfos);
+        providerSyncInfos.addAll(appleProviderInfos);
         
         log.info("현재 월 API 사용량 조회 완료: userId={}, currentUsage={}, remaining={}, providerCount={}", 
                 authUser.id(), usage.getActivitySyncCount(), limit - usage.getActivitySyncCount(),
-                terraUsers.size());
+                providerSyncInfos.size());
         
         return ApiUsageResponse.of(usage.getActivitySyncCount(), limit, providerSyncInfos);
     }
@@ -155,15 +171,64 @@ public class IntegrationFacade {
     }
 
     /**
+     * Apple HealthKit 연동
+     * @param authUser 인증된 사용자
+     * @return Apple 연동 응답
+     */
+    public AppleConnectResponse connectApple(AuthUser authUser) {
+        log.info("Apple HealthKit 연동: userId={}", authUser.id());
+        
+        User user = userService.getUser(authUser.id());
+        AppleUser appleUser = appleUserService.createAppleUser(user);
+        
+        AppleConnectResponse response = AppleConnectResponse.from(appleUser);
+        
+        log.info("Apple HealthKit 연동 완료: userId={}, connectedAt={}", 
+                authUser.id(), appleUser.getCreatedAt());
+        
+        return response;
+    }
+
+    /**
+     * Apple HealthKit 연동 상태 조회
+     * @param authUser 인증된 사용자
+     * @return Apple 연동 상태 응답
+     */
+    public AppleStatusResponse getAppleStatus(AuthUser authUser) {
+        log.info("Apple HealthKit 연동 상태 조회: userId={}", authUser.id());
+        
+        User user = userService.getUser(authUser.id());
+        Optional<AppleUser> appleUser = appleUserService.getActiveAppleUser(user);
+        
+        AppleStatusResponse response = appleUser.isPresent() 
+                ? AppleStatusResponse.from(appleUser.get())
+                : AppleStatusResponse.notConnected();
+        
+        log.info("Apple HealthKit 연동 상태 조회 완료: userId={}, isConnected={}", 
+                authUser.id(), response.isConnected());
+        
+        return response;
+    }
+
+    /**
      * 특정 제공자 연동 해제
      * @param authUser 인증된 사용자
      * @param providerName 제공자 이름
      */
     public void disconnectProvider(AuthUser authUser, String providerName) {
         log.info("특정 제공자 연동 해제: userId={}, providerName={}", authUser.id(), providerName);
-        
+
         User user = userService.getUser(authUser.id());
-        terraUserService.disconnectProvider(user, providerName);
+        
+        // Apple HealthKit 연동 해제
+        if ("APPLE-HEALTH".equalsIgnoreCase(providerName) || "APPLE-HEALTH-KIT".equalsIgnoreCase(providerName)) {
+            appleUserService.disconnectAppleUser(user);
+            log.info("Apple HealthKit 연동 해제 완료: userId={}", authUser.id());
+        } else {
+            // Terra 연동 해제 (Samsung Health, Google Fit 등)
+            terraUserService.disconnectProvider(user, providerName);
+            log.info("Terra 제공자 연동 해제 완료: userId={}, providerName={}", authUser.id(), providerName);
+        }
         
         log.info("특정 제공자 연동 해제 완료: userId={}, providerName={}", authUser.id(), providerName);
     }

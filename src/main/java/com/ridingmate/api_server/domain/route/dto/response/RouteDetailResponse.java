@@ -27,8 +27,8 @@ public record RouteDetailResponse(
     @JsonFormat(pattern = "yyyy-MM-dd'T'HH:mm:ss")
     LocalDateTime createdAt,
 
-    @Schema(description = "예상 소요시간(분)", example = "71")
-    Long durationMinutes,
+    @Schema(description = "예상 소요시간(초)", example = "4260")
+    Long durationSeconds,
 
     @Schema(description = "이동 거리 (km)", example = "13.2")
     Double distance,
@@ -76,7 +76,7 @@ public record RouteDetailResponse(
             route.getTitle(),
             GeometryUtil.lineStringToPolyline(route.getRouteLine()),
             route.getCreatedAt(),
-            route.getDuration().toMinutes(),
+            route.getDuration().toSeconds(),
             route.getDistance(),
             route.getElevationGain(),
             route.getUser().getUuid().toString(),
