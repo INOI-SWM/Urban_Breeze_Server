@@ -176,9 +176,18 @@ public class IntegrationFacade {
      */
     public void disconnectProvider(AuthUser authUser, String providerName) {
         log.info("특정 제공자 연동 해제: userId={}, providerName={}", authUser.id(), providerName);
-        
+
         User user = userService.getUser(authUser.id());
-        terraUserService.disconnectProvider(user, providerName);
+        
+        // Apple HealthKit 연동 해제
+        if ("APPLE-HEALTH".equalsIgnoreCase(providerName) || "APPLE-HEALTH-KIT".equalsIgnoreCase(providerName)) {
+            appleUserService.disconnectAppleUser(user);
+            log.info("Apple HealthKit 연동 해제 완료: userId={}", authUser.id());
+        } else {
+            // Terra 연동 해제 (Samsung Health, Google Fit 등)
+            terraUserService.disconnectProvider(user, providerName);
+            log.info("Terra 제공자 연동 해제 완료: userId={}, providerName={}", authUser.id(), providerName);
+        }
         
         log.info("특정 제공자 연동 해제 완료: userId={}, providerName={}", authUser.id(), providerName);
     }
