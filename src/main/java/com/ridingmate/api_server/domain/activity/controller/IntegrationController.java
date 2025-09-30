@@ -6,6 +6,7 @@ import com.ridingmate.api_server.domain.activity.exception.IntegrationSuccessCod
 import com.ridingmate.api_server.domain.activity.exception.code.ApiUsageErrorCode;
 import com.ridingmate.api_server.domain.activity.facade.IntegrationFacade;
 import com.ridingmate.api_server.domain.auth.security.AuthUser;
+import com.ridingmate.api_server.domain.user.exception.AppleErrorCode;
 import com.ridingmate.api_server.domain.user.exception.UserErrorCode;
 import com.ridingmate.api_server.global.exception.ApiErrorCodeExample;
 import com.ridingmate.api_server.global.exception.CommonResponse;
@@ -102,6 +103,33 @@ public class IntegrationController implements IntegrationApi{
         return ResponseEntity
                 .status(IntegrationSuccessCode.INTEGRATION_API_USAGE_INCREMENT_SUCCESS.getStatus())
                 .body(CommonResponse.success(IntegrationSuccessCode.INTEGRATION_API_USAGE_INCREMENT_SUCCESS, response));
+    }
+
+    @Override
+    @PostMapping("/apple/connect")
+    @ApiErrorCodeExample(UserErrorCode.class)
+    @ApiErrorCodeExample(AppleErrorCode.class)
+    public ResponseEntity<CommonResponse<AppleConnectResponse>> connectApple(
+            @AuthenticationPrincipal AuthUser authUser
+    ) {
+        AppleConnectResponse response = integrationFacade.connectApple(authUser);
+        
+        return ResponseEntity
+                .status(IntegrationSuccessCode.INTEGRATION_APPLE_CONNECT_SUCCESS.getStatus())
+                .body(CommonResponse.success(IntegrationSuccessCode.INTEGRATION_APPLE_CONNECT_SUCCESS, response));
+    }
+
+    @Override
+    @GetMapping("/apple/status")
+    @ApiErrorCodeExample(UserErrorCode.class)
+    public ResponseEntity<CommonResponse<AppleStatusResponse>> getAppleStatus(
+            @AuthenticationPrincipal AuthUser authUser
+    ) {
+        AppleStatusResponse response = integrationFacade.getAppleStatus(authUser);
+        
+        return ResponseEntity
+                .status(IntegrationSuccessCode.INTEGRATION_APPLE_STATUS_SUCCESS.getStatus())
+                .body(CommonResponse.success(IntegrationSuccessCode.INTEGRATION_APPLE_STATUS_SUCCESS, response));
     }
 
     @Override

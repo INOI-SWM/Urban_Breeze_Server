@@ -28,6 +28,7 @@ import org.springframework.stereotype.Component;
 import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 import java.util.stream.Collectors;
 
 @Component
@@ -165,6 +166,46 @@ public class IntegrationFacade {
         
         log.info("API 사용량 증가 완료 (응답 포함): userId={}, currentUsage={}, remaining={}", 
                 authUser.id(), response.currentUsage(), response.remainingUsage());
+        
+        return response;
+    }
+
+    /**
+     * Apple HealthKit 연동
+     * @param authUser 인증된 사용자
+     * @return Apple 연동 응답
+     */
+    public AppleConnectResponse connectApple(AuthUser authUser) {
+        log.info("Apple HealthKit 연동: userId={}", authUser.id());
+        
+        User user = userService.getUser(authUser.id());
+        AppleUser appleUser = appleUserService.createAppleUser(user);
+        
+        AppleConnectResponse response = AppleConnectResponse.from(appleUser);
+        
+        log.info("Apple HealthKit 연동 완료: userId={}, connectedAt={}", 
+                authUser.id(), appleUser.getCreatedAt());
+        
+        return response;
+    }
+
+    /**
+     * Apple HealthKit 연동 상태 조회
+     * @param authUser 인증된 사용자
+     * @return Apple 연동 상태 응답
+     */
+    public AppleStatusResponse getAppleStatus(AuthUser authUser) {
+        log.info("Apple HealthKit 연동 상태 조회: userId={}", authUser.id());
+        
+        User user = userService.getUser(authUser.id());
+        Optional<AppleUser> appleUser = appleUserService.getActiveAppleUser(user);
+        
+        AppleStatusResponse response = appleUser.isPresent() 
+                ? AppleStatusResponse.from(appleUser.get())
+                : AppleStatusResponse.notConnected();
+        
+        log.info("Apple HealthKit 연동 상태 조회 완료: userId={}, isConnected={}", 
+                authUser.id(), response.isConnected());
         
         return response;
     }

@@ -106,6 +106,16 @@ public class AppleUserService {
     }
 
     /**
+     * 사용자의 활성화된 Apple 연동 정보 조회 (없으면 Exception 발생)
+     */
+    @Transactional(readOnly = true)
+    public AppleUser getAppleUser(User user) {
+        log.info("사용자의 Apple 연동 정보 조회: userId={}", user.getId());
+        return appleUserRepository.findByUserAndIsActiveTrue(user)
+                .orElseThrow(() -> new AppleException(AppleErrorCode.APPLE_NOT_CONNECTED));
+    }
+
+    /**
      * Apple 연동 해제
      */
     @Transactional

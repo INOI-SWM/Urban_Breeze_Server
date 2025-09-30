@@ -13,6 +13,8 @@ public enum IntegrationSuccessCode implements SuccessCode {
     INTEGRATION_TERRA_AUTH_TOKEN_SUCCESS(HttpStatus.OK, "Terra SDK 인증 토큰이 발급되었습니다."),
     INTEGRATION_API_USAGE_SUCCESS(HttpStatus.OK, "API 사용량 조회가 완료되었습니다."),
     INTEGRATION_API_USAGE_INCREMENT_SUCCESS(HttpStatus.OK, "API 사용량이 증가되었습니다."),
+    INTEGRATION_APPLE_CONNECT_SUCCESS(HttpStatus.OK, "Apple HealthKit 연동이 완료되었습니다."),
+    INTEGRATION_APPLE_STATUS_SUCCESS(HttpStatus.OK, "Apple HealthKit 연동 상태 조회가 완료되었습니다."),
     INTEGRATION_PROVIDER_DISCONNECT_SUCCESS(HttpStatus.OK, "제공자 연동이 해제되었습니다.")
     ;
     private final HttpStatus status;

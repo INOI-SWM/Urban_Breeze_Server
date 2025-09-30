@@ -280,7 +280,7 @@ public class ActivityFacade {
             }
         }
 
-        AppleUser appleUser = appleUserService.getOrCreateAppleUser(user);
+        AppleUser appleUser = appleUserService.getAppleUser(user);
         appleUserService.updateLastSyncDate(appleUser);
 
         
