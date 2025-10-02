@@ -25,7 +25,8 @@ public record TerraPayload(
             @JsonProperty("movement_data") MovementData movementData,
             @JsonProperty("cadence_data") CadenceData cadenceData,
             @JsonProperty("heart_rate_data") HeartRateData heartRateData,
-            @JsonProperty("power_data") PowerData powerData
+            @JsonProperty("power_data") PowerData powerData,
+            @JsonProperty("calories_data") CaloriesData caloriesData
     ) {}
 
     public record Metadata(
@@ -124,6 +125,21 @@ public record TerraPayload(
     public record PowerSample(
             @JsonProperty("power_watts") Double powerWatts,
             OffsetDateTime timestamp,
+            @JsonProperty("timer_duration_seconds") Long timerDurationSeconds
+    ) {}
+
+    // 칼로리 데이터
+    public record CaloriesData(
+            @JsonProperty("total_burned_calories") Double totalBurnedCalories,
+            @JsonProperty("net_activity_calories") Double netActivityCalories,
+            @JsonProperty("BMR_calories") Double bmrCalories,
+            @JsonProperty("net_intake_calories") Double netIntakeCalories,
+            @JsonProperty("calorie_samples") List<CalorieSample> calorieSamples
+    ) {}
+
+    public record CalorieSample(
+            OffsetDateTime timestamp,
+            @JsonProperty("calories") Double calories,
             @JsonProperty("timer_duration_seconds") Long timerDurationSeconds
     ) {}
 }

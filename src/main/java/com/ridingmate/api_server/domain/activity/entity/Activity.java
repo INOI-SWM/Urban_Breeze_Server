@@ -93,6 +93,12 @@ public class Activity extends BaseTimeEntity {
     private Integer maxPower;
 
     /**
+     * 소모 칼로리 (kcal)
+     */
+    @Column(name = "calories")
+    private Double calories;
+
+    /**
      * 삭제 여부 (소프트 삭제)
      */
     @Column(name = "is_delete", nullable = false)
@@ -104,7 +110,7 @@ public class Activity extends BaseTimeEntity {
                      LocalDateTime startedAt, LocalDateTime endedAt,
                      String thumbnailImagePath, Integer cadence,
                      Integer averageHeartRate, Integer maxHeartRate,
-                     Integer averagePower, Integer maxPower
+                     Integer averagePower, Integer maxPower, Double calories
     ){
         this.user = user;
         this.title = title;
@@ -119,6 +125,7 @@ public class Activity extends BaseTimeEntity {
         this.maxHeartRate = maxHeartRate;
         this.averagePower = averagePower;
         this.maxPower = maxPower;
+        this.calories = calories;
         this.activityId = UUID.randomUUID();
     }
 
