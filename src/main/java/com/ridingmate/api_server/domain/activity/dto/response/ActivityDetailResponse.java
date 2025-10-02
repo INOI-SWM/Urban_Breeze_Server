@@ -62,6 +62,9 @@ public record ActivityDetailResponse(
         @Schema(description = "최고 파워 (W)", example = "--")
         Integer maxPower,
 
+        @Schema(description = "소모 칼로리 (kcal)", example = "450.0")
+        Double calories,
+
         @Schema(description = "사용자 정보")
         UserInfo user,
 
@@ -194,6 +197,7 @@ public record ActivityDetailResponse(
                 activity.getMaxHeartRate(),
                 activity.getAveragePower(),
                 activity.getMaxPower(),
+                activity.getCalories(),
                 userInfo,
                 thumbnailImageUrl,
                 activityImages,
