@@ -83,6 +83,10 @@ public class ActivityService {
         Integer maxPower = activityData.powerData() != null && activityData.powerData().maxPowerWatts() != null 
                 ? activityData.powerData().maxPowerWatts().intValue() : null;
 
+        // 칼로리 정보 추출
+        Double calories = activityData.caloriesData() != null && activityData.caloriesData().totalBurnedCalories() != null 
+                ? activityData.caloriesData().totalBurnedCalories() : null;
+
         Activity activity = Activity.builder()
                 .user(user)
                 .title(metadata.name() != null ? metadata.name() : "Terra 연동 활동")
@@ -96,6 +100,7 @@ public class ActivityService {
                 .maxHeartRate(maxHeartRate)
                 .averagePower(avgPower)
                 .maxPower(maxPower)
+                .calories(calories)
                 .build();
 
         // Activity 저장
