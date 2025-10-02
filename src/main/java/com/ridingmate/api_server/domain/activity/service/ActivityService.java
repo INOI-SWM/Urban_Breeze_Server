@@ -851,6 +851,7 @@ public class ActivityService {
                 .maxHeartRate(maxHeartRate)
                 .averagePower(null) // Apple HealthKit에서는 파워를 별도로 제공하지 않음
                 .maxPower(null) // Apple HealthKit에서는 파워를 별도로 제공하지 않음
+                .calories(request.calories()) // Apple HealthKit에서 제공하는 칼로리 정보
                 .build();
     }
 

@@ -61,7 +61,7 @@ public record AppleWorkoutImportResponse(
                 activity.getEndedAt(),
                 activity.getDistance(),
                 activity.getDuration() != null ? activity.getDuration().getSeconds() : null,
-                null, // calories는 Activity 엔티티에 없음
+                activity.getCalories(), // Activity 엔티티의 칼로리 정보
                 activity.getAverageHeartRate(),
                 activity.getMaxHeartRate(),
                 activity.getCadence(),
