@@ -25,7 +25,7 @@ import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
 
 @RestController
-@RequestMapping("/api/routes")
+@RequestMapping("/api/v1/routes")
 @RequiredArgsConstructor
 public class RouteController implements RouteApi{
 

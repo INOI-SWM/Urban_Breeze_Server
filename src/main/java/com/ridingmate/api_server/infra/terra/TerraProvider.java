@@ -9,7 +9,8 @@ import lombok.RequiredArgsConstructor;
 @Schema(description = "테라 지원 서비스 목록")
 public enum TerraProvider {
     STRAVA("STRAVA", "Strava"),
-    GARMIN("GARMIN", "Garmin")
+    GARMIN("GARMIN", "Garmin"),
+    SUUNTO("SUUNTO", "Suunto"),
     ;
 
     private final String providerName;

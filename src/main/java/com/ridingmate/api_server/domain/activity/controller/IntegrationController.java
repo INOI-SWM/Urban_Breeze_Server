@@ -18,7 +18,7 @@ import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
-@RequestMapping("/api/integration")
+@RequestMapping("/api/v1/integration")
 @RequiredArgsConstructor
 public class IntegrationController implements IntegrationApi{
 
