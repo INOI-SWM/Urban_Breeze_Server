@@ -14,7 +14,7 @@ import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
-@RequestMapping("/api/feedback")
+@RequestMapping("/api/v1/feedback")
 @RequiredArgsConstructor
 public class FeedbackController implements FeedbackApi {
 
