@@ -31,7 +31,7 @@ public class SecurityConfig {
             .sessionManagement(session -> 
                 session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
             .authorizeHttpRequests(auth -> auth
-                .requestMatchers("/api/auth/**").permitAll()    // 로그인 API
+                    .requestMatchers("/api/v1/auth/**").permitAll()    // 로그인 API
                 .requestMatchers("/actuator/**").permitAll()      // 헬스체크
                 .requestMatchers("/swagger-ui/**").permitAll()    // Swagger UI
                 .requestMatchers("/v3/api-docs/**").permitAll()   // API 문서
