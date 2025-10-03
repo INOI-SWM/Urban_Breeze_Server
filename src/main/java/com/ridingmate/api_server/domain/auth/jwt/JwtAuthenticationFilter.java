@@ -166,7 +166,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
         log.debug("JWT 필터 경로 체크 - URI: {}", path);
         
         // SecurityConfig의 permitAll() 경로들과 동일하게 설정
-        boolean shouldNotFilter = path.startsWith("/api/auth/") ||           // 로그인 API
+        boolean shouldNotFilter = path.startsWith("/api/v1/auth/") ||           // 로그인 API
                path.startsWith("/actuator/") ||           // Spring Boot Actuator
                path.startsWith("/swagger-ui/") ||         // Swagger UI
                path.startsWith("/v3/api-docs") ||         // OpenAPI 문서
