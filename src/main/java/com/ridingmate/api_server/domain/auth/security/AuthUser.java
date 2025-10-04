@@ -23,7 +23,7 @@ public record AuthUser(
         return new AuthUser(
                 user.getId(),
                 user.getUuid(),
-                user.getEmail()
+                user.getSocialProvider() + ":" + user.getSocialId()
         );
     }
 
