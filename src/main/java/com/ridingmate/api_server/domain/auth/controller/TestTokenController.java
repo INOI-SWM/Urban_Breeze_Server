@@ -104,6 +104,11 @@ public class TestTokenController {
             )
             @RequestParam("gpxFile") MultipartFile gpxFile,
             @Parameter(
+                    description = "썸네일 이미지 파일 (선택사항)", 
+                    required = false
+            )
+            @RequestParam(value = "thumbnailImage", required = false) MultipartFile thumbnailImage,
+            @Parameter(
                     description = "추천코스 제목", 
                     required = true
             )
@@ -145,7 +150,7 @@ public class TestTokenController {
 
         // GPX 파일로부터 추천코스 생성
         GpxUploadResponse response = gpxRecommendationService.createRecommendationFromGpx(
-                user, gpxFile, title, description,
+                user, gpxFile, thumbnailImage, title, description,
                 difficulty, region, landscapeType, recommendationType
         );
 
