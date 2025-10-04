@@ -95,7 +95,7 @@ public record RecommendationDetailResponse(
                 GeometryUtil.lineStringToPolyline(route.getRouteLine()),
                 route.getCreatedAt(),
                 route.getDuration().toSeconds(),
-                route.getDistance() * 1000, // km를 m로 변환
+                route.getDistance(), // km를 m로 변환
                 route.getElevationGain(),
                 route.getUser().getUuid().toString(),
                 route.getUser().getNickname(),

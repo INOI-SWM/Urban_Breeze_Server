@@ -25,7 +25,7 @@ public record CreateRouteResponse(
                 route.getRouteId().toString(),
                 route.getTitle(),
                 route.getDuration().toSeconds(),
-                route.getDistanceInKm() * 1000, // km를 m로 변환
+                route.getDistance(),
                 route.getElevationGain()
         );
     }
