@@ -49,7 +49,7 @@ public record RouteListItemResponse(
                 route.getTitle(),
                 thumbnailUrl,
                 route.getCreatedAt(),
-                route.getDistanceInKm() * 1000, // km를 m로 변환
+                route.getDistance(),
                 route.getRoundedElevationGain(),
                 route.getUser().getUuid().toString(),
                 route.getUser().getNickname(),

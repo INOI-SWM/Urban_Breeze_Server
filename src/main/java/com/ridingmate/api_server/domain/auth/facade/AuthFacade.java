@@ -14,6 +14,7 @@ import com.ridingmate.api_server.domain.auth.dto.GoogleUserInfo;
 import com.ridingmate.api_server.domain.auth.dto.KakaoUserInfo;
 import com.ridingmate.api_server.domain.auth.dto.TokenInfo;
 import com.ridingmate.api_server.domain.auth.dto.AgreementStatusResponse;
+import com.ridingmate.api_server.infra.aws.s3.S3Manager;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
@@ -27,6 +28,7 @@ public class AuthFacade {
     private final UserService userService;
     private final RefreshTokenService refreshTokenService;
     private final AgreementService agreementService;
+    private final S3Manager s3Manager;
 
     /**
      * Google 로그인 처리
@@ -47,8 +49,11 @@ public class AuthFacade {
         // 4. JWT 토큰 생성
         TokenInfo tokenInfo = tokenService.generateToken(user);
         
-        // 5. 응답 생성
-        return LoginResponse.of(tokenInfo, user, agreementStatus);
+        // 5. 프로필 이미지 presigned URL 생성
+        String profileImageUrl = s3Manager.getPresignedUrl(user.getProfileImagePath());
+        
+        // 6. 응답 생성
+        return LoginResponse.of(tokenInfo, user, agreementStatus, profileImageUrl);
     }
 
     /**
@@ -70,8 +75,11 @@ public class AuthFacade {
         // 4. JWT 토큰 생성
         TokenInfo tokenInfo = tokenService.generateToken(user);
 
-        // 5. 응답 생성
-        return LoginResponse.of(tokenInfo, user, agreementStatus);
+        // 5. 프로필 이미지 presigned URL 생성
+        String profileImageUrl = s3Manager.getPresignedUrl(user.getProfileImagePath());
+
+        // 6. 응답 생성
+        return LoginResponse.of(tokenInfo, user, agreementStatus, profileImageUrl);
     }
 
     /**
@@ -93,8 +101,11 @@ public class AuthFacade {
         // 4. JWT 토큰 생성
         TokenInfo tokenInfo = tokenService.generateToken(user);
         
-        // 5. 응답 생성
-        return LoginResponse.of(tokenInfo, user, agreementStatus);
+        // 5. 프로필 이미지 presigned URL 생성
+        String profileImageUrl = s3Manager.getPresignedUrl(user.getProfileImagePath());
+        
+        // 6. 응답 생성
+        return LoginResponse.of(tokenInfo, user, agreementStatus, profileImageUrl);
     }
 
     public TokenInfo refreshAccessToken(String refreshToken){

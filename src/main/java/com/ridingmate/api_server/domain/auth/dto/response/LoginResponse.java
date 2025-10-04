@@ -36,7 +36,7 @@ public record LoginResponse(
             String email,
 
             @Schema(description = "프로필 이미지 URL", example = "https://example.com/images/profile.jpg")
-            String profileImagePath,
+            String profileImageUrl,
 
             @Schema(description = "자기소개", example = "한강 라이딩을 즐겨요!")
             String introduce,
@@ -66,14 +66,15 @@ public record LoginResponse(
      * @param tokenInfo JWT 토큰 정보
      * @param user 사용자
      * @param agreementStatus 동의항목 상태
+     * @param profileImageUrl 프로필 이미지 presigned URL
      * @return LoginResponse
      */
-    public static LoginResponse of(TokenInfo tokenInfo, User user, AgreementStatusResponse agreementStatus) {
+    public static LoginResponse of(TokenInfo tokenInfo, User user, AgreementStatusResponse agreementStatus, String profileImageUrl) {
         UserInfo userInfo = new UserInfo(
                 user.getUuid(),
                 user.getNickname(),
                 user.getEmail(),
-                user.getProfileImagePath(),
+                profileImageUrl,
                 user.getIntroduce(),
                 user.getBirthYear(),
                 user.getGender()

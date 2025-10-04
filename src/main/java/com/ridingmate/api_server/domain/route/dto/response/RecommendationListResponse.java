@@ -70,7 +70,7 @@ public record RecommendationListResponse(
                 route.getRouteId().toString(),
                 route.getTitle(),
                 route.getDescription(),
-                route.getDistanceInKm() * 1000, // km를 m로 변환
+                route.getDistance(), // km를 m로 변환
                 route.getDuration().toSeconds(),
                 route.getRoundedElevationGain(),
                 route.getRegion().getDisplayName(),
