@@ -5,8 +5,11 @@ import com.ridingmate.api_server.global.config.converter.StringToLandscapeTypeLi
 import com.ridingmate.api_server.global.config.converter.StringToRecommendationTypeListConverter;
 import com.ridingmate.api_server.global.config.converter.StringToRegionListConverter;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.format.FormatterRegistry;
+import org.springframework.web.multipart.MultipartResolver;
+import org.springframework.web.multipart.support.StandardServletMultipartResolver;
 import org.springframework.web.servlet.config.annotation.CorsRegistry;
 import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
 
@@ -36,5 +39,12 @@ public class WebConfig implements WebMvcConfigurer {
         registry.addConverter(new StringToRecommendationTypeListConverter());
         registry.addConverter(new StringToRegionListConverter());
         registry.addConverter(new StringToDifficultyListConverter());
+    }
+
+    @Bean
+    public MultipartResolver multipartResolver() {
+        StandardServletMultipartResolver resolver = new StandardServletMultipartResolver();
+        resolver.setResolveLazily(true);
+        return resolver;
     }
 }
