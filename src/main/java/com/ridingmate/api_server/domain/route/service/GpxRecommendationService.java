@@ -44,7 +44,7 @@ public class GpxRecommendationService {
 
     @Transactional
     public GpxUploadResponse createRecommendationFromGpx(
-            User user, MultipartFile gpxFile, String title, String description,
+            User user, MultipartFile gpxFile, MultipartFile thumbnailImage, String title, String description,
             com.ridingmate.api_server.domain.route.enums.Difficulty difficulty,
             com.ridingmate.api_server.domain.route.enums.Region region,
             com.ridingmate.api_server.domain.route.enums.LandscapeType landscapeType,
@@ -71,8 +71,8 @@ public class GpxRecommendationService {
             route.updateGpxFilePath(gpxFilePath);
             routeRepository.save(route);
 
-            // 7. 썸네일 이미지 생성
-            String thumbnailUrl = generateThumbnail(route, parseResult.coordinates());
+            // 7. 썸네일 이미지 처리
+            String thumbnailUrl = handleThumbnailImage(route, thumbnailImage, parseResult.coordinates());
 
             return GpxUploadResponse.from(route, recommendation, thumbnailUrl, s3Manager.getPresignedUrl(gpxFilePath));
 
@@ -151,12 +151,53 @@ public class GpxRecommendationService {
     }
 
     /**
-     * GPX 좌표를 이용한 썸네일 이미지 생성
+     * 썸네일 이미지 처리 (사용자 업로드 또는 자동 생성)
      */
-    private String generateThumbnail(Route route, List<Coordinate> coordinates) {
+    private String handleThumbnailImage(Route route, MultipartFile thumbnailImage, List<Coordinate> coordinates) {
+        try {
+            // 1. 사용자가 썸네일 이미지를 업로드한 경우
+            if (thumbnailImage != null && !thumbnailImage.isEmpty()) {
+                return uploadUserThumbnail(route, thumbnailImage);
+            }
+            
+            // 2. 사용자 썸네일이 없는 경우 자동 생성
+            return generateAutoThumbnail(route, coordinates);
+            
+        } catch (Exception e) {
+            log.error("썸네일 처리 실패: routeId={}, error={}", 
+                    route.getId(), e.getMessage(), e);
+            return "https://via.placeholder.com/300x200?text=Thumbnail+Error";
+        }
+    }
+
+    /**
+     * 사용자 업로드 썸네일 처리
+     */
+    private String uploadUserThumbnail(Route route, MultipartFile thumbnailImage) throws IOException {
+        // 이미지 유효성 검사
+        validateImageFile(thumbnailImage);
+        
+        // 썸네일 경로 생성 및 S3 업로드
+        String thumbnailPath = createThumbnailImagePath(route.getId());
+        s3Manager.uploadByteFiles(thumbnailPath, thumbnailImage.getBytes(), thumbnailImage.getContentType());
+        
+        // Route 엔티티에 썸네일 경로 업데이트
+        route.updateThumbnailImagePath(thumbnailPath);
+        routeRepository.save(route);
+        
+        log.info("사용자 썸네일 업로드 성공: routeId={}, path={}, fileName={}", 
+                route.getId(), thumbnailPath, thumbnailImage.getOriginalFilename());
+
+        return s3Manager.getPresignedUrl(thumbnailPath);
+    }
+
+    /**
+     * 자동 썸네일 생성 (사용자 썸네일이 없는 경우)
+     */
+    private String generateAutoThumbnail(Route route, List<Coordinate> coordinates) {
         try {
             if (coordinates.size() < 2) {
-                log.warn("GPX 썸네일 생성 건너뜀: routeId={}, 좌표 부족 (count={})", 
+                log.warn("자동 썸네일 생성 건너뜀: routeId={}, 좌표 부족 (count={})", 
                         route.getId(), coordinates.size());
                 return "https://via.placeholder.com/300x200?text=No+Route+Data";
             }
@@ -179,15 +220,35 @@ public class GpxRecommendationService {
             route.updateThumbnailImagePath(thumbnailPath);
             routeRepository.save(route);
             
-            log.info("GPX 썸네일 생성 성공: routeId={}, path={}, coordCount={}", 
+            log.info("자동 썸네일 생성 성공: routeId={}, path={}, coordCount={}", 
                     route.getId(), thumbnailPath, coordinates.size());
 
             return s3Manager.getPresignedUrl(thumbnailPath);
 
         } catch (Exception e) {
-            log.error("GPX 썸네일 생성 실패: routeId={}, error={}", 
+            log.error("자동 썸네일 생성 실패: routeId={}, error={}", 
                     route.getId(), e.getMessage(), e);
-            return "https://via.placeholder.com/300x200?text=Thumbnail+Error";
+            return "https://via.placeholder.com/300x200?text=Auto+Thumbnail+Error";
+        }
+    }
+
+    /**
+     * 이미지 파일 유효성 검사
+     */
+    private void validateImageFile(MultipartFile imageFile) {
+        if (imageFile == null || imageFile.isEmpty()) {
+            throw new IllegalArgumentException("이미지 파일이 선택되지 않았습니다.");
+        }
+
+        String contentType = imageFile.getContentType();
+        if (contentType == null || !contentType.startsWith("image/")) {
+            throw new IllegalArgumentException("이미지 파일만 업로드 가능합니다.");
+        }
+
+        // 파일 크기 제한 (5MB)
+        long maxSize = 5 * 1024 * 1024; // 5MB
+        if (imageFile.getSize() > maxSize) {
+            throw new IllegalArgumentException("이미지 파일 크기는 5MB를 초과할 수 없습니다.");
         }
     }
 

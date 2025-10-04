@@ -20,8 +20,8 @@ public record RouteListItemResponse(
         @JsonFormat(pattern = "yyyy-MM-dd'T'HH:mm:ss")
         LocalDateTime createdAt,
 
-        @Schema(description = "이동 거리 (km)", example = "13.2")
-        Double distance,
+        @Schema(description = "이동 거리 (m)", example = "13200")
+        Double distanceM,
 
         @Schema(description = "총 상승 고도 (m)", example = "120.4")
         Double elevationGain,
@@ -49,7 +49,7 @@ public record RouteListItemResponse(
                 route.getTitle(),
                 thumbnailUrl,
                 route.getCreatedAt(),
-                route.getDistanceInKm(),
+                route.getDistanceInKm() * 1000, // km를 m로 변환
                 route.getRoundedElevationGain(),
                 route.getUser().getUuid().toString(),
                 route.getUser().getNickname(),

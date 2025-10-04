@@ -13,8 +13,8 @@ public record CreateRouteResponse(
         @Schema(description = "예상 소요 시간 (초)", example = "3600")
         long totalDurationSeconds,
 
-        @Schema(description = "총 거리 (km)", example = "13.2")
-        double totalDistance,
+        @Schema(description = "총 거리 (m)", example = "13200")
+        double totalDistanceM,
 
         @Schema(description = "총 상승 고도 (m)", example = "120.4")
         double totalElevationGain
@@ -25,7 +25,7 @@ public record CreateRouteResponse(
                 route.getRouteId().toString(),
                 route.getTitle(),
                 route.getDuration().toSeconds(),
-                route.getDistanceInKm(),
+                route.getDistanceInKm() * 1000, // km를 m로 변환
                 route.getElevationGain()
         );
     }

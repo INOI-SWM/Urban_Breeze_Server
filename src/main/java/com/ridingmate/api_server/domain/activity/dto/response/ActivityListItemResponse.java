@@ -19,8 +19,8 @@ public record ActivityListItemResponse(
         @Schema(description = "종료 시간", example = "2024-03-15T11:30:00")
         LocalDateTime endedAt,
 
-        @Schema(description = "총 거리 (km)", example = "25.5")
-        Double distance,
+        @Schema(description = "총 거리 (m)", example = "25500")
+        Double distanceM,
 
         @Schema(description = "소요 시간 (초)", example = "9000")
         Long durationSeconds,
@@ -52,7 +52,7 @@ public record ActivityListItemResponse(
                 activity.getTitle(),
                 activity.getStartedAt(),
                 activity.getEndedAt(),
-                activity.getDistance() / 1000.0, // 미터를 킬로미터로 변환
+                activity.getDistance(), // 미터 단위 그대로 사용
                 activity.getDuration().toSeconds(),
                 activity.getElevationGain(),
                 thumbnailImageUrl,

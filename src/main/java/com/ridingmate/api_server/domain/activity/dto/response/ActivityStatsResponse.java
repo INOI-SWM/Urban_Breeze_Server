@@ -37,8 +37,8 @@ public record ActivityStatsResponse(
 
     @Schema(description = "기간별 통계 요약")
     public record SummaryInfo(
-            @Schema(description = "총 거리 (km)", example = "84.5")
-            Double totalDistance,
+            @Schema(description = "총 거리 (m)", example = "84500")
+            Double totalDistanceM,
 
             @Schema(description = "총 상승 고도 (m)", example = "980")
             Double totalElevationGain,
@@ -61,8 +61,8 @@ public record ActivityStatsResponse(
 
     @Schema(description = "일별 통계 값")
     public record DetailValue(
-            @Schema(description = "거리 (km)", example = "25.2")
-            Double distanceKm,
+            @Schema(description = "거리 (m)", example = "25200")
+            Double distanceM,
 
             @Schema(description = "상승 고도 (m)", example = "320")
             Double elevationGainM,

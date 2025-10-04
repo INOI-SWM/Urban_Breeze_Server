@@ -44,8 +44,8 @@ public record RecommendationDetailResponse(
     @Schema(description = "예상 소요시간(초)", example = "4260")
     Long durationSeconds,
 
-    @Schema(description = "이동 거리 (km)", example = "13.2")
-    Double distance,
+    @Schema(description = "이동 거리 (m)", example = "13200")
+    Double distanceM,
 
     @Schema(description = "총 상승 고도 (m)", example = "120.4")
     Double elevationGain,
@@ -95,7 +95,7 @@ public record RecommendationDetailResponse(
                 GeometryUtil.lineStringToPolyline(route.getRouteLine()),
                 route.getCreatedAt(),
                 route.getDuration().toSeconds(),
-                route.getDistance(),
+                route.getDistance() * 1000, // km를 m로 변환
                 route.getElevationGain(),
                 route.getUser().getUuid().toString(),
                 route.getUser().getNickname(),
