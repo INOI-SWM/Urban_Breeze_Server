@@ -18,6 +18,7 @@ public enum RouteSuccessCode implements SuccessCode {
     ROUTE_DELETED(HttpStatus.OK, "경로가 삭제되었습니다."),
     RECOMMENDED_ROUTE_COPIED(HttpStatus.CREATED, "추천 코스가 나의 경로에 저장되었습니다."),
     RECOMMENDED_ROUTES_FETCHED(HttpStatus.OK, "추천 경로 목록이 조회되었습니다."),
+    GPX_UPLOAD_SUCCESS(HttpStatus.CREATED, "GPX 파일로부터 추천코스가 성공적으로 생성되었습니다."),
     ;
     private final HttpStatus status;
     private final String message;

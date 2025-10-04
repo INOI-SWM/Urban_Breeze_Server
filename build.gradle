@@ -71,6 +71,9 @@ dependencies {
 
 	//algorithms
 	implementation 'com.github.ggalmazor:lttb_downsampling:1.1.0'
+	
+	// GPX 파싱
+	implementation 'io.jenetics:jpx:3.0.0'
 }
 
 bootJar {

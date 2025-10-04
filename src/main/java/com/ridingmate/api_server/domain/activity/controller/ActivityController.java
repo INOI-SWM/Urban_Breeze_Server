@@ -14,7 +14,6 @@ import com.ridingmate.api_server.domain.activity.dto.response.UploadActivityImag
 import com.ridingmate.api_server.domain.activity.exception.ActivitySuccessCode;
 import com.ridingmate.api_server.domain.activity.facade.ActivityFacade;
 import com.ridingmate.api_server.domain.auth.security.AuthUser;
-import com.ridingmate.api_server.global.annotation.FormDataRequestBody;
 import com.ridingmate.api_server.global.exception.CommonResponse;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;

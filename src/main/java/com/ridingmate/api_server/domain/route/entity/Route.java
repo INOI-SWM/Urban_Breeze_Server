@@ -101,7 +101,8 @@ public class Route extends BaseTimeEntity {
 
     @Builder
     private Route(User user, String title, String description, Double distance, Duration duration, Double elevationGain,
-                  LandscapeType landscapeType, String gpxFilePath, Double maxLat, Double maxLon,
+                  Region region, LandscapeType landscapeType, Difficulty difficulty,
+                  String gpxFilePath, Double maxLat, Double maxLon,
                   Double minLat, Double minLon, LineString routeLine) {
         this.user = user;
         this.title = title;
@@ -110,7 +111,9 @@ public class Route extends BaseTimeEntity {
         this.duration = duration;
         this.elevationGain = elevationGain;
         this.routeId = UUID.randomUUID();
+        this.region = region;
         this.landscapeType = landscapeType;
+        this.difficulty = difficulty;
         this.gpxFilePath = gpxFilePath;
         this.maxLat = maxLat;
         this.maxLon = maxLon;
