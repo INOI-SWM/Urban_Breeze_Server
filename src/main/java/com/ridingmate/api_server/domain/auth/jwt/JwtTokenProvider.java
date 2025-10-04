@@ -33,8 +33,11 @@ public class JwtTokenProvider {
         Date now = new Date();
         Date expireDate = new Date(now.getTime() + jwtProperties.getAccessTokenExpireTime());
 
+        // 사용자 식별자로 provider:socialId 형식 사용
+        String subject = authUserInfo.getProvider() + ":" + authUserInfo.getSocialId();
+
         return Jwts.builder()
-                .subject(authUserInfo.getEmail())           // 사용자 식별자로 이메일 사용
+                .subject(subject)                                        // 사용자 식별자로 provider:socialId 사용
                 .claim("type", "access")                                 // 토큰 타입
                 .issuer(jwtProperties.getIssuer())                       // 발급자
                 .issuedAt(now)                                           // 발급 시간
@@ -84,8 +87,8 @@ public class JwtTokenProvider {
      * @return Spring Security Authentication 객체
      */
     public Authentication getAuthentication(String token) {
-        String email = parseClaims(token).getSubject();
-        UserDetails userDetails = customUserDetailsService.loadUserByUsername(email);
+        String subject = parseClaims(token).getSubject();
+        UserDetails userDetails = customUserDetailsService.loadUserByUsername(subject);
         return new UsernamePasswordAuthenticationToken(userDetails, "", userDetails.getAuthorities());
     }
 
