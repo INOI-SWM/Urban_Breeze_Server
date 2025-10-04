@@ -18,7 +18,7 @@ public class OrsMapper {
                 feature.bbox(),
                 feature.geometry().coordinates(),
                 durationMinutes,
-                summary.distance(),
+                summary.distance(), // ORS API는 이미 미터 단위로 반환
                 props.ascent()
         );
     }

@@ -214,7 +214,7 @@ public class ActivityService {
 
         // 요약 정보 생성
         ActivityStatsResponse.SummaryInfo summaryInfo = new ActivityStatsResponse.SummaryInfo(
-                summaryStats.getTotalDistanceInKm(),
+                summaryStats.getTotalDistanceInKm() * 1000, // km를 m로 변환
                 summaryStats.totalElevation(),
                 summaryStats.getTotalDurationSeconds(),
                 summaryStats.count().intValue()
@@ -363,7 +363,7 @@ public class ActivityService {
             
             // 상세 값 생성
             ActivityStatsResponse.DetailValue value = new ActivityStatsResponse.DetailValue(
-                    dayStats.getTotalDistanceInKm(),
+                    dayStats.getTotalDistanceInKm() * 1000, // km를 m로 변환
                     dayStats.totalElevation(),
                     dayStats.getTotalDurationSeconds()
             );
@@ -406,7 +406,7 @@ public class ActivityService {
             
             // 상세 값 생성
             ActivityStatsResponse.DetailValue value = new ActivityStatsResponse.DetailValue(
-                    monthStats.getTotalDistanceInKm(),
+                    monthStats.getTotalDistanceInKm() * 1000, // km를 m로 변환
                     monthStats.totalElevation(),
                     monthStats.getTotalDurationSeconds()
             );
@@ -750,7 +750,7 @@ public class ActivityService {
                     
                     // 연도별 통계 값 생성
                     ActivityStatsResponse.DetailValue yearValue = new ActivityStatsResponse.DetailValue(
-                            yearlyProjection.getTotalDistance() / 1000.0, // 미터를 킬로미터로 변환
+                            yearlyProjection.getTotalDistance(), // 미터 단위 그대로 사용
                             yearlyProjection.getTotalElevation(),
                             yearlyProjection.getTotalDurationSeconds()
                     );

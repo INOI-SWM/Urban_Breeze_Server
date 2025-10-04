@@ -35,8 +35,8 @@ public record ActivityDetailResponse(
         @Schema(description = "전체 시간 (초)", example = "1200")
         Long totalDurationSeconds,
 
-        @Schema(description = "이동 거리 (km)", example = "3.14")
-        Double distance,
+        @Schema(description = "이동 거리 (m)", example = "3140")
+        Double distanceM,
 
         @Schema(description = "평균 속도 (km/h)", example = "18.16")
         Double averageSpeed,
@@ -188,7 +188,7 @@ public record ActivityDetailResponse(
                 activity.getEndedAt(),
                 activeDuration.toSeconds(),
                 totalDuration.toSeconds(),
-                activity.getDistance() / 1000.0, // 미터를 킬로미터로 변환
+                activity.getDistance(), // 미터 단위 그대로 사용
                 Math.round(averageSpeed * 100.0) / 100.0, // 소수점 2자리 반올림
                 activity.getElevationGain(),
                 activity.getElevationGain(), // TODO: 실제 하강 고도 필드 추가 시 변경

@@ -43,8 +43,8 @@ public record RecommendationListResponse(
         @Schema(description = "코스 설명", example = "한강을 따라가는 아름다운 라이딩 코스입니다.")
         String description,
         
-        @Schema(description = "총 거리 (km)", example = "13.2")
-        Double distanceKm,
+        @Schema(description = "총 거리 (m)", example = "13200")
+        Double distanceM,
         
         @Schema(description = "총 소요 시간 (초)", example = "3600")
         Long durationSeconds,
@@ -70,7 +70,7 @@ public record RecommendationListResponse(
                 route.getRouteId().toString(),
                 route.getTitle(),
                 route.getDescription(),
-                route.getDistanceInKm(),
+                route.getDistanceInKm() * 1000, // km를 m로 변환
                 route.getDuration().toSeconds(),
                 route.getRoundedElevationGain(),
                 route.getRegion().getDisplayName(),

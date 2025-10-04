@@ -6,7 +6,7 @@ public record RouteSegmentResponse(
         List<Double> bbox,
         List<List<Double>> geometry,
         int totalDurationSeconds,
-        double totalDistance,
+        double totalDistanceM,
         double averageGradient
 ) {
 }
