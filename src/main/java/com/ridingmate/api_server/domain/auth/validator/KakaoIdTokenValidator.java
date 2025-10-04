@@ -34,9 +34,21 @@ public class KakaoIdTokenValidator {
             
             // 사용자 정보 추출
             String userId = String.valueOf(userInfoResponse.id());
+            
+            // 카카오 계정 정보 로깅
+            log.debug("Kakao API 응답 - ID: {}, kakaoAccount: {}", userId, userInfoResponse.kakaoAccount());
+            
             String email = userInfoResponse.kakaoAccount() != null
                 ? userInfoResponse.kakaoAccount().email()
                 : null;
+            
+            log.debug("추출된 이메일: {}", email);
+            
+            // 이메일이 없는 경우 대체 이메일 생성 (카카오 비즈니스 인증 없이는 이메일을 받기 어려움)
+            if (email == null || email.isEmpty()) {
+                email = "kakao_" + userId + "@kakao.local";
+                log.warn("카카오 사용자 이메일 정보 없음 - 대체 이메일 생성: {}", email);
+            }
             
             String nickname = userInfoResponse.properties() != null
                 ? userInfoResponse.properties().nickname()
