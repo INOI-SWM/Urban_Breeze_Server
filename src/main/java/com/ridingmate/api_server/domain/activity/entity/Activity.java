@@ -1,5 +1,6 @@
 package com.ridingmate.api_server.domain.activity.entity;
 
+import com.ridingmate.api_server.domain.activity.enums.ActivityProvider;
 import com.ridingmate.api_server.domain.user.entity.User;
 import com.ridingmate.api_server.global.entity.BaseTimeEntity;
 import jakarta.persistence.*;
@@ -99,6 +100,13 @@ public class Activity extends BaseTimeEntity {
     private Double calories;
 
     /**
+     * 운동 기록 제공자
+     */
+    @Enumerated(EnumType.STRING)
+    @Column(name = "provider")
+    private ActivityProvider provider;
+
+    /**
      * 삭제 여부 (소프트 삭제)
      */
     @Column(name = "is_delete", nullable = false)
@@ -110,7 +118,8 @@ public class Activity extends BaseTimeEntity {
                      LocalDateTime startedAt, LocalDateTime endedAt,
                      String thumbnailImagePath, Integer cadence,
                      Integer averageHeartRate, Integer maxHeartRate,
-                     Integer averagePower, Integer maxPower, Double calories
+                     Integer averagePower, Integer maxPower, Double calories,
+                     ActivityProvider provider
     ){
         this.user = user;
         this.title = title;
@@ -126,6 +135,7 @@ public class Activity extends BaseTimeEntity {
         this.averagePower = averagePower;
         this.maxPower = maxPower;
         this.calories = calories;
+        this.provider = provider;
         this.activityId = UUID.randomUUID();
     }
 

@@ -14,6 +14,7 @@ import com.ridingmate.api_server.domain.activity.dto.response.DeleteActivityImag
 import com.ridingmate.api_server.domain.activity.entity.Activity;
 import com.ridingmate.api_server.domain.activity.entity.ActivityGpsLog;
 import com.ridingmate.api_server.domain.activity.entity.ActivityImage;
+import com.ridingmate.api_server.domain.activity.enums.ActivityProvider;
 import com.ridingmate.api_server.domain.activity.enums.ActivityStatsPeriod;
 import com.ridingmate.api_server.domain.activity.exception.ActivityException;
 import com.ridingmate.api_server.domain.activity.exception.code.ActivityCommonErrorCode;
@@ -60,10 +61,11 @@ public class ActivityService {
      * Terra 웹훅 데이터로부터 Activity 생성 (순수 도메인 로직)
      * @param user 사용자
      * @param activityData Terra 활동 데이터
+     * @param terraUser Terra 사용자 정보 (provider 정보 포함)
      * @return 생성된 Activity
      */
     @Transactional
-    public Activity createActivityFromTerraData(User user, TerraPayload.Data activityData) {
+    public Activity createActivityFromTerraData(User user, TerraPayload.Data activityData, TerraPayload.User terraUser) {
         TerraPayload.Metadata metadata = activityData.metadata();
         TerraPayload.DistanceData.Summary distanceSummary = activityData.distanceData().summary();
 
@@ -87,6 +89,9 @@ public class ActivityService {
         Double calories = activityData.caloriesData() != null && activityData.caloriesData().totalBurnedCalories() != null 
                 ? activityData.caloriesData().totalBurnedCalories() : null;
 
+        // Terra 사용자 정보에서 provider 추출
+        ActivityProvider provider = ActivityProvider.fromCode(terraUser != null ? terraUser.provider() : null);
+
         Activity activity = Activity.builder()
                 .user(user)
                 .title(metadata.name() != null ? metadata.name() : "Terra 연동 활동")
@@ -101,6 +106,7 @@ public class ActivityService {
                 .averagePower(avgPower)
                 .maxPower(maxPower)
                 .calories(calories)
+                .provider(provider) // Terra에서 제공하는 provider 정보
                 .build();
 
         // Activity 저장
@@ -857,6 +863,7 @@ public class ActivityService {
                 .averagePower(null) // Apple HealthKit에서는 파워를 별도로 제공하지 않음
                 .maxPower(null) // Apple HealthKit에서는 파워를 별도로 제공하지 않음
                 .calories(request.calories()) // Apple HealthKit에서 제공하는 칼로리 정보
+                .provider(ActivityProvider.APPLE_HEALTH_KIT) // Apple HealthKit에서 가져온 데이터
                 .build();
     }
 

@@ -65,6 +65,9 @@ public record ActivityDetailResponse(
         @Schema(description = "소모 칼로리 (kcal)", example = "450.0")
         Double calories,
 
+        @Schema(description = "운동 기록 제공자", example = "Apple HealthKit")
+        String provider,
+
         @Schema(description = "사용자 정보")
         UserInfo user,
 
@@ -198,6 +201,7 @@ public record ActivityDetailResponse(
                 activity.getAveragePower(),
                 activity.getMaxPower(),
                 activity.getCalories(),
+                activity.getProvider() != null ? activity.getProvider().getDisplayName() : "Unknown", // 운동 기록 제공자
                 userInfo,
                 thumbnailImageUrl,
                 activityImages,
