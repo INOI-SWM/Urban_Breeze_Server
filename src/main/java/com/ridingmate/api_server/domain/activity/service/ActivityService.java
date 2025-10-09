@@ -14,6 +14,7 @@ import com.ridingmate.api_server.domain.activity.dto.response.DeleteActivityImag
 import com.ridingmate.api_server.domain.activity.entity.Activity;
 import com.ridingmate.api_server.domain.activity.entity.ActivityGpsLog;
 import com.ridingmate.api_server.domain.activity.entity.ActivityImage;
+import com.ridingmate.api_server.domain.activity.enums.ActivityProvider;
 import com.ridingmate.api_server.domain.activity.enums.ActivityStatsPeriod;
 import com.ridingmate.api_server.domain.activity.exception.ActivityException;
 import com.ridingmate.api_server.domain.activity.exception.code.ActivityCommonErrorCode;
@@ -857,6 +858,7 @@ public class ActivityService {
                 .averagePower(null) // Apple HealthKit에서는 파워를 별도로 제공하지 않음
                 .maxPower(null) // Apple HealthKit에서는 파워를 별도로 제공하지 않음
                 .calories(request.calories()) // Apple HealthKit에서 제공하는 칼로리 정보
+                .provider(ActivityProvider.APPLE_HEALTH_KIT) // Apple HealthKit에서 가져온 데이터
                 .build();
     }
 
