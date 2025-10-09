@@ -80,7 +80,7 @@ public class TerraWebhookProcessingService {
 
         for (TerraPayload.Data activityData : cyclingActivities) {
             // ActivityFacade를 통해 Activity 생성 (썸네일 포함)
-            Activity newActivity = activityFacade.createActivityFromTerraData(user, activityData, activityData);
+            Activity newActivity = activityFacade.createActivityFromTerraData(user, activityData, activityData, terraPayload.user());
             
             // GPS 로그 생성 및 저장
             List<ActivityGpsLog> gpsLogs = createActivityGpsLogEntities(newActivity, activityData);

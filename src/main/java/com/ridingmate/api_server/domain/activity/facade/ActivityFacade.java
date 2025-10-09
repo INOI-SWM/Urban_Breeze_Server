@@ -51,11 +51,12 @@ public class ActivityFacade {
      * @param user 사용자
      * @param activityData Terra 활동 데이터
      * @param terraData Terra 원본 데이터 (GPS 좌표 추출용)
+     * @param terraUser Terra 사용자 정보 (provider 정보 포함)
      * @return 생성된 Activity (썸네일 경로 포함)
      */
-    public Activity createActivityFromTerraData(User user, TerraPayload.Data activityData, TerraPayload.Data terraData) {
+    public Activity createActivityFromTerraData(User user, TerraPayload.Data activityData, TerraPayload.Data terraData, TerraPayload.User terraUser) {
         // 1. ActivityService를 통해 순수 도메인 로직으로 Activity 생성
-        Activity activity = activityService.createActivityFromTerraData(user, activityData);
+        Activity activity = activityService.createActivityFromTerraData(user, activityData, terraUser);
         
         // 2. 썸네일 생성 시도 (실패해도 Activity 생성은 계속)
         try {
