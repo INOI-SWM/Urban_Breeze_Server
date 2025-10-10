@@ -18,4 +18,6 @@ public interface TerraUserRepository extends JpaRepository<TerraUser, Long> {
     Optional<TerraUser> findByUserAndProviderAndIsActiveTrueAndDeletedAtIsNull(User user, TerraProvider provider);
 
     Optional<TerraUser> findByTerraUserIdAndIsActiveTrueAndDeletedAtIsNull(UUID terraUserId);
+
+    Optional<TerraUser> findByTerraUserIdAndDeletedAtIsNull(UUID terraUserId);
 }

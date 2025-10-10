@@ -18,8 +18,8 @@ public record TerraGenerateAuthLinkRequest(
             providers,
             "en",
             uuid.toString(),
-            "https://test",
-            "https://test"
+            null, // AuthSuccessRedirectUrl을 null로 설정
+            null  // AuthFailureRedirectUrl을 null로 설정
         );
     }
 }

@@ -48,7 +48,7 @@ public class TerraWebhookProcessingService {
             return;
         }
 
-        TerraUser terraUser = terraUserRepository.findByTerraUserIdAndIsActiveTrueAndDeletedAtIsNull(UUID.fromString(user.userId()))
+        TerraUser terraUser = terraUserRepository.findByTerraUserIdAndDeletedAtIsNull(UUID.fromString(user.userId()))
                 .orElseThrow(() -> new TerraUserException(TerraUserErrorCode.TERRA_USER_NOT_FOUND));
 
         terraUser.setActive();

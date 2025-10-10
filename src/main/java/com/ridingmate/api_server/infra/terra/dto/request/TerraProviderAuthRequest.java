@@ -21,16 +21,12 @@ public record TerraProviderAuthRequest(
      * @return TerraProviderAuthRequest
      */
     public static TerraProviderAuthRequest of(String provider, UUID referenceId, String appScheme) {
-        // 설정 파일의 스킴을 기반으로 성공/실패 URL을 동적으로 생성
-        String successUrl = appScheme + "://auth/success?provider=" + provider.toLowerCase();
-        String failureUrl = appScheme + "://auth/failure";
-
         return new TerraProviderAuthRequest(
                 provider,
                 "en",
                 referenceId.toString(),
-                successUrl,
-                failureUrl
+                null, // auth_success_redirect_url을 null로 설정
+                null  // auth_failure_redirect_url을 null로 설정
         );
     }
 }
