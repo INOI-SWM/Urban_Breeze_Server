@@ -42,10 +42,11 @@ public class TerraUser extends BaseTimeEntity {
     private LocalDateTime deletedAt;  // ← 연동 해제 시간
 
     @Builder
-    public TerraUser(UUID terraUserId, TerraProvider provider, User user) {
+    public TerraUser(UUID terraUserId, TerraProvider provider, User user, boolean isActive) {
         this.terraUserId = terraUserId;
         this.provider = provider;
         this.user = user;
+        this.isActive = isActive;
     }
 
     public void updateLastSyncDates(){
