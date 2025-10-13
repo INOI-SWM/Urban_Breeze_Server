@@ -11,6 +11,7 @@ import com.ridingmate.api_server.domain.user.entity.TerraUser;
 import com.ridingmate.api_server.domain.user.exception.TerraUserErrorCode;
 import com.ridingmate.api_server.domain.user.exception.TerraUserException;
 import com.ridingmate.api_server.domain.user.repository.TerraUserRepository;
+import com.ridingmate.api_server.infra.terra.TerraProvider;
 import com.ridingmate.api_server.infra.terra.dto.response.TerraPayload;
 import com.ridingmate.api_server.infra.terra.TerraActivityType;
 import com.ridingmate.api_server.domain.user.entity.User;
@@ -48,10 +49,43 @@ public class TerraWebhookProcessingService {
             return;
         }
 
-        TerraUser terraUser = terraUserRepository.findByTerraUserIdAndDeletedAtIsNull(UUID.fromString(user.userId()))
-                .orElseThrow(() -> new TerraUserException(TerraUserErrorCode.TERRA_USER_NOT_FOUND));
+        // 1. reference_id로 User 조회
+        User ourUser = userRepository.findByUuid(UUID.fromString(user.referenceId()))
+                .orElseThrow(() -> {
+                    log.error("Auth 이벤트의 reference_id에 해당하는 유저를 찾을 수 없습니다: {}", user.referenceId());
+                    return new RuntimeException("User not found");
+                });
 
-        terraUser.setActive();
+        // 2. terra_user_id로 TerraUser 조회
+        Optional<TerraUser> existingTerraUser = terraUserRepository.findByTerraUserIdAndDeletedAtIsNull(
+                UUID.fromString(user.userId()));
+
+        if (existingTerraUser.isPresent()) {
+            TerraUser terraUser = existingTerraUser.get();
+            
+            if (terraUser.isActive()) {
+                // 이미 활성화된 사용자 - 중복 처리
+                log.info("TerraUser already active: userId={}, terraUserId={}", 
+                        user.referenceId(), user.userId());
+            } else {
+                // 비활성화된 사용자 - 활성화
+                terraUser.setActive();
+                log.info("TerraUser activated: userId={}, terraUserId={}, provider={}", 
+                        user.referenceId(), user.userId(), user.provider());
+            }
+        } else {
+            // TerraUser가 존재하지 않음 - 새로 생성 (SDK 기반으로 추정)
+            TerraUser newTerraUser = TerraUser.builder()
+                    .user(ourUser)
+                    .terraUserId(UUID.fromString(user.userId()))
+                    .provider(TerraProvider.fromProviderName(user.provider()))
+                    .isActive(true) // SDK 기반은 바로 활성화
+                    .build();
+            
+            terraUserRepository.save(newTerraUser);
+            log.info("New TerraUser created (SDK): userId={}, terraUserId={}, provider={}", 
+                    user.referenceId(), user.userId(), user.provider());
+        }
     }
 
     @Transactional
