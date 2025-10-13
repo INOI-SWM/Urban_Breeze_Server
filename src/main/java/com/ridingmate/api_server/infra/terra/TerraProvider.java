@@ -11,6 +11,9 @@ public enum TerraProvider {
     STRAVA("STRAVA", "Strava"),
     GARMIN("GARMIN", "Garmin"),
     SUUNTO("SUUNTO", "Suunto"),
+    SAMSUNG("SAMSUNG", "Samsung"),
+    HEALTH_CONNECT("HEALTH_CONNECT", "Google Fit(Health Connect)"),
+    APPLE("APPLE", "Apple Health"),
     ;
 
     private final String providerName;
