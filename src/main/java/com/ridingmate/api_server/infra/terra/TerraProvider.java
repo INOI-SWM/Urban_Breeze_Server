@@ -11,9 +11,9 @@ public enum TerraProvider {
     STRAVA("STRAVA", "Strava"),
     GARMIN("GARMIN", "Garmin"),
     SUUNTO("SUUNTO", "Suunto"),
-    SAMSUNG("SAMSUNG", "Samsung"),
-    HEALTH_CONNECT("HEALTH_CONNECT", "Google Fit(Health Connect)"),
-    APPLE("APPLE", "Apple Health"),
+    SAMSUNG_HEALTH("SAMSUNG-HEALTH", "Samsung"),
+    HEALTH_CONNECT("HEALTH-CONNECT", "Google Fit(Health Connect)"),
+    APPLE_HEALTH_KIT("APPLE-HEALTH-KIT", "Apple Health"),
     ;
 
     private final String providerName;
@@ -33,5 +33,29 @@ public enum TerraProvider {
             }
         }
         throw new IllegalArgumentException("지원하지 않는 제공자입니다: " + providerName);
+    }
+
+    /**
+     * Terra에서 오는 provider 이름을 우리 시스템의 providerName으로 매핑
+     * @param terraProviderName Terra에서 오는 provider 이름
+     * @return TerraProvider
+     */
+    public static TerraProvider fromTerraProviderName(String terraProviderName) {
+        switch (terraProviderName.toUpperCase()) {
+            case "SAMSUNG":
+                return SAMSUNG_HEALTH;
+            case "APPLE":
+                return APPLE_HEALTH_KIT;
+            case "HEALTH_CONNECT":
+                return HEALTH_CONNECT;
+            case "STRAVA":
+                return STRAVA;
+            case "GARMIN":
+                return GARMIN;
+            case "SUUNTO":
+                return SUUNTO;
+            default:
+                throw new IllegalArgumentException("지원하지 않는 Terra 제공자입니다: " + terraProviderName);
+        }
     }
 }
