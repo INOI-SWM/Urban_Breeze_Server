@@ -18,7 +18,7 @@ public record ProviderSyncInfo(
 ) {
     public static ProviderSyncInfo from(TerraUser terraUser){
         return new ProviderSyncInfo(
-                terraUser.getProvider().toString(),
+                terraUser.getProvider().getProviderName(),
                 terraUser.getLastSyncDate(),
                 terraUser.isActive()
         );
@@ -26,7 +26,7 @@ public record ProviderSyncInfo(
 
     public static ProviderSyncInfo fromAppleUser(AppleUser appleUser){
         return new ProviderSyncInfo(
-                "Apple HealthKit",
+                "APPLE-HEALTH-KIT",
                 appleUser.getLastSyncDate(),
                 appleUser.isActive()
         );

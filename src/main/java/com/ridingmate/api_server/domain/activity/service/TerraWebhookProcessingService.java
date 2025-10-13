@@ -78,7 +78,7 @@ public class TerraWebhookProcessingService {
             TerraUser newTerraUser = TerraUser.builder()
                     .user(ourUser)
                     .terraUserId(UUID.fromString(user.userId()))
-                    .provider(TerraProvider.fromProviderName(user.provider()))
+                    .provider(TerraProvider.fromTerraProviderName(user.provider()))
                     .isActive(true) // SDK 기반은 바로 활성화
                     .build();
             
