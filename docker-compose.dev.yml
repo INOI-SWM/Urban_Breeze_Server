@@ -23,7 +23,7 @@ services:
 
   app:
     image: ${DOCKER_USERNAME}/${DOCKER_REPO}:dev-${DOCKER_IMAGE_VERSION}
-    container_name: riding-mate-dev
+    container_name: urban-breeze-dev
     ports:
       - "8080:8080"
     env_file:

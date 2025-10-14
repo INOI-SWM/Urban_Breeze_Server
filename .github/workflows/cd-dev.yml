@@ -96,9 +96,9 @@ jobs:
 
       - name: Stop app container only
         run: |
-          if docker ps -a --format '{{.Names}}' | grep -q '^riding-mate-dev$'; then
-            sudo docker stop riding-mate-dev
-            sudo docker rm riding-mate-dev
+          if docker ps -a --format '{{.Names}}' | grep -q '^urban-breeze-dev$'; then
+            sudo docker stop urban-breeze-dev
+            sudo docker rm urban-breeze-dev
           fi
 
       - name: Prune Docker Images
