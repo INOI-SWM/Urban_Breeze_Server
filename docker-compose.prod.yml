@@ -21,4 +21,4 @@ volumes:
   postgres-data:
 
 networks:
-  dev-network:
+  prod-network:
