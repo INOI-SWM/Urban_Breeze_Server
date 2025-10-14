@@ -55,7 +55,7 @@ jobs:
         uses: docker/build-push-action@v5
         with:
           context: .
-          file: ./Dockerfile            # ← prod용 Dockerfile (dev면 Dockerfile.dev)
+          file: ./Dockerfile.dev            # ← prod용 Dockerfile (dev면 Dockerfile.dev)
           push: true
           tags: |
             ${{ secrets.DOCKER_USERNAME }}/${{ secrets.DOCKER_REPO }}:prod-${{ steps.datetime.outputs.datetime }}
@@ -74,8 +74,6 @@ jobs:
   deploy:
     runs-on: [self-hosted, app-prod]      # ← prod 전용 러너 라벨
     needs: build
-    environment:
-      name: production                     # ← GitHub Environments 사용 시 승인/비밀변수 분리 가능
 
     steps:
       - name: Download docker-compose.prod.yml
