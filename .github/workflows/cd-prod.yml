@@ -55,11 +55,9 @@ jobs:
         uses: docker/build-push-action@v5
         with:
           context: .
-          file: ./Dockerfile.dev            # ← prod용 Dockerfile (dev면 Dockerfile.dev)
+          file: ./Dockerfile.prod
           push: true
-          tags: |
-            ${{ secrets.DOCKER_USERNAME }}/${{ secrets.DOCKER_REPO }}:prod-${{ steps.datetime.outputs.datetime }}
-            ${{ secrets.DOCKER_USERNAME }}/${{ secrets.DOCKER_REPO }}:prod-latest
+          tags: ${{ secrets.DOCKER_USERNAME }}/${{ secrets.DOCKER_REPO }}:prod-${{ steps.datetime.outputs.datetime }}
           build-args: JAR_FILE=build/libs/app.jar
 
       - name: Upload docker-compose.prod.yml
