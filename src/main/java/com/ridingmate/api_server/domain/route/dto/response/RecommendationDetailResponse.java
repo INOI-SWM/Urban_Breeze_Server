@@ -1,0 +1,108 @@
+package com.ridingmate.api_server.domain.route.dto.response;
+
+import com.fasterxml.jackson.annotation.JsonFormat;
+import com.ggalmazor.ltdownsampling.Point;
+import com.ridingmate.api_server.domain.route.entity.Recommendation;
+import com.ridingmate.api_server.domain.route.entity.Route;
+import com.ridingmate.api_server.domain.route.enums.LandscapeType;
+import com.ridingmate.api_server.domain.route.enums.RecommendationType;
+import com.ridingmate.api_server.domain.route.enums.Region;
+import com.ridingmate.api_server.global.util.GeometryUtil;
+import io.swagger.v3.oas.annotations.media.Schema;
+
+import java.time.LocalDateTime;
+import java.util.List;
+import java.util.stream.Collectors;
+import java.util.stream.IntStream;
+
+public record RecommendationDetailResponse(
+    @Schema(description = "경로 ID", example = "550e8400-e29b-41d4-a716-446655440000")
+    String routeId,
+
+    @Schema(description = "경로 제목", example = "한강 라이딩 경로")
+    String title,
+
+    @Schema(description = "경로 설명", example = "한강을 따라가는 아름다운 라이딩 코스입니다.")
+    String description,
+
+    @Schema(description = "추천 타입", example = "FAMOUS")
+    String recommendationType,
+
+    @Schema(description = "자연 경관 타입", example = "RIVERSIDE")
+    String landscapeType,
+
+    @Schema(description = "지역", example = "SEOUL")
+    String region,
+
+    @Schema(description = "경로 Polyline", example = "o{~vFf`miWvCkGbAaJjGgQxBwF")
+    String polyline,
+
+    @Schema(description = "경로 생성일", example = "2024-01-15T10:30:00")
+    @JsonFormat(pattern = "yyyy-MM-dd'T'HH:mm:ss")
+    LocalDateTime createdAt,
+
+    @Schema(description = "예상 소요시간(초)", example = "4260")
+    Long durationSeconds,
+
+    @Schema(description = "이동 거리 (m)", example = "13200")
+    Double distanceM,
+
+    @Schema(description = "총 상승 고도 (m)", example = "120.4")
+    Double elevationGain,
+
+    @Schema(description = "사용자 ID", example = "550e8400-e29b-41d4-a716-446655440000")
+    String userId,
+
+    @Schema(description = "사용자 닉네임", example = "라이더123")
+    String nickname,
+
+    @Schema(description = "프로필 이미지 URL", example = "https://s3.amazonaws.com/bucket/profile-1.jpg")
+    String profileImageUrl,
+
+    @Schema(description = "샘플링된 경로 좌표 갯수", example = "100")
+    Integer trackPointsCount,
+
+    @Schema(description = "샘플링된 경로의 고도 데이터 목록")
+    List<ElevationPoint> trackPoints,
+
+    @Schema(
+            description = "경로 Bounding Box 좌표 [minLon, minLat, maxLon, maxLat]",
+            example = "[127.01, 37.50, 127.05, 37.55]"
+    )
+    List<Double> bbox
+) {
+
+    @Schema(description = "경로 고도 데이터")
+    public record ElevationPoint(
+            @Schema(description = "데이터 포인트의 인덱스", example = "0")
+            long index,
+            @Schema(description = "해당 지점의 고도 (m)", example = "81.2")
+            double elevation
+    ) {}
+
+    public static RecommendationDetailResponse from(Route route, List<Point> routeGpsPoints, String profileImageUrl) {
+        List<ElevationPoint> elevationPoints = IntStream.range(0, routeGpsPoints.size())
+                .mapToObj(i -> new ElevationPoint(i, routeGpsPoints.get(i).getY()))
+                .collect(Collectors.toList());
+
+        return new RecommendationDetailResponse(
+                route.getRouteId().toString(),
+                route.getTitle(),
+                route.getDescription(),
+                route.getRecommendation().getRecommendationType().getDisplayName(),
+                route.getLandscapeType().getDisplayName(),
+                route.getRegion().getDisplayName(),
+                GeometryUtil.lineStringToPolyline(route.getRouteLine()),
+                route.getCreatedAt(),
+                route.getDuration().toSeconds(),
+                route.getDistance(), // km를 m로 변환
+                route.getElevationGain(),
+                route.getUser().getUuid().toString(),
+                route.getUser().getNickname(),
+                profileImageUrl,
+                elevationPoints.size(),
+                elevationPoints,
+                List.of(route.getMinLon(), route.getMinLat(), route.getMaxLon(), route.getMaxLat())
+        );
+    }
+}

@@ -1,0 +1,25 @@
+package com.ridingmate.api_server.domain.user.exception;
+
+import com.ridingmate.api_server.global.exception.BaseCode;
+import com.ridingmate.api_server.global.exception.SuccessCode;
+import lombok.Getter;
+import lombok.RequiredArgsConstructor;
+import org.springframework.http.HttpStatus;
+
+@Getter
+@RequiredArgsConstructor
+public enum UserSuccessCode implements SuccessCode {
+
+    GET_MY_INFO_SUCCESS(HttpStatus.OK, "내 정보 조회 성공"),
+    UPDATE_NICKNAME_SUCCESS(HttpStatus.OK,  "닉네임 변경 성공"),
+    UPDATE_INTRODUCE_SUCCESS(HttpStatus.OK, "한 줄 소개 변경 성공"),
+    UPDATE_GENDER_SUCCESS(HttpStatus.OK, "성별 변경 성공"),
+    UPDATE_BIRTH_YEAR_SUCCESS(HttpStatus.OK, "출생년도 변경 성공"),
+    UPDATE_PROFILE_IMAGE_SUCCESS(HttpStatus.OK, "프로필 이미지 변경 성공"),
+    DELETE_PROFILE_IMAGE_SUCCESS(HttpStatus.OK, "프로필 이미지 삭제 성공"),
+    UPDATE_AGREEMENTS_SUCCESS(HttpStatus.OK, "동의항목 업데이트 성공"),
+    DELETE_USER_SUCCESS(HttpStatus.OK, "회원 탈퇴 성공");
+
+    private final HttpStatus status;
+    private final String message;
+}

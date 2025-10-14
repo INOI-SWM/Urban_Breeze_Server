@@ -1,0 +1,12 @@
+package com.ridingmate.api_server.domain.route.dto.response;
+
+import java.util.List;
+
+public record RouteSegmentResponse(
+        List<Double> bbox,
+        List<List<Double>> geometry,
+        int totalDurationSeconds,
+        double totalDistanceM,
+        double averageGradient
+) {
+}

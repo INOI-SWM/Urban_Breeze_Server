@@ -1,0 +1,11 @@
+commit-msg:
+  parallel: true
+  commands:
+    validate-commit-msg:
+      run: .lefthook/validate-commit-msg.sh {1}
+
+pre-push:
+  parallel: true
+  commands:
+    validate-branch-name:
+      run: .lefthook/validate-branch-name.sh
