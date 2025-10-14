@@ -1,5 +1,3 @@
-version: '3.8'
-
 services:
   app:
     image: ${DOCKER_USERNAME}/${DOCKER_REPO}:dev-${DOCKER_IMAGE_VERSION}
@@ -12,13 +10,8 @@ services:
       TZ: Asia/Seoul
     networks:
       - prod-network
-    depends_on:
-      db:
-        condition: service_healthy
     restart: unless-stopped
-
-volumes:
-  postgres-data:
 
 networks:
   prod-network:
+    driver: bridge
