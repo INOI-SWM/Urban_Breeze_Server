@@ -74,6 +74,12 @@ dependencies {
 	
 	// GPX 파싱
 	implementation 'io.jenetics:jpx:3.0.0'
+	
+	// 로깅 - Slack Appender
+	implementation 'com.github.maricn:logback-slack-appender:1.4.0'
+	
+	// JVM 모니터링 - Micrometer
+	implementation 'io.micrometer:micrometer-registry-prometheus'
 }
 
 bootJar {
