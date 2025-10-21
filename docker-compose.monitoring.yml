@@ -6,7 +6,7 @@ services:
     image: prom/prometheus:latest
     container_name: prometheus
     ports:
-      - "9090:9090"
+      - "127.0.0.1:9090:9090"
     volumes:
       - ./monitoring/prometheus.yml:/etc/prometheus/prometheus.yml
       - prometheus_data:/prometheus
@@ -26,10 +26,10 @@ services:
     image: grafana/grafana:latest
     container_name: grafana
     ports:
-      - "3000:3000"
+      - "127.0.0.1:3000:3000"
     volumes:
       - grafana_data:/var/lib/grafana
-      - ./monitoring/grafana/provisioning:/etc/grafana/provisioning
+      - ./monitoring/grafana/provisioning/datasources:/etc/grafana/provisioning/datasources
     environment:
       - GF_SECURITY_ADMIN_PASSWORD=admin123
       - GF_USERS_ALLOW_SIGN_UP=false
@@ -43,8 +43,7 @@ services:
   node-exporter:
     image: prom/node-exporter:latest
     container_name: node-exporter
-    ports:
-      - "9100:9100"
+    # 내부 네트워크에서만 사용하므로 외부 포트 노출 제거
     volumes:
       - /proc:/host/proc:ro
       - /sys:/host/sys:ro
@@ -62,8 +61,7 @@ services:
   cloudwatch-exporter:
     image: prom/cloudwatch-exporter:latest
     container_name: cloudwatch-exporter
-    ports:
-      - "9106:9106"
+    # 내부 네트워크에서만 사용하므로 외부 포트 노출 제거
     volumes:
       - ./monitoring/cloudwatch-exporter.yml:/config/config.yml
     environment:
