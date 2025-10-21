@@ -27,7 +27,7 @@ services:
     ports:
       - "8080:8080"
     env_file:
-      - .env
+      - src/main/resources/.env
     environment:
       TZ: Asia/Seoul
     networks:
