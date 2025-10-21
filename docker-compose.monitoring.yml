@@ -1,5 +1,3 @@
-version: '3.8'
-
 services:
   # Prometheus - 메트릭 수집
   prometheus:
