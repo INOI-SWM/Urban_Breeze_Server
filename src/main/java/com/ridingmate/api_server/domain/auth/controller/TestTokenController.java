@@ -3,6 +3,7 @@ package com.ridingmate.api_server.domain.auth.controller;
 import com.ridingmate.api_server.domain.auth.dto.TokenInfo;
 import com.ridingmate.api_server.domain.auth.exception.AuthSuccessCode;
 import com.ridingmate.api_server.domain.auth.service.TokenService;
+import com.ridingmate.api_server.domain.privacy.service.LocationDataAccessLogService;
 import com.ridingmate.api_server.domain.route.dto.response.GpxUploadResponse;
 import com.ridingmate.api_server.domain.route.exception.RouteSuccessCode;
 import com.ridingmate.api_server.domain.route.service.GpxRecommendationService;
@@ -22,6 +23,8 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
+import java.util.Map;
+
 /**
  * 임시 토큰 생성 컨트롤러
  * 개발 초기 단계에서 사용
@@ -37,6 +40,7 @@ public class TestTokenController {
     private final UserRepository userRepository;
     private final GpxRecommendationService gpxRecommendationService;
     private final GpsDataEncryptionService gpsDataEncryptionService;
+    private final LocationDataAccessLogService locationDataAccessLogService;
 
     @Operation(
             summary = "ID 1번 사용자 토큰 생성",
@@ -215,6 +219,24 @@ public class TestTokenController {
         long maxSize = 10 * 1024 * 1024; // 10MB
         if (gpxFile.getSize() > maxSize) {
             throw new IllegalArgumentException("파일 크기는 10MB를 초과할 수 없습니다.");
+        }
+    }
+
+    /**
+     * 기존 Route/Activity에 대한 위치정보 수집 로그 소급 생성
+     * (테스트/마이그레이션용)
+     */
+    @PostMapping("/test/backfill-location-logs")
+    public ResponseEntity<Map<String, Object>> backfillLocationAccessLogs() {
+        try {
+            Map<String, Object> result = locationDataAccessLogService.backfillCollectionLogs();
+            return ResponseEntity.ok(result);
+        } catch (Exception e) {
+            log.error("위치정보 수집 로그 소급 생성 실패", e);
+            return ResponseEntity.status(500).body(Map.of(
+                    "error", e.getMessage(),
+                    "message", "위치정보 수집 로그 소급 생성 실패"
+            ));
         }
     }
 
