@@ -15,6 +15,7 @@ import com.ridingmate.api_server.domain.activity.exception.code.ActivityCommonEr
 import com.ridingmate.api_server.domain.activity.service.ActivityService;
 import com.ridingmate.api_server.domain.auth.security.AuthUser;
 import com.ridingmate.api_server.domain.user.entity.AppleUser;
+import com.ridingmate.api_server.domain.privacy.service.LocationDataAccessLogService;
 import com.ridingmate.api_server.domain.user.entity.User;
 import com.ridingmate.api_server.domain.user.service.AppleUserService;
 import com.ridingmate.api_server.domain.user.service.UserService;
@@ -45,6 +46,7 @@ public class ActivityFacade {
     private final TerraMapper terraMapper;
     private final AppleUserService appleUserService;
     private final UserService userService;
+    private final LocationDataAccessLogService locationDataAccessLogService;
 
     /**
      * Terra 웹훅 데이터로부터 Activity 생성 (썸네일 포함)
@@ -58,7 +60,15 @@ public class ActivityFacade {
         // 1. ActivityService를 통해 순수 도메인 로직으로 Activity 생성
         Activity activity = activityService.createActivityFromTerraData(user, activityData, terraUser);
         
-        // 2. 썸네일 생성 시도 (실패해도 Activity 생성은 계속)
+        // 2. 위치정보 수집 기록 생성
+        locationDataAccessLogService.logLocationCollection(
+                user, 
+                "ACTIVITY_GPS", 
+                activity.getActivityId().toString(), 
+                "TERRA_WEBHOOK"
+        );
+        
+        // 3. 썸네일 생성 시도 (실패해도 Activity 생성은 계속)
         try {
             Coordinate[] coordinates = terraMapper.toCoordinates(terraData);
 
@@ -107,6 +117,8 @@ public class ActivityFacade {
      * @return 활동 목록 응답
      */
     public ActivityListResponse getActivityList(AuthUser authUser, ActivityListRequest request) {
+        log.info("[ActivityFacade] 주행 기록 목록 조회 시작: userId={}, page={}, size={}", 
+                authUser.id(), request.page(), request.size());
         Page<Activity> activityPage = activityService.getActivitiesByUser(authUser.id(), request);
 
         List<ActivityListItemResponse> activityItems = activityPage.getContent().stream()
@@ -127,6 +139,8 @@ public class ActivityFacade {
                 })
                 .toList();
 
+        log.info("[ActivityFacade] 주행 기록 목록 조회 완료: userId={}, totalElements={}", 
+                authUser.id(), activityPage.getTotalElements());
         return ActivityListResponse.of(activityItems, activityPage);
     }
 
@@ -136,7 +150,19 @@ public class ActivityFacade {
      * @return 활동 상세 응답
      */
     public ActivityDetailResponse getActivityDetail(String activityId) {
+        log.info("[ActivityFacade] 주행 기록 상세 조회 시작: activityId={}", activityId);
         Activity activity = activityService.getActivityWithUserByActivityId(activityId);
+
+        // 위치정보 조회 기록 생성
+        User dataOwner = activity.getUser();
+        User accessor = dataOwner;  // 현재는 본인만 조회 가능, 추후 어드민 기능 추가 시 수정 필요
+        locationDataAccessLogService.logActivityGpsAccess(
+                dataOwner, 
+                accessor,
+                activityId, 
+                null,  // IP는 Controller에서 가져올 수 없으므로 null
+                null   // User-Agent도 Controller에서 가져올 수 없으므로 null
+        );
 
         List<GpsLogProjection> gpsLogProjections = activityService.getActivityGpsLogProjections(activity);
 
@@ -167,6 +193,9 @@ public class ActivityFacade {
         // Bounding Box 계산
         List<Double> bbox = GeometryUtil.calculateBoundingBoxList(coordinates);
 
+        log.info("[ActivityFacade] 주행 기록 상세 조회 완료: activityId={}, coordCount={}, imageCount={}", 
+                activityId, coordinates.length, imageResponses.size());
+        
         return ActivityDetailResponse.from(
                 activity,
                 elevationPoints,
@@ -186,7 +215,12 @@ public class ActivityFacade {
      * @return 활동 통계 응답
      */
     public ActivityStatsResponse getActivityStats(AuthUser authUser, ActivityStatsRequest request) {
-        return activityService.getActivityStats(authUser.id(), request);
+        log.info("[ActivityFacade] 주행 기록 통계 조회: userId={}, period={}", 
+                authUser.id(), request.period());
+        ActivityStatsResponse response = activityService.getActivityStats(authUser.id(), request);
+        log.info("[ActivityFacade] 주행 기록 통계 조회 완료: userId={}, totalActivities={}", 
+                authUser.id(), response.summary().totalActivityCount());
+        return response;
     }
 
 
@@ -271,12 +305,20 @@ public class ActivityFacade {
 
         AppleWorkoutsImportResponse response = activityService.importAppleWorkouts(user, request);
         
-        // 업로드된 각 운동 기록에 대해 썸네일 생성 시도
+        // 위치정보 수집 기록 생성 (각 활동별로)
         for (var activityResponse : response.activities()) {
             try {
+                locationDataAccessLogService.logLocationCollection(
+                        user, 
+                        "ACTIVITY_GPS", 
+                        activityResponse.activityId(), 
+                        "APPLE_HEALTHKIT_IMPORT"
+                );
+                
+                // 썸네일 생성 시도
                 generateThumbnailForAppleActivity(activityResponse.activityId());
             } catch (Exception e) {
-                log.error("Apple 운동 기록 썸네일 생성 실패: activityId={}, error={}", 
+                log.error("Apple 운동 기록 처리 실패: activityId={}, error={}", 
                         activityResponse.activityId(), e.getMessage(), e);
             }
         }
