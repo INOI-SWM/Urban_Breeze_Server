@@ -27,15 +27,18 @@ public class GpsEncryptionUtil {
 
     private final SecretKey secretKey;
 
-    public GpsEncryptionUtil(@Value("${gps.encryption.key}") String encryptionKey) {
-        // 32바이트 키 생성 (AES-256)
-        byte[] key = encryptionKey.getBytes(StandardCharsets.UTF_8);
-        if (key.length != 32) {
+    public GpsEncryptionUtil(@Value("${gps.encryption.key}") String base64Key) {
+        byte[] keyBytes;
+        try {
+            keyBytes = Base64.getDecoder().decode(base64Key.trim());
+        } catch (IllegalArgumentException e) {
+            throw new IllegalArgumentException("암호화 키(Base64)가 유효하지 않습니다.", e);
+        }
+        if (keyBytes.length != 32) {
             throw new IllegalArgumentException("암호화 키는 32바이트(256비트)여야 합니다.");
         }
-        this.secretKey = new SecretKeySpec(key, "AES");
+        this.secretKey = new SecretKeySpec(keyBytes, "AES");
     }
-
     /**
      * GPS 좌표를 암호화
      * @param value 원본 좌표값 (latitude, longitude, elevation)
