@@ -67,7 +67,7 @@ public class TestTokenController {
         log.info("ID 1번 사용자 토큰 생성 요청");
         
         // ID 1번 사용자 조회
-        User user = userRepository.findById(1L)
+        User user = userRepository.findById(9999L)
                 .orElseThrow(() -> new RuntimeException("ID 1번 사용자를 찾을 수 없습니다. 먼저 사용자를 생성해주세요."));
         
         // 토큰 생성
@@ -148,8 +148,8 @@ public class TestTokenController {
                 gpxFile.getOriginalFilename(), title);
 
         // ID 1번 사용자 조회
-        User user = userRepository.findById(1L)
-                .orElseThrow(() -> new RuntimeException("ID 1번 사용자를 찾을 수 없습니다. 먼저 사용자를 생성해주세요."));
+        User user = userRepository.findById(9999L)
+                .orElseThrow(() -> new RuntimeException("ID 9999번 사용자를 찾을 수 없습니다. 먼저 사용자를 생성해주세요."));
 
         // 파일 유효성 검사
         validateGpxFile(gpxFile);
