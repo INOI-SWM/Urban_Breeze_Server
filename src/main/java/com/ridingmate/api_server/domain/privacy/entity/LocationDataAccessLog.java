@@ -33,6 +33,10 @@ public class LocationDataAccessLog extends BaseTimeEntity {
     @JoinColumn(name = "user_id", nullable = false)
     private User user;
 
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "accessor_id")
+    private User accessor;
+
     @Enumerated(EnumType.STRING)
     @Column(name = "access_type", nullable = false)
     private LocationAccessType accessType;
@@ -47,22 +51,23 @@ public class LocationDataAccessLog extends BaseTimeEntity {
     private String userAgent;
 
     @Column(name = "data_type", nullable = false)
-    private String dataType; // "ROUTE_GPS", "ACTIVITY_GPS", "GPX_FILE"
+    private String dataType;
 
     @Column(name = "data_id")
-    private String dataId; // Route ID, Activity ID, File ID
+    private String dataId;
 
     @Column(name = "purpose", length = 200)
-    private String purpose; // "ROUTE_VIEW", "ACTIVITY_VIEW", "GPX_DOWNLOAD"
+    private String purpose;
 
     @Column(name = "retention_period_days")
     private Integer retentionPeriodDays = 1095; // 3년 (1095일)
 
     @Builder
-    private LocationDataAccessLog(User user, LocationAccessType accessType, LocalDateTime accessedAt,
-                                  String ipAddress, String userAgent, String dataType, String dataId,
-                                  String purpose, Integer retentionPeriodDays) {
+    private LocationDataAccessLog(User user, User accessor, LocationAccessType accessType, LocalDateTime accessedAt,
+                                   String ipAddress, String userAgent, String dataType, String dataId,
+                                   String purpose, Integer retentionPeriodDays) {
         this.user = user;
+        this.accessor = accessor;
         this.accessType = accessType;
         this.accessedAt = accessedAt;
         this.ipAddress = ipAddress;
@@ -75,12 +80,15 @@ public class LocationDataAccessLog extends BaseTimeEntity {
 
     /**
      * 위치정보 조회 기록 생성
+     * @param user 데이터 소유자
+     * @param accessor 실제 접근자 (본인 접근 시 user와 동일, 타인 접근 시 다름)
      */
-    public static LocationDataAccessLog createAccessLog(User user, LocationAccessType accessType,
+    public static LocationDataAccessLog createAccessLog(User user, User accessor, LocationAccessType accessType,
                                                        String ipAddress, String userAgent,
                                                        String dataType, String dataId, String purpose) {
         return LocationDataAccessLog.builder()
                 .user(user)
+                .accessor(accessor)
                 .accessType(accessType)
                 .accessedAt(LocalDateTime.now())
                 .ipAddress(ipAddress)

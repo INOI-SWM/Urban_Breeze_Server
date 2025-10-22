@@ -8,6 +8,7 @@ import com.ridingmate.api_server.domain.route.dto.request.CreateRouteRequest;
 import com.ridingmate.api_server.domain.route.dto.request.RouteSegmentRequest;
 import com.ridingmate.api_server.domain.route.dto.request.RouteListRequest;
 import com.ridingmate.api_server.domain.route.dto.response.*;
+import com.ridingmate.api_server.domain.privacy.service.LocationDataAccessLogService;
 import com.ridingmate.api_server.domain.route.entity.Route;
 import com.ridingmate.api_server.domain.route.service.RouteService;
 import com.ridingmate.api_server.domain.user.entity.User;
@@ -47,6 +48,7 @@ public class RouteFacade {
     private final RouteService routeService;
     private final S3Manager s3Manager;
     private final UserService userService;
+    private final LocationDataAccessLogService locationDataAccessLogService;
 
     public RouteSegmentResponse generateSegment(RouteSegmentRequest request) {
         OrsRouteResponse orsResponse = orsClient.getRoutePreview(request.toOrsRequest());
@@ -118,6 +120,18 @@ public class RouteFacade {
 
     public RouteDetailResponse getRouteDetail(String routeId){
         Route route = routeService.getRouteWithUserByRouteId(routeId);
+        
+        // 위치정보 조회 기록 생성
+        User dataOwner = route.getUser();
+        User accessor = dataOwner;  // 현재는 본인만 조회 가능, 추후 어드민 기능 추가 시 수정 필요
+        locationDataAccessLogService.logRouteGpsAccess(
+                dataOwner, 
+                accessor,
+                routeId, 
+                null,  // IP는 Controller에서 가져올 수 없으므로 null
+                null   // User-Agent도 Controller에서 가져올 수 없으므로 null
+        );
+        
         Coordinate[] coordinates = routeService.getRouteDetailList(route.getId());
 
         // 고도 프로필 다운샘플링 (GeometryUtil에서 모든 로직 처리)
@@ -136,6 +150,18 @@ public class RouteFacade {
     public GpxDownloadInfo downloadGpxFile(String routeId) {
         log.info("[RouteFacade] GPX 파일 다운로드 시작: routeId={}", routeId);
         Route route = routeService.getRouteWithUserByRouteId(routeId);  // 1번만 조회
+        
+        // 위치정보 다운로드 기록 생성
+        User dataOwner = route.getUser();
+        User accessor = dataOwner;  // 현재는 본인만 다운로드 가능, 추후 어드민 기능 추가 시 수정 필요
+        locationDataAccessLogService.logGpxDownload(
+                dataOwner, 
+                accessor,
+                routeId, 
+                null,  // IP는 Controller에서 가져올 수 없으므로 null
+                null   // User-Agent도 Controller에서 가져올 수 없으므로 null
+        );
+        
         byte[] content = routeService.downloadGpxFile(route);
         String fileName = routeService.generateGpxFileName(route);
         

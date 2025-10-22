@@ -26,19 +26,21 @@ public class LocationDataAccessLogService {
 
     /**
      * 위치정보 조회 기록 생성
+     * @param user 데이터 소유자
+     * @param accessor 실제 접근자 (본인 접근 시 user와 동일)
      */
-    public void logLocationDataAccess(User user, LocationAccessType accessType,
+    public void logLocationDataAccess(User user, User accessor, LocationAccessType accessType,
                                     String ipAddress, String userAgent,
                                     String dataType, String dataId, String purpose) {
         try {
             LocationDataAccessLog accessLog = LocationDataAccessLog.createAccessLog(
-                    user, accessType, ipAddress, userAgent, dataType, dataId, purpose
+                    user, accessor, accessType, ipAddress, userAgent, dataType, dataId, purpose
             );
             
             locationDataAccessLogRepository.save(accessLog);
             
-            log.info("[LocationDataAccessLog] 위치정보 조회 기록 생성: userId={}, accessType={}, dataType={}, dataId={}, purpose={}",
-                    user.getId(), accessType, dataType, dataId, purpose);
+            log.info("[LocationDataAccessLog] 위치정보 조회 기록 생성: userId={}, accessorId={}, accessType={}, dataType={}, dataId={}, purpose={}",
+                    user.getId(), accessor != null ? accessor.getId() : null, accessType, dataType, dataId, purpose);
                     
         } catch (Exception e) {
             log.error("[LocationDataAccessLog] 위치정보 조회 기록 생성 실패: userId={}, error={}", 
@@ -48,25 +50,31 @@ public class LocationDataAccessLogService {
 
     /**
      * 경로 GPS 데이터 조회 기록
+     * @param user 데이터 소유자
+     * @param accessor 실제 접근자 (본인 접근 시 user와 동일)
      */
-    public void logRouteGpsAccess(User user, String routeId, String ipAddress, String userAgent) {
-        logLocationDataAccess(user, LocationAccessType.ACCESS, ipAddress, userAgent,
+    public void logRouteGpsAccess(User user, User accessor, String routeId, String ipAddress, String userAgent) {
+        logLocationDataAccess(user, accessor, LocationAccessType.ACCESS, ipAddress, userAgent,
                 "ROUTE_GPS", routeId, "ROUTE_VIEW");
     }
 
     /**
      * 활동 GPS 데이터 조회 기록
+     * @param user 데이터 소유자
+     * @param accessor 실제 접근자 (본인 접근 시 user와 동일)
      */
-    public void logActivityGpsAccess(User user, String activityId, String ipAddress, String userAgent) {
-        logLocationDataAccess(user, LocationAccessType.ACCESS, ipAddress, userAgent,
+    public void logActivityGpsAccess(User user, User accessor, String activityId, String ipAddress, String userAgent) {
+        logLocationDataAccess(user, accessor, LocationAccessType.ACCESS, ipAddress, userAgent,
                 "ACTIVITY_GPS", activityId, "ACTIVITY_VIEW");
     }
 
     /**
      * GPX 파일 다운로드 기록
+     * @param user 데이터 소유자
+     * @param accessor 실제 접근자 (본인 접근 시 user와 동일)
      */
-    public void logGpxDownload(User user, String fileId, String ipAddress, String userAgent) {
-        logLocationDataAccess(user, LocationAccessType.DOWNLOAD, ipAddress, userAgent,
+    public void logGpxDownload(User user, User accessor, String fileId, String ipAddress, String userAgent) {
+        logLocationDataAccess(user, accessor, LocationAccessType.DOWNLOAD, ipAddress, userAgent,
                 "GPX_FILE", fileId, "GPX_DOWNLOAD");
     }
 
@@ -74,7 +82,7 @@ public class LocationDataAccessLogService {
      * 위치정보 수집 기록
      */
     public void logLocationCollection(User user, String dataType, String dataId, String purpose) {
-        logLocationDataAccess(user, LocationAccessType.COLLECTION, null, null,
+        logLocationDataAccess(user, user, LocationAccessType.COLLECTION, null, null,
                 dataType, dataId, purpose);
     }
 
@@ -83,7 +91,7 @@ public class LocationDataAccessLogService {
      * 예: 경로 공유, 분석 서비스 연동 등
      */
     public void logLocationProvision(User user, String dataType, String dataId, String recipient, String purpose) {
-        logLocationDataAccess(user, LocationAccessType.PROVISION, null, null,
+        logLocationDataAccess(user, user, LocationAccessType.PROVISION, null, null,
                 dataType, dataId, purpose + " -> " + recipient);
     }
 
