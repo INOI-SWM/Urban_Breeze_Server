@@ -54,4 +54,9 @@ public interface LocationDataAccessLogRepository extends JpaRepository<LocationD
      */
     @Query("DELETE FROM LocationDataAccessLog l WHERE l.accessedAt < :expiredDate")
     void deleteExpiredLogs(@Param("expiredDate") LocalDateTime expiredDate);
+
+    /**
+     * 특정 데이터 ID와 접근 유형으로 로그 존재 여부 확인
+     */
+    boolean existsByDataIdAndAccessType(String dataId, LocationAccessType accessType);
 }
