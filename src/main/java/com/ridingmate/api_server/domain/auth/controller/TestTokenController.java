@@ -9,6 +9,7 @@ import com.ridingmate.api_server.domain.route.service.GpxRecommendationService;
 import com.ridingmate.api_server.domain.user.entity.User;
 import com.ridingmate.api_server.domain.user.repository.UserRepository;
 import com.ridingmate.api_server.global.exception.CommonResponse;
+import com.ridingmate.api_server.global.service.GpsDataEncryptionService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
@@ -35,6 +36,7 @@ public class TestTokenController {
     private final TokenService tokenService;
     private final UserRepository userRepository;
     private final GpxRecommendationService gpxRecommendationService;
+    private final GpsDataEncryptionService gpsDataEncryptionService;
 
     @Operation(
             summary = "ID 1번 사용자 토큰 생성",
@@ -159,6 +161,42 @@ public class TestTokenController {
         return ResponseEntity
                 .status(RouteSuccessCode.GPX_UPLOAD_SUCCESS.getStatus())
                 .body(CommonResponse.success(RouteSuccessCode.GPX_UPLOAD_SUCCESS, response));
+    }
+
+    @Operation(
+            summary = "기존 GPS 데이터 암호화 (마이그레이션용)",
+            description = """
+            기존 DOUBLE 타입으로 저장된 GPS 데이터를 암호화합니다.
+            
+            **주의사항:**
+            - 이 작업은 한 번만 실행해야 합니다!
+            - 대량의 데이터가 있을 경우 시간이 오래 걸릴 수 있습니다.
+            - ActivityGpsLog와 RouteGpsLog의 lat/lng/elevation을 암호화합니다.
+            - 배치 단위로 처리되므로 중간에 실패해도 일부는 암호화됩니다.
+            
+            **실행 전 확인:**
+            1. DB 백업 완료 여부
+            2. GPS_ENCRYPTION_KEY 환경 변수 설정 여부
+            3. 컬럼 타입이 TEXT로 변경되었는지 (Flyway 마이그레이션)
+            """
+    )
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "성공: 암호화 완료"),
+            @ApiResponse(responseCode = "500", description = "실패: 암호화 중 오류 발생")
+    })
+    @PostMapping("/encrypt-gps-data")
+    public ResponseEntity<String> encryptGpsData() {
+        log.warn("🔐 [GPS 암호화] 기존 GPS 데이터 암호화 시작 - 이 작업은 한 번만 실행해야 합니다!");
+        
+        try {
+            gpsDataEncryptionService.encryptAllGpsData();
+            log.info("✅ [GPS 암호화] 기존 GPS 데이터 암호화 완료");
+            return ResponseEntity.ok("✅ GPS 데이터 암호화가 완료되었습니다.");
+            
+        } catch (Exception e) {
+            log.error("❌ [GPS 암호화] 기존 GPS 데이터 암호화 실패", e);
+            return ResponseEntity.status(500).body("❌ 암호화 실패: " + e.getMessage());
+        }
     }
 
     /**

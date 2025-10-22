@@ -37,8 +37,20 @@
         </filter>
     </appender>
 
-    <!-- 개발 환경용 설정 -->
-    <springProfile name="local,dev">
+    <!-- 로컬 환경용 설정 (Slack 알림 제외) -->
+    <springProfile name="local">
+        <root level="INFO">
+            <appender-ref ref="CONSOLE"/>
+            <appender-ref ref="FILE"/>
+            <!-- Slack 알림 제외 -->
+        </root>
+        
+        <logger name="com.ridingmate" level="DEBUG"/>
+        <logger name="org.springframework.web" level="DEBUG"/>
+    </springProfile>
+
+    <!-- Dev 환경용 설정 (Slack 알림 포함) -->
+    <springProfile name="dev">
         <root level="INFO">
             <appender-ref ref="CONSOLE"/>
             <appender-ref ref="FILE"/>

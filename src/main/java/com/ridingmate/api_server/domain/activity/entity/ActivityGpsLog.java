@@ -3,6 +3,7 @@ package com.ridingmate.api_server.domain.activity.entity;
 import com.ridingmate.api_server.domain.activity.exception.ActivityException;
 import com.ridingmate.api_server.domain.activity.exception.code.ActivityCommonErrorCode;
 import com.ridingmate.api_server.domain.activity.exception.code.ActivityValidationErrorCode;
+import com.ridingmate.api_server.global.config.EncryptedDoubleConverter;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.NotBlank;
 import lombok.AccessLevel;
@@ -32,13 +33,16 @@ public class ActivityGpsLog {
     @Column(name = "log_time", nullable = false)
     private LocalDateTime logTime;
 
-    @Column(name = "latitude", nullable = false)
+    @Convert(converter = EncryptedDoubleConverter.class)
+    @Column(name = "latitude", nullable = false, columnDefinition = "TEXT")
     private Double latitude;
 
-    @Column(name = "longitude", nullable = false)
+    @Convert(converter = EncryptedDoubleConverter.class)
+    @Column(name = "longitude", nullable = false, columnDefinition = "TEXT")
     private Double longitude;
 
-    @Column(name = "elevation")
+    @Convert(converter = EncryptedDoubleConverter.class)
+    @Column(name = "elevation", columnDefinition = "TEXT")
     private Double elevation;
 
     @Column(name = "speed")
