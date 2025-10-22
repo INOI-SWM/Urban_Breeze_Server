@@ -15,8 +15,10 @@ import com.ridingmate.api_server.global.exception.ApiErrorCodeExample;
 import com.ridingmate.api_server.global.exception.CommonResponse;
 import com.ridingmate.api_server.infra.kakao.KakaoErrorCode;
 import com.ridingmate.api_server.infra.ors.OrsErrorCode;
+import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
@@ -24,6 +26,7 @@ import org.springframework.web.bind.annotation.*;
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
 
+@Slf4j
 @RestController
 @RequestMapping("/api/v1/routes")
 @RequiredArgsConstructor
@@ -36,6 +39,7 @@ public class RouteController implements RouteApi{
     @ApiErrorCodeExample(RouteCommonErrorCode.class)
     @ApiErrorCodeExample(OrsErrorCode.class)
     public ResponseEntity<CommonResponse<RouteSegmentResponse>>previewRoute(@RequestBody RouteSegmentRequest request) {
+        log.info("[Route] POST segment request - params={}", request);
         RouteSegmentResponse response = routeFacade.generateSegment(request);
         return ResponseEntity
                 .status(RouteSuccessCode.SEGMENT_CREATED.getStatus())
@@ -49,6 +53,8 @@ public class RouteController implements RouteApi{
     public ResponseEntity<CommonResponse<CreateRouteResponse>> createRoute(
             @AuthenticationPrincipal AuthUser authUser,
             @Valid @RequestBody CreateRouteRequest request) {
+        log.info("[Route] POST create request - userId={}, params={}", 
+                authUser != null ? authUser.id() : null, request);
         CreateRouteResponse response = routeFacade.createRoute(authUser, request);
         return ResponseEntity.
                 status(RouteSuccessCode.ROUTE_CREATED.getStatus())
@@ -61,6 +67,8 @@ public class RouteController implements RouteApi{
     public ResponseEntity<CommonResponse<ShareRouteResponse>> shareRoute(
             @AuthenticationPrincipal AuthUser authUser,
             @PathVariable String routeId) {
+        log.info("[Route] GET share request - userId={}, routeId={}", 
+                authUser != null ? authUser.id() : null, routeId);
         ShareRouteResponse  response = routeFacade.shareRoute(authUser, routeId);
         return ResponseEntity
                 .status(RouteSuccessCode.SHARE_LINK_FETCHED.getStatus())
@@ -73,6 +81,8 @@ public class RouteController implements RouteApi{
             @AuthenticationPrincipal AuthUser authUser,
             @ModelAttribute RouteListRequest request
     ) {
+        log.info("[Route] GET list request - userId={}, params={}", 
+                authUser != null ? authUser.id() : null, request);
         RouteListResponse response = routeFacade.getRouteList(authUser, request);
         return ResponseEntity
                 .status(RouteSuccessCode.ROUTE_LIST_FETCHED.getStatus())
@@ -85,6 +95,7 @@ public class RouteController implements RouteApi{
     public ResponseEntity<CommonResponse<RouteDetailResponse>> getRouteDetail(
         @PathVariable String routeId
     ) {
+        log.info("[Route] GET detail request - routeId={}", routeId);
         RouteDetailResponse response = routeFacade.getRouteDetail(routeId);
         return ResponseEntity
             .status(RouteSuccessCode.ROUTE_DETAIL_FETCHED.getStatus())
@@ -98,6 +109,7 @@ public class RouteController implements RouteApi{
             @RequestParam String query,
             @RequestParam Double lon,
             @RequestParam Double lat) {
+        log.info("[Route] GET map search request - query={}, lon={}, lat={}", query, lon, lat);
         MapSearchResponse response = routeFacade.getMapSearch(query, lon, lat);
         return ResponseEntity
                 .status(RouteSuccessCode.MAP_SEARCH_FETCHED.getStatus())
@@ -108,6 +120,7 @@ public class RouteController implements RouteApi{
     @GetMapping("/{routeId}/gpx")
     @ApiErrorCodeExample(RouteCommonErrorCode.class)
     public ResponseEntity<byte[]> downloadGpxFile(@PathVariable String routeId) {
+        log.info("[Route] GET GPX download request - routeId={}", routeId);
         GpxDownloadInfo downloadInfo = routeFacade.downloadGpxFile(routeId);
 
         String encodedFileName = URLEncoder.encode(downloadInfo.fileName(), StandardCharsets.UTF_8);
@@ -125,7 +138,8 @@ public class RouteController implements RouteApi{
     public ResponseEntity<CommonResponse<Void>> addRouteToMyRoutes(
             @AuthenticationPrincipal AuthUser authUser,
             @Valid @RequestBody AddRouteToMyRoutesRequest request) {
-        
+        log.info("[Route] POST add to my routes request - userId={}, params={}", 
+                authUser != null ? authUser.id() : null, request);
         routeFacade.addRouteToMyRoutes(authUser.id(), request);
         
         return ResponseEntity
@@ -140,7 +154,8 @@ public class RouteController implements RouteApi{
     public ResponseEntity<CommonResponse<Void>> deleteRoute(
             @AuthenticationPrincipal AuthUser authUser,
             @PathVariable String routeId) {
-        
+        log.info("[Route] DELETE route request - userId={}, routeId={}", 
+                authUser != null ? authUser.id() : null, routeId);
         routeFacade.deleteRoute(authUser.id(), routeId);
         
         return ResponseEntity

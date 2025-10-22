@@ -57,6 +57,9 @@ public class RouteService {
 
     @Transactional
     public Route createRoute(Long userId, CreateRouteRequest request, LineString routeLine) {
+        log.info("[RouteService] 경로 생성 시작: userId={}, title={}, distance={}", 
+                userId, request.title(), request.distance());
+        
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new AuthException(AuthErrorCode.AUTHENTICATION_USER_NOT_FOUND));
 
@@ -86,6 +89,8 @@ public class RouteService {
                 .toArray(Coordinate[]::new);
         createRouteGpsLog(route, geometry);
 
+        log.info("[RouteService] 경로 생성 완료: userId={}, routeId={}, gpsLogCount={}", 
+                userId, route.getId(), geometry.length);
         return route;
     }
 
