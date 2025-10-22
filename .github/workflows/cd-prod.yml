@@ -66,6 +66,14 @@ jobs:
           name: compose-yml
           path: ./docker-compose.prod.yml
 
+      - name: Upload monitoring stack files
+        uses: actions/upload-artifact@v4
+        with:
+          name: monitoring-bundle
+          path: |
+            ./docker-compose.monitoring.yml
+            ./monitoring/
+
     outputs:
       BUILD_VERSION: ${{ steps.datetime.outputs.datetime }}
 
@@ -78,6 +86,12 @@ jobs:
         uses: actions/download-artifact@v4
         with:
           name: compose-yml
+          path: .
+
+      - name: Download monitoring stack files
+        uses: actions/download-artifact@v4
+        with:
+          name: monitoring-bundle
           path: .
 
       - name: Write .env (prod)
@@ -100,3 +114,6 @@ jobs:
 
       - name: Run New Containers (prod)
         run: sudo docker compose -f docker-compose.prod.yml up -d
+
+      - name: Run Monitoring Stack (prod)
+        run: sudo docker compose -f docker-compose.monitoring.yml up -d

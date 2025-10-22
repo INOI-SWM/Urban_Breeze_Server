@@ -66,6 +66,14 @@ jobs:
           name: compose-yml
           path: ./docker-compose.dev.yml
 
+      - name: Upload monitoring stack files
+        uses: actions/upload-artifact@v4
+        with:
+          name: monitoring-bundle
+          path: |
+            docker-compose.monitoring.yml
+            monitoring/**
+
     outputs:
       BUILD_VERSION: ${{ steps.datetime.outputs.datetime }}
 
@@ -80,6 +88,12 @@ jobs:
           name: compose-yml
           path: .
 
+      - name: Download monitoring stack files
+        uses: actions/download-artifact@v4
+        with:
+          name: monitoring-bundle
+          path: .
+
       - name: Write .env file
         run: |
           cat <<EOF > .env
@@ -92,6 +106,9 @@ jobs:
           POSTGRES_PASSWORD=${{ secrets.POSTGRES_PASSWORD }}
           
           ORS_API_KEY=${{ secrets.ORS_API_KEY }}
+          AWS_ACCESS_KEY_ID=${{ secrets.AWS_ACCESS_KEY_ID }}
+          AWS_SECRET_ACCESS_KEY=${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          AWS_REGION=ap-northeast-2
           EOF
 
       - name: Stop app container only
@@ -106,3 +123,6 @@ jobs:
 
       - name: Run New Containers
         run: sudo docker compose -f docker-compose.dev.yml up -d
+
+      - name: Run Monitoring Stack
+        run: sudo docker compose -f docker-compose.monitoring.yml up -d

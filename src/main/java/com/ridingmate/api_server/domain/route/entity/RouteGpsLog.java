@@ -2,6 +2,7 @@ package com.ridingmate.api_server.domain.route.entity;
 
 import com.ridingmate.api_server.domain.route.exception.RouteException;
 import com.ridingmate.api_server.domain.route.exception.code.RouteCreationErrorCode;
+import com.ridingmate.api_server.global.config.EncryptedDoubleConverter;
 import jakarta.persistence.*;
 import lombok.AccessLevel;
 import lombok.Builder;
@@ -29,13 +30,16 @@ public class RouteGpsLog {
     @Column(name = "log_time", nullable = false)
     private LocalDateTime logTime;
 
-    @Column(name = "longitude", nullable = false)
+    @Convert(converter = EncryptedDoubleConverter.class)
+    @Column(name = "longitude", nullable = false, columnDefinition = "TEXT")
     private Double longitude;
 
-    @Column(name = "latitude", nullable = false)
+    @Convert(converter = EncryptedDoubleConverter.class)
+    @Column(name = "latitude", nullable = false, columnDefinition = "TEXT")
     private Double latitude;
 
-    @Column(name = "elevation")
+    @Convert(converter = EncryptedDoubleConverter.class)
+    @Column(name = "elevation", columnDefinition = "TEXT")
     private Double elevation;
 
     @Builder

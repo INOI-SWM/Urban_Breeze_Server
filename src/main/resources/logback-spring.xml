@@ -1,0 +1,92 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<configuration>
+    <springProperty scope="context" name="SLACK_WEBHOOK_URL" source="slack.webhook-url" />
+    <springProperty scope="context" name="SLACK_CHANNEL"     source="slack.channel" />
+    <!-- 콘솔 출력 설정 -->
+    <appender name="CONSOLE" class="ch.qos.logback.core.ConsoleAppender">
+        <encoder>
+            <pattern>%d{yyyy-MM-dd HH:mm:ss.SSS} [%thread] %-5level %logger{36} - %msg%n</pattern>
+        </encoder>
+    </appender>
+
+    <!-- 파일 출력 설정 -->
+    <appender name="FILE" class="ch.qos.logback.core.rolling.RollingFileAppender">
+        <file>logs/urbanbreeze-api.log</file>
+        <rollingPolicy class="ch.qos.logback.core.rolling.SizeAndTimeBasedRollingPolicy">
+            <fileNamePattern>logs/urbanbreeze-api.%d{yyyy-MM-dd}.%i.log</fileNamePattern>
+            <maxFileSize>100MB</maxFileSize>
+            <maxHistory>30</maxHistory>
+        </rollingPolicy>
+        <encoder>
+            <pattern>%d{yyyy-MM-dd HH:mm:ss.SSS} [%thread] %-5level %logger{36} - %msg%n</pattern>
+        </encoder>
+    </appender>
+
+    <!-- Slack 알림 설정 (ERROR 레벨 이상만) -->
+    <appender name="SLACK" class="com.github.maricn.logback.SlackAppender">
+        <webhookUri>${SLACK_WEBHOOK_URL}</webhookUri>
+        <channel>${SLACK_CHANNEL}</channel>
+        <username>UrbanBreeze Bot</username>
+        <iconEmoji>:warning:</iconEmoji>
+        <layout class="ch.qos.logback.classic.PatternLayout">
+            <pattern>🚨 *UrbanBreeze API 오류 발생*%n%n%d{yyyy-MM-dd HH:mm:ss} [%thread] %-5level %logger{36}%n%msg%n%ex{short}</pattern>
+        </layout>
+        <!-- ERROR 레벨 이상만 전송 -->
+        <filter class="ch.qos.logback.classic.filter.ThresholdFilter">
+            <level>ERROR</level>
+        </filter>
+    </appender>
+
+    <!-- 로컬 환경용 설정 (Slack 알림 제외) -->
+    <springProfile name="local">
+        <root level="INFO">
+            <appender-ref ref="CONSOLE"/>
+            <appender-ref ref="FILE"/>
+            <!-- Slack 알림 제외 -->
+        </root>
+        
+        <logger name="com.ridingmate" level="DEBUG"/>
+        <logger name="org.springframework.web" level="DEBUG"/>
+        
+        <!-- Prometheus 메트릭 관련 로그 레벨 조정 -->
+        <logger name="org.springframework.web.servlet.DispatcherServlet" level="INFO"/>
+        <logger name="org.springframework.web.servlet.mvc.method.annotation" level="INFO"/>
+        <logger name="com.ridingmate.api_server.domain.auth.jwt" level="INFO"/>
+    </springProfile>
+
+    <!-- Dev 환경용 설정 (Slack 알림 포함) -->
+    <springProfile name="dev">
+        <root level="INFO">
+            <appender-ref ref="CONSOLE"/>
+            <appender-ref ref="FILE"/>
+            <appender-ref ref="SLACK"/>
+        </root>
+        
+        <logger name="com.ridingmate" level="INFO"/>
+        <logger name="org.springframework.web" level="INFO"/>
+        
+        <!-- Prometheus 메트릭 관련 로그 레벨 조정 -->
+        <logger name="org.springframework.web.servlet.DispatcherServlet" level="WARN"/>
+        <logger name="org.springframework.web.servlet.mvc.method.annotation" level="WARN"/>
+        <logger name="com.ridingmate.api_server.domain.auth.jwt" level="WARN"/>
+    </springProfile>
+
+    <!-- 운영 환경용 설정 -->
+    <springProfile name="prod">
+        <root level="INFO">
+            <appender-ref ref="CONSOLE"/>
+            <appender-ref ref="FILE"/>
+            <appender-ref ref="SLACK"/>
+        </root>
+        
+        <logger name="com.ridingmate" level="INFO"/>
+        <logger name="org.springframework.web" level="WARN"/>
+        <logger name="org.hibernate.SQL" level="WARN"/>
+        
+        <!-- Prometheus 메트릭 관련 로그 레벨 조정 -->
+        <logger name="org.springframework.web.servlet.DispatcherServlet" level="WARN"/>
+        <logger name="org.springframework.web.servlet.mvc.method.annotation" level="WARN"/>
+        <logger name="com.ridingmate.api_server.domain.auth.jwt" level="WARN"/>
+    </springProfile>
+
+</configuration>
