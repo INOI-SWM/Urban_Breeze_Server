@@ -8,6 +8,7 @@ import com.ridingmate.api_server.domain.route.dto.request.CreateRouteRequest;
 import com.ridingmate.api_server.domain.route.dto.request.RouteSegmentRequest;
 import com.ridingmate.api_server.domain.route.dto.request.RouteListRequest;
 import com.ridingmate.api_server.domain.route.dto.response.*;
+import com.ridingmate.api_server.domain.privacy.service.LocationDataAccessLogService;
 import com.ridingmate.api_server.domain.route.entity.Route;
 import com.ridingmate.api_server.domain.route.service.RouteService;
 import com.ridingmate.api_server.domain.user.entity.User;
@@ -24,6 +25,7 @@ import com.ridingmate.api_server.infra.ors.dto.response.OrsRouteResponse;
 import com.ridingmate.api_server.global.util.GeometryUtil;
 import com.ridingmate.api_server.global.util.GpxGenerator;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.locationtech.jts.geom.Coordinate;
 import org.locationtech.jts.geom.LineString;
 import org.springframework.data.domain.Page;
@@ -33,6 +35,7 @@ import java.io.IOException;
 import java.util.List;
 import java.util.UUID;
 
+@Slf4j
 @Component
 @RequiredArgsConstructor
 public class RouteFacade {
@@ -45,6 +48,7 @@ public class RouteFacade {
     private final RouteService routeService;
     private final S3Manager s3Manager;
     private final UserService userService;
+    private final LocationDataAccessLogService locationDataAccessLogService;
 
     public RouteSegmentResponse generateSegment(RouteSegmentRequest request) {
         OrsRouteResponse orsResponse = orsClient.getRoutePreview(request.toOrsRequest());
@@ -52,6 +56,7 @@ public class RouteFacade {
     }
 
     public CreateRouteResponse createRoute(AuthUser authUser, CreateRouteRequest request) {
+        log.info("[RouteFacade] 경로 생성 시작: userId={}, title={}", authUser.id(), request.title());
         LineString routeLine = GeometryUtil.polylineToLineString(request.polyline());
         Route route = routeService.createRoute(authUser.id(), request, routeLine);
 
@@ -72,6 +77,8 @@ public class RouteFacade {
             throw new RuntimeException("GPX 파일 생성 중 오류가 발생했습니다: " + e.getMessage(), e);
         }
 
+        log.info("[RouteFacade] 경로 생성 완료: userId={}, routeId={}, distance={}", 
+                authUser.id(), route.getRouteId(), route.getDistance());
         return CreateRouteResponse.from(route);
     }
 
@@ -88,6 +95,8 @@ public class RouteFacade {
      * @return 정렬된 경로 목록 응답
      */
     public RouteListResponse getRouteList(AuthUser authUser, RouteListRequest request) {
+        log.info("[RouteFacade] 경로 목록 조회 시작: userId={}, page={}, size={}", 
+                authUser.id(), request.page(), request.size());
         // Service에서 경로 목록 조회
         Page<Route> routePage = routeService.getRoutesByUser(authUser.id(), request);
         User user = userService.getUser(authUser.id());
@@ -104,11 +113,25 @@ public class RouteFacade {
         // 전체 데이터 기준의 최대값 조회 (페이지 데이터가 아닌 전체 데이터 기준)
         FilterRangeInfo filterRangeInfo = routeService.getMaxDistanceAndElevationByUser(user);
 
+        log.info("[RouteFacade] 경로 목록 조회 완료: userId={}, totalElements={}", 
+                authUser.id(), routePage.getTotalElements());
         return RouteListResponse.of(routeItems, routePage, filterRangeInfo);
     }
 
     public RouteDetailResponse getRouteDetail(String routeId){
         Route route = routeService.getRouteWithUserByRouteId(routeId);
+        
+        // 위치정보 조회 기록 생성
+        User dataOwner = route.getUser();
+        User accessor = dataOwner;  // 현재는 본인만 조회 가능, 추후 어드민 기능 추가 시 수정 필요
+        locationDataAccessLogService.logRouteGpsAccess(
+                dataOwner, 
+                accessor,
+                routeId, 
+                null,  // IP는 Controller에서 가져올 수 없으므로 null
+                null   // User-Agent도 Controller에서 가져올 수 없으므로 null
+        );
+        
         Coordinate[] coordinates = routeService.getRouteDetailList(route.getId());
 
         // 고도 프로필 다운샘플링 (GeometryUtil에서 모든 로직 처리)
@@ -125,10 +148,25 @@ public class RouteFacade {
     }
 
     public GpxDownloadInfo downloadGpxFile(String routeId) {
+        log.info("[RouteFacade] GPX 파일 다운로드 시작: routeId={}", routeId);
         Route route = routeService.getRouteWithUserByRouteId(routeId);  // 1번만 조회
+        
+        // 위치정보 다운로드 기록 생성
+        User dataOwner = route.getUser();
+        User accessor = dataOwner;  // 현재는 본인만 다운로드 가능, 추후 어드민 기능 추가 시 수정 필요
+        locationDataAccessLogService.logGpxDownload(
+                dataOwner, 
+                accessor,
+                routeId, 
+                null,  // IP는 Controller에서 가져올 수 없으므로 null
+                null   // User-Agent도 Controller에서 가져올 수 없으므로 null
+        );
+        
         byte[] content = routeService.downloadGpxFile(route);
         String fileName = routeService.generateGpxFileName(route);
         
+        log.info("[RouteFacade] GPX 파일 다운로드 완료: routeId={}, fileName={}, size={}bytes", 
+                routeId, fileName, content.length);
         return GpxDownloadInfo.of(content, fileName);
     }
 

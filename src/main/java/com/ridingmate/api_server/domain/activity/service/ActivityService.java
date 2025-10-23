@@ -121,11 +121,16 @@ public class ActivityService {
      */
     @Transactional(readOnly = true)
     public Page<Activity> getActivitiesByUser(Long userId, ActivityListRequest request) {
+        log.info("[ActivityService] 사용자 주행 기록 조회: userId={}, page={}, size={}, sort={}", 
+                userId, request.page(), request.size(), request.sortType());
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new AuthException(AuthErrorCode.AUTHENTICATION_USER_NOT_FOUND));
 
         Pageable pageable = PageRequest.of(request.page(), request.size(), request.sortType().getSort());
-        return activityRepository.findByUserWithSort(user, pageable);
+        Page<Activity> result = activityRepository.findByUserWithSort(user, pageable);
+        log.info("[ActivityService] 사용자 주행 기록 조회 완료: userId={}, totalElements={}", 
+                userId, result.getTotalElements());
+        return result;
     }
 
     // 이미지 관련 배치 조회 메서드들 제거 (Activity에 thumbnailImagePath 추가로 불필요)
@@ -151,8 +156,12 @@ public class ActivityService {
      */
     @Transactional(readOnly = true)
     public Activity getActivityWithUserByActivityId(String activityId) {
-        return activityRepository.findByActivityId(UUID.fromString(activityId))
+        log.info("[ActivityService] 주행 기록 상세 조회: activityId={}", activityId);
+        Activity activity = activityRepository.findByActivityId(UUID.fromString(activityId))
                 .orElseThrow(() -> new ActivityException(ActivityCommonErrorCode.ACTIVITY_NOT_FOUND));
+        log.info("[ActivityService] 주행 기록 상세 조회 완료: activityId={}, userId={}", 
+                activityId, activity.getUser().getId());
+        return activity;
     }
 
     /**
@@ -206,6 +215,7 @@ public class ActivityService {
      */
     @Transactional(readOnly = true)
     public ActivityStatsResponse getActivityStats(Long userId, ActivityStatsRequest request) {
+        log.info("[ActivityService] 주행 기록 통계 조회: userId={}, period={}", userId, request.period());
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new AuthException(AuthErrorCode.AUTHENTICATION_USER_NOT_FOUND));
 
@@ -233,7 +243,10 @@ public class ActivityService {
         LocalDateTime oldestActivityDateTime = activityRepository.findOldestActivityDate(user);
         LocalDate oldestActivityDate = oldestActivityDateTime != null ? oldestActivityDateTime.toLocalDate() : null;
 
-        return ActivityStatsResponse.of(periodInfo, summaryInfo, details, oldestActivityDate);
+        ActivityStatsResponse response = ActivityStatsResponse.of(periodInfo, summaryInfo, details, oldestActivityDate);
+        log.info("[ActivityService] 주행 기록 통계 조회 완료: userId={}, totalActivities={}, totalDistance={}", 
+                userId, response.summary().totalActivityCount(), response.summary().totalDistanceM());
+        return response;
     }
 
     /**
