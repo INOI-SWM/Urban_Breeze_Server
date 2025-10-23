@@ -8,7 +8,8 @@ services:
       - .env
     environment:
       TZ: Asia/Seoul
-      SPRING_PROFILES_ACTIVE: prod
+    volumes:
+      - /var/log/urbanbreeze:/app/logs
     networks:
       - prod-network
     restart: unless-stopped

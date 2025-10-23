@@ -42,10 +42,12 @@ public class TerraSqsConsumer {
                 log.info("S3 페이로드 감지, URL에서 데이터 다운로드 시작: {}", downloadUrl);
 
                 try {
+                    // 대용량 페이로드를 위한 스트리밍 처리
                     finalPayload = webClient.get()
                             .uri(URI.create(downloadUrl))
                             .retrieve()
                             .bodyToMono(String.class)
+                            .timeout(java.time.Duration.ofMinutes(5)) // 5분 타임아웃
                             .block();
 
                     if (finalPayload == null || finalPayload.isEmpty()) {
