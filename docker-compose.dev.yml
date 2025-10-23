@@ -28,6 +28,7 @@ services:
       - .env
     environment:
       TZ: Asia/Seoul
+      SPRING_PROFILES_ACTIVE: dev
     volumes:
       - /var/log/urbanbreeze:/app/logs
     networks:
