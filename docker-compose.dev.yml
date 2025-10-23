@@ -29,8 +29,7 @@ services:
     environment:
       TZ: Asia/Seoul
     volumes:
-      - /var/log/urbanbreeze:/app/logs  # 로그 파일을 호스트에 마운트
-      SPRING_PROFILES_ACTIVE: dev
+      - /var/log/urbanbreeze:/app/logs
     networks:
       - dev-network
     depends_on:
