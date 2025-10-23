@@ -10,10 +10,13 @@ services:
       TZ: Asia/Seoul
       SPRING_PROFILES_ACTIVE: prod
     volumes:
-      - /var/log/urbanbreeze:/app/logs
+      - urbanbreeze-logs:/app/logs
     networks:
       - prod-network
     restart: unless-stopped
+
+volumes:
+  urbanbreeze-logs:
 
 networks:
   prod-network:
