@@ -111,6 +111,43 @@ jobs:
           AWS_REGION=ap-northeast-2
           EOF
 
+      - name: Configure AWS credentials
+        env:
+          AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          AWS_DEFAULT_REGION: ap-northeast-2
+        run: |
+          echo "AWS credentials configured"
+
+      - name: Backup logs before restart
+        env:
+          AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          AWS_DEFAULT_REGION: ap-northeast-2
+        run: |
+          if docker ps -a --format '{{.Names}}' | grep -q '^urban-breeze-dev$'; then
+            # Docker 볼륨에서 로그 백업
+            if docker volume ls | grep -q "urbanbreeze-logs"; then
+              date=$(date +%Y%m%d_%H%M%S)
+              
+              # 임시 컨테이너로 볼륨 내용 백업
+              docker run --rm -v urbanbreeze-logs:/logs -v $(pwd):/backup alpine tar -czf /backup/urbanbreeze_logs_dev_${date}.tar.gz -C /logs .
+              
+              # S3에 업로드
+              echo "Uploading dev logs to S3..."
+              if aws s3 cp "urbanbreeze_logs_dev_${date}.tar.gz" "s3://urbanbreeze-logs/dev/logs/"; then
+                echo "Dev logs backed up to S3 successfully"
+                
+                # 로컬 압축 파일 삭제
+                rm "urbanbreeze_logs_dev_${date}.tar.gz"
+                echo "Local backup file removed"
+              else
+                echo "Failed to upload dev logs to S3"
+                exit 1
+              fi
+            fi
+          fi
+
       - name: Stop app container only
         run: |
           if docker ps -a --format '{{.Names}}' | grep -q '^urban-breeze-dev$'; then
@@ -126,3 +163,15 @@ jobs:
 
       - name: Run Monitoring Stack
         run: sudo docker compose -f docker-compose.monitoring.yml up -d
+
+      - name: Setup Log Backup Cron Job
+        run: |
+          # 백업 스크립트 업로드
+          sudo mkdir -p /home/ubuntu/scripts
+          sudo cp scripts/log-backup.sh /home/ubuntu/scripts/
+          sudo chmod +x /home/ubuntu/scripts/log-backup.sh
+          
+          # Cron Job 설정
+          sudo bash scripts/setup-cron.sh
+          
+          echo "Log backup cron job configured successfully"

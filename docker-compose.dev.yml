@@ -30,7 +30,7 @@ services:
       TZ: Asia/Seoul
       SPRING_PROFILES_ACTIVE: dev
     volumes:
-      - /var/log/urbanbreeze:/app/logs
+      - urbanbreeze-logs:/app/logs
     networks:
       - dev-network
     depends_on:
@@ -40,6 +40,7 @@ services:
 
 volumes:
   postgres-data:
+  urbanbreeze-logs:
 
 networks:
   dev-network:
