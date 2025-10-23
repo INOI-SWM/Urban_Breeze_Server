@@ -8,6 +8,8 @@ services:
       - .env
     environment:
       TZ: Asia/Seoul
+    volumes:
+      - /var/log/urbanbreeze:/app/logs  # 로그 파일을 호스트에 마운트
     networks:
       - prod-network
     restart: unless-stopped
