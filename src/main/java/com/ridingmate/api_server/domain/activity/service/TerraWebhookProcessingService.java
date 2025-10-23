@@ -165,30 +165,38 @@ public class TerraWebhookProcessingService {
                         TreeMap::new
                 ));
 
-        // 새로운 데이터들을 위한 Map 생성
-        NavigableMap<OffsetDateTime, Double> cadenceMap = cadenceSamples.stream()
+        // 새로운 데이터들을 위한 Map 생성 (null 체크 추가)
+        log.debug("Terra 데이터 처리: cadenceSamples={}, heartRateSamples={}, powerSamples={}", 
+                cadenceSamples != null ? cadenceSamples.size() : 0,
+                heartRateSamples != null ? heartRateSamples.size() : 0,
+                powerSamples != null ? powerSamples.size() : 0);
+                
+        NavigableMap<OffsetDateTime, Double> cadenceMap = cadenceSamples != null ? cadenceSamples.stream()
+                .filter(sample -> sample != null && sample.timestamp() != null && sample.cadenceRpm() != null)
                 .collect(Collectors.toMap(
                         TerraPayload.CadenceSample::timestamp,
                         TerraPayload.CadenceSample::cadenceRpm,
                         (e1, e2) -> e1,
                         TreeMap::new
-                ));
+                )) : new TreeMap<>();
 
-        NavigableMap<OffsetDateTime, Double> heartRateMap = heartRateSamples.stream()
+        NavigableMap<OffsetDateTime, Double> heartRateMap = heartRateSamples != null ? heartRateSamples.stream()
+                .filter(sample -> sample != null && sample.timestamp() != null && sample.heartRateBpm() != null)
                 .collect(Collectors.toMap(
                         TerraPayload.HeartRateSample::timestamp,
                         TerraPayload.HeartRateSample::heartRateBpm,
                         (e1, e2) -> e1,
                         TreeMap::new
-                ));
+                )) : new TreeMap<>();
 
-        NavigableMap<OffsetDateTime, Double> powerMap = powerSamples.stream()
+        NavigableMap<OffsetDateTime, Double> powerMap = powerSamples != null ? powerSamples.stream()
+                .filter(sample -> sample != null && sample.timestamp() != null && sample.powerWatts() != null)
                 .collect(Collectors.toMap(
                         TerraPayload.PowerSample::timestamp,
                         TerraPayload.PowerSample::powerWatts,
                         (e1, e2) -> e1,
                         TreeMap::new
-                ));
+                )) : new TreeMap<>();
 
 
 
