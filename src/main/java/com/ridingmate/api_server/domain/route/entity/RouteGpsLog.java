@@ -1,5 +1,6 @@
 package com.ridingmate.api_server.domain.route.entity;
 
+import com.ridingmate.api_server.domain.route.enums.WaypointType;
 import com.ridingmate.api_server.domain.route.exception.RouteException;
 import com.ridingmate.api_server.domain.route.exception.code.RouteCreationErrorCode;
 import com.ridingmate.api_server.global.config.EncryptedDoubleConverter;
@@ -42,8 +43,20 @@ public class RouteGpsLog {
     @Column(name = "elevation", columnDefinition = "TEXT")
     private Double elevation;
 
+    // Waypoint 정보 (선택적)
+    @Enumerated(EnumType.STRING)
+    @Column(name = "waypoint_type", length = 50)
+    private WaypointType waypointType;
+
+    @Column(name = "waypoint_title", length = 200)
+    private String waypointTitle;
+
+    @Column(name = "waypoint_description", columnDefinition = "TEXT")
+    private String waypointDescription;
+
     @Builder
-    private RouteGpsLog(Route route, Double longitude, Double latitude, Double elevation, LocalDateTime logTime){
+    private RouteGpsLog(Route route, Double longitude, Double latitude, Double elevation, LocalDateTime logTime,
+                        WaypointType waypointType, String waypointTitle, String waypointDescription){
         // GPS 로그 필수 값 검증
         if (latitude == null || longitude == null || logTime == null) {
             throw new RouteException(RouteCreationErrorCode.INVALID_GPS_LOG_COORDINATES);
@@ -54,6 +67,27 @@ public class RouteGpsLog {
         this.latitude = latitude;
         this.elevation = elevation;
         this.logTime = logTime;
+        this.waypointType = waypointType;
+        this.waypointTitle = waypointTitle;
+        this.waypointDescription = waypointDescription;
+    }
+
+    /**
+     * Waypoint 여부 확인
+     * @return waypointType이 null이 아니면 true
+     */
+    public boolean isWaypoint() {
+        return this.waypointType != null;
+    }
+    
+    /**
+     * Waypoint 정보가 있는지 확인
+     * @return waypointType, waypointTitle, waypointDescription 중 하나라도 있으면 true
+     */
+    public boolean hasWaypointInfo() {
+        return this.waypointType != null || 
+               (this.waypointTitle != null && !this.waypointTitle.trim().isEmpty()) ||
+               (this.waypointDescription != null && !this.waypointDescription.trim().isEmpty());
     }
 
     /**
@@ -71,6 +105,11 @@ public class RouteGpsLog {
         
         // 3. 시간 정보 마스킹 (개인 활동 패턴)
         this.logTime = null;
+        
+        // 4. Waypoint 정보 마스킹 (개인 위치 정보)
+        this.waypointType = null;
+        this.waypointTitle = null;
+        this.waypointDescription = null;
         
         // GPS 데이터는 법정 보존 대상이지만 개인정보 보호를 위해 마스킹
         // - 통계용 집계 데이터는 별도 테이블에서 관리
