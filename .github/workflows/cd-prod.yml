@@ -155,14 +155,3 @@ jobs:
       - name: Run Monitoring Stack (prod)
         run: sudo docker compose -f docker-compose.monitoring.yml up -d
 
-      - name: Setup Log Backup Cron Job
-        run: |
-          # 백업 스크립트 업로드
-          sudo mkdir -p /home/ubuntu/scripts
-          sudo cp scripts/log-backup.sh /home/ubuntu/scripts/
-          sudo chmod +x /home/ubuntu/scripts/log-backup.sh
-          
-          # Cron Job 설정
-          sudo bash scripts/setup-cron.sh
-          
-          echo "Log backup cron job configured successfully"
