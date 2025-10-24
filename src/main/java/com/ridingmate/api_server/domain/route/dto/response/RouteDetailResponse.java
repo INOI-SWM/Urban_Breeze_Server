@@ -1,8 +1,11 @@
 package com.ridingmate.api_server.domain.route.dto.response;
 
 import com.fasterxml.jackson.annotation.JsonFormat;
+import com.fasterxml.jackson.annotation.JsonInclude;
 import com.ggalmazor.ltdownsampling.Point;
 import com.ridingmate.api_server.domain.route.entity.Route;
+import com.ridingmate.api_server.domain.route.entity.RouteGpsLog;
+import com.ridingmate.api_server.domain.route.enums.WaypointType;
 import com.ridingmate.api_server.global.util.GeometryUtil;
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.NotEmpty;
@@ -58,17 +61,63 @@ public record RouteDetailResponse(
     List<Double> bbox
 ) {
 
-    @Schema(description = "경로 고도 데이터")
+    @Schema(description = "경로 GPS 트랙 포인트 데이터")
     public record ElevationPoint(
             @Schema(description = "데이터 포인트의 인덱스", example = "0")
             long index,
+            
+            @Schema(description = "경도", example = "126.9780")
+            double longitude,
+            
+            @Schema(description = "위도", example = "37.5665")
+            double latitude,
+            
             @Schema(description = "해당 지점의 고도 (m)", example = "81.2")
-            double elevation
-    ) {}
-
-    public static RouteDetailResponse from(Route route, List<Point> routeGpsPoints, String profileImageUrl){
-        List<ElevationPoint> elevationPoints = IntStream.range(0, routeGpsPoints.size())
-                .mapToObj(i -> new ElevationPoint(i, routeGpsPoints.get(i).getY()))
+            double elevation,
+            
+            @Schema(description = "Waypoint 정보 (선택적)")
+            @JsonInclude(JsonInclude.Include.NON_NULL)
+            WaypointInfo waypoint
+    ) {
+        @Schema(description = "Waypoint 정보")
+        @JsonInclude(JsonInclude.Include.NON_NULL)
+        public record WaypointInfo(
+                @Schema(description = "Waypoint 타입", example = "summit")
+                WaypointType type,
+                
+                @Schema(description = "Waypoint 제목 (선택적)", example = "정상")
+                @JsonInclude(JsonInclude.Include.NON_NULL)
+                String title,
+                
+                @Schema(description = "Waypoint 설명 (선택적)", example = "산봉우리 정상")
+                @JsonInclude(JsonInclude.Include.NON_NULL)
+                String description
+        ) {}
+    }
+    
+    public static RouteDetailResponse fromWithWaypoints(Route route, List<RouteGpsLog> routeGpsLogs, String profileImageUrl){
+        List<ElevationPoint> elevationPoints = IntStream.range(0, routeGpsLogs.size())
+                .mapToObj(i -> {
+                    RouteGpsLog gpsLog = routeGpsLogs.get(i);
+                    
+                    // Waypoint 정보 처리
+                    ElevationPoint.WaypointInfo waypointInfo = null;
+                    if (gpsLog.isWaypoint()) {
+                        waypointInfo = new ElevationPoint.WaypointInfo(
+                            gpsLog.getWaypointType(),
+                            gpsLog.getWaypointTitle(),
+                            gpsLog.getWaypointDescription()
+                        );
+                    }
+                    
+                    return new ElevationPoint(
+                        i,
+                        gpsLog.getLongitude(),
+                        gpsLog.getLatitude(),
+                        gpsLog.getElevation(),
+                        waypointInfo
+                    );
+                })
                 .collect(Collectors.toList());
 
         return new RouteDetailResponse(

@@ -140,6 +140,15 @@ public class RouteService {
                 .map(routeGpsLog -> new Coordinate(routeGpsLog.getLongitude(), routeGpsLog.getLatitude(), routeGpsLog.getElevation()))
                 .toArray(Coordinate[]::new);
     }
+    
+    @Transactional(readOnly = true)
+    public List<RouteGpsLog> getRouteGpsLogsWithWaypoints(Long routeId) {
+        List<RouteGpsLog> routeGpsLogs = routeGpsLogRepository.findByRouteIdOrderByLogTimeAsc(routeId);
+        if (routeGpsLogs == null || routeGpsLogs.isEmpty()) {
+            throw new RouteException(RouteDetailErrorCode.ROUTE_GPS_LOGS_INVALID);
+        }
+        return routeGpsLogs;
+    }
 
     @Transactional(readOnly = true)
     public String createShareLink(Route route, Long userId) {
