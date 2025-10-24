@@ -51,6 +51,24 @@ public record CreateRouteRequest(
                 Double latitude,
 
                 @Schema(description = "고도 정보", example = "27.5")
-                Double elevation
-        ){}
+                Double elevation,
+
+                @Schema(description = "Waypoint 정보 (선택적)", example = "{\"type\": \"summit\", \"title\": \"정상\", \"description\": \"산봉우리 정상\"}")
+                WaypointInfo waypoint
+        ){
+            public record WaypointInfo(
+                    @Schema(description = "Waypoint 타입", example = "summit", allowableValues = {
+                            "generic", "summit", "valley", "water", "food", "danger", 
+                            "left", "right", "straight", "firstAid", "category4", 
+                            "category3", "category2", "category1", "horsCategory", "sprint"
+                    })
+                    String type,
+
+                    @Schema(description = "Waypoint 제목 (선택적)", example = "정상")
+                    String title,
+
+                    @Schema(description = "Waypoint 설명 (선택적)", example = "산봉우리 정상")
+                    String description
+            ){}
+        }
 }
