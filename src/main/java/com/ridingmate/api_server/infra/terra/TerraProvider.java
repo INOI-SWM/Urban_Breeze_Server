@@ -14,6 +14,7 @@ public enum TerraProvider {
     SAMSUNG_HEALTH("SAMSUNG-HEALTH", "Samsung"),
     HEALTH_CONNECT("HEALTH-CONNECT", "Google Fit(Health Connect)"),
     APPLE_HEALTH_KIT("APPLE-HEALTH-KIT", "Apple Health"),
+    WAHOO("WAHOO", "Wahoo"),
     ;
 
     private final String providerName;
@@ -54,6 +55,8 @@ public enum TerraProvider {
                 return GARMIN;
             case "SUUNTO":
                 return SUUNTO;
+            case "WAHOO":
+                return WAHOO;
             default:
                 throw new IllegalArgumentException("지원하지 않는 Terra 제공자입니다: " + terraProviderName);
         }

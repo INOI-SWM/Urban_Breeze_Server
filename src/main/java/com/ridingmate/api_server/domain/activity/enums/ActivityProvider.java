@@ -12,6 +12,7 @@ public enum ActivityProvider {
     GOOGLE_FIT("GOOGLE_FIT", "Google Fit"),
     STRAVA("STRAVA", "Strava"),
     SUUNTO("SUUNTO", "Suunto"),
+    WAHOO("WAHOO", "Wahoo"),
     UNKNOWN("UNKNOWN", "Unknown");
 
     private final String code;
@@ -36,3 +37,4 @@ public enum ActivityProvider {
         return UNKNOWN;
     }
 }
+
