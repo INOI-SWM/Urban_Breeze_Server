@@ -10,6 +10,7 @@ import com.ridingmate.api_server.domain.route.dto.request.RouteListRequest;
 import com.ridingmate.api_server.domain.route.dto.response.*;
 import com.ridingmate.api_server.domain.privacy.service.LocationDataAccessLogService;
 import com.ridingmate.api_server.domain.route.entity.Route;
+import com.ridingmate.api_server.domain.route.entity.RouteGpsLog;
 import com.ridingmate.api_server.domain.route.service.RouteService;
 import com.ridingmate.api_server.domain.user.entity.User;
 import com.ridingmate.api_server.domain.user.service.UserService;
@@ -132,14 +133,12 @@ public class RouteFacade {
                 null   // User-Agent도 Controller에서 가져올 수 없으므로 null
         );
         
-        Coordinate[] coordinates = routeService.getRouteDetailList(route.getId());
-
-        // 고도 프로필 다운샘플링 (GeometryUtil에서 모든 로직 처리)
-        List<Point> elevationProfilePoints = GeometryUtil.downsampleElevationProfile(coordinates, route.getDistance());
+        // Waypoint 정보를 포함한 GPS 로그 조회
+        List<RouteGpsLog> routeGpsLogs = routeService.getRouteGpsLogsWithWaypoints(route.getId());
 
         String profileImageUrl = s3Manager.getPresignedUrl(route.getUser().getProfileImagePath());
 
-        return RouteDetailResponse.from(route, elevationProfilePoints, profileImageUrl);
+        return RouteDetailResponse.fromWithWaypoints(route, routeGpsLogs, profileImageUrl);
     }
 
     public MapSearchResponse getMapSearch(String query, Double lon, Double lat) {

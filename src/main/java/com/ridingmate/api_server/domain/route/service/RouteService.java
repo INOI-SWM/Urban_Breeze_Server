@@ -12,6 +12,7 @@ import com.ridingmate.api_server.domain.route.entity.RouteGpsLog;
 import com.ridingmate.api_server.domain.route.entity.UserRoute;
 import com.ridingmate.api_server.domain.route.enums.RecommendationSortType;
 import com.ridingmate.api_server.domain.route.enums.RouteRelationType;
+import com.ridingmate.api_server.domain.route.enums.WaypointType;
 import com.ridingmate.api_server.domain.route.exception.code.RouteCommonErrorCode;
 import com.ridingmate.api_server.domain.route.exception.RouteException;
 import com.ridingmate.api_server.domain.route.exception.code.RouteDetailErrorCode;
@@ -84,30 +85,41 @@ public class RouteService {
         // 생성자와 경로 간의 OWNER 관계 생성
         createUserRouteRelation(user, route, RouteRelationType.OWNER);
 
-        Coordinate[] geometry = request.geometry().stream()
-                .map(dto -> new Coordinate(dto.longitude(), dto.latitude(), dto.elevation()))
-                .toArray(Coordinate[]::new);
-        createRouteGpsLog(route, geometry);
+        createRouteGpsLog(route, request.geometry());
 
         log.info("[RouteService] 경로 생성 완료: userId={}, routeId={}, gpsLogCount={}", 
-                userId, route.getId(), geometry.length);
+                userId, route.getId(), request.geometry().size());
         return route;
     }
 
-    private void createRouteGpsLog(Route route, Coordinate[] geometry) {
+    private void createRouteGpsLog(Route route, List<CreateRouteRequest.Position> positions) {
         LocalDateTime baseTime = LocalDateTime.now();
         int sequence = 0;
 
         List<RouteGpsLog> routeGpsLogs = new ArrayList<>();
-        for (Coordinate coordinate : geometry) {
+        for (CreateRouteRequest.Position position : positions) {
             LocalDateTime virtualLogTime = baseTime.plusSeconds(sequence);
+
+            // Waypoint 정보 처리
+            WaypointType waypointType = null;
+            String waypointTitle = null;
+            String waypointDescription = null;
+            
+            if (position.waypoint() != null) {
+                waypointType = WaypointType.fromCode(position.waypoint().type());
+                waypointTitle = position.waypoint().title();
+                waypointDescription = position.waypoint().description();
+            }
 
             RouteGpsLog routeGpsLog = RouteGpsLog.builder()
                     .route(route)
-                    .longitude(coordinate.getX())
-                    .latitude(coordinate.getY())
-                    .elevation(coordinate.getZ())
+                    .longitude(position.longitude())
+                    .latitude(position.latitude())
+                    .elevation(position.elevation())
                     .logTime(virtualLogTime)
+                    .waypointType(waypointType)
+                    .waypointTitle(waypointTitle)
+                    .waypointDescription(waypointDescription)
                     .build();
             routeGpsLogs.add(routeGpsLog);
 
@@ -127,6 +139,15 @@ public class RouteService {
         return routeGpsLogs.stream()
                 .map(routeGpsLog -> new Coordinate(routeGpsLog.getLongitude(), routeGpsLog.getLatitude(), routeGpsLog.getElevation()))
                 .toArray(Coordinate[]::new);
+    }
+    
+    @Transactional(readOnly = true)
+    public List<RouteGpsLog> getRouteGpsLogsWithWaypoints(Long routeId) {
+        List<RouteGpsLog> routeGpsLogs = routeGpsLogRepository.findByRouteIdOrderByLogTimeAsc(routeId);
+        if (routeGpsLogs == null || routeGpsLogs.isEmpty()) {
+            throw new RouteException(RouteDetailErrorCode.ROUTE_GPS_LOGS_INVALID);
+        }
+        return routeGpsLogs;
     }
 
     @Transactional(readOnly = true)
