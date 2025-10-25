@@ -156,6 +156,27 @@ public interface RouteApi {
     );
 
     @Operation(
+            summary = "경로 TCX 파일 다운로드",
+            description = """
+                    특정 경로의 TCX 파일을 다운로드합니다.
+                    
+                    - TCX 파일은 Garmin Training Center XML 형식입니다.
+                    - Garmin 사이클링 컴퓨터와 완벽 호환됩니다.
+                    - Waypoint 정보가 포함되어 있습니다.
+                    - 파일명: {경로제목}.tcx
+                    """
+    )
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "성공: TCX 파일 다운로드 완료"),
+            @ApiResponse(responseCode = "404", description = "경로를 찾을 수 없습니다."),
+            @ApiResponse(responseCode = "500", description = "TCX 파일 생성 중 오류가 발생했습니다."),
+    })
+    ResponseEntity<byte[]> downloadTcxFile(
+            @Parameter(description = "경로 ID")
+            @PathVariable String routeId
+    );
+
+    @Operation(
             summary = "내 경로에 추가",
             description = "공유받은 경로를 내 경로 목록에 추가합니다."
     )

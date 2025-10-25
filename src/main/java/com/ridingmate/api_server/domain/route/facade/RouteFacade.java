@@ -1,13 +1,14 @@
 package com.ridingmate.api_server.domain.route.facade;
 
-import com.ggalmazor.ltdownsampling.Point;
 import com.ridingmate.api_server.domain.auth.security.AuthUser;
+import com.ridingmate.api_server.domain.privacy.enums.LocationAccessType;
 import com.ridingmate.api_server.domain.route.dto.FilterRangeInfo;
 import com.ridingmate.api_server.domain.route.dto.request.AddRouteToMyRoutesRequest;
 import com.ridingmate.api_server.domain.route.dto.request.CreateRouteRequest;
 import com.ridingmate.api_server.domain.route.dto.request.RouteSegmentRequest;
 import com.ridingmate.api_server.domain.route.dto.request.RouteListRequest;
 import com.ridingmate.api_server.domain.route.dto.response.*;
+import com.ridingmate.api_server.domain.route.dto.response.TcxDownloadInfo;
 import com.ridingmate.api_server.domain.privacy.service.LocationDataAccessLogService;
 import com.ridingmate.api_server.domain.route.entity.Route;
 import com.ridingmate.api_server.domain.route.entity.RouteGpsLog;
@@ -157,8 +158,8 @@ public class RouteFacade {
                 dataOwner, 
                 accessor,
                 routeId, 
-                null,  // IP는 Controller에서 가져올 수 없으므로 null
-                null   // User-Agent도 Controller에서 가져올 수 없으므로 null
+                null,  // IP 정보 없음
+                null   // User-Agent 정보 없음
         );
         
         byte[] content = routeService.downloadGpxFile(route);
@@ -167,6 +168,32 @@ public class RouteFacade {
         log.info("[RouteFacade] GPX 파일 다운로드 완료: routeId={}, fileName={}, size={}bytes", 
                 routeId, fileName, content.length);
         return GpxDownloadInfo.of(content, fileName);
+    }
+
+    public TcxDownloadInfo downloadTcxFile(String routeId) {
+        log.info("[RouteFacade] TCX 파일 다운로드 시작: routeId={}", routeId);
+        Route route = routeService.getRouteWithUserByRouteId(routeId);
+        
+        // 위치정보 다운로드 기록 생성
+        User dataOwner = route.getUser();
+        User accessor = dataOwner;  // 현재는 본인만 다운로드 가능, 추후 어드민 기능 추가 시 수정 필요
+        locationDataAccessLogService.logLocationDataAccess(
+                dataOwner,
+                accessor,
+                LocationAccessType.DOWNLOAD,
+                null,  // IP 정보 없음
+                null,   // User-Agent 정보 없음
+                "TCX_FILE",
+                routeId,
+                "TCX_DOWNLOAD"
+        );
+        
+        byte[] content = routeService.downloadTcxFile(route);
+        String fileName = routeService.generateTcxFileName(route);
+        
+        log.info("[RouteFacade] TCX 파일 다운로드 완료: routeId={}, fileName={}, size={}bytes", 
+                routeId, fileName, content.length);
+        return TcxDownloadInfo.of(content, fileName);
     }
 
     /**

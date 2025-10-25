@@ -15,7 +15,6 @@ import com.ridingmate.api_server.global.exception.ApiErrorCodeExample;
 import com.ridingmate.api_server.global.exception.CommonResponse;
 import com.ridingmate.api_server.infra.kakao.KakaoErrorCode;
 import com.ridingmate.api_server.infra.ors.OrsErrorCode;
-import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -130,6 +129,22 @@ public class RouteController implements RouteApi{
                 .header("Content-Disposition", "attachment; filename=\"" + encodedFileName + "\"")
                 .body(downloadInfo.content());
     }
+
+    @Override
+    @GetMapping("/{routeId}/tcx")
+    @ApiErrorCodeExample(RouteCommonErrorCode.class)
+    public ResponseEntity<byte[]> downloadTcxFile(@PathVariable String routeId) {
+        log.info("[Route] GET TCX download request - routeId={}", routeId);
+        TcxDownloadInfo downloadInfo = routeFacade.downloadTcxFile(routeId);
+
+        String encodedFileName = URLEncoder.encode(downloadInfo.fileName(), StandardCharsets.UTF_8);
+        
+        return ResponseEntity.ok()
+                .header("Content-Type", downloadInfo.contentType())
+                .header("Content-Disposition", "attachment; filename=\"" + encodedFileName + "\"")
+                .body(downloadInfo.content());
+    }
+
 
     @Override
     @PostMapping("/my-routes")
