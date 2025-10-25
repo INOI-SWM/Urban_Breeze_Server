@@ -2,6 +2,7 @@ package com.ridingmate.api_server.global.util;
 
 import com.ridingmate.api_server.domain.route.entity.Route;
 import com.ridingmate.api_server.domain.route.entity.RouteGpsLog;
+import com.ridingmate.api_server.domain.route.enums.WaypointType;
 import org.locationtech.jts.geom.Coordinate;
 import org.locationtech.jts.geom.LineString;
 
@@ -22,46 +23,57 @@ public class TcxGenerator {
     private static final String TCX_HEADER = """
             <?xml version="1.0" encoding="UTF-8"?>
             <TrainingCenterDatabase xmlns="http://www.garmin.com/xmlschemas/TrainingCenterDatabase/v2">
-                <Activities>
-                    <Activity Sport="Biking">
-                        <Id>%s</Id>
+                <Folders />
+                <Courses>
+                    <Course>
                         <Name>%s</Name>
-                        <Lap StartTime="%s">
+                        <Lap>
                             <TotalTimeSeconds>0</TotalTimeSeconds>
                             <DistanceMeters>%.2f</DistanceMeters>
-                            <MaximumSpeed>0</MaximumSpeed>
-                            <Calories>0</Calories>
-                            <Track>
+                            <BeginPosition>
+                                <LatitudeDegrees>%.6f</LatitudeDegrees>
+                                <LongitudeDegrees>%.6f</LongitudeDegrees>
+                            </BeginPosition>
+                            <EndPosition>
+                                <LatitudeDegrees>%.6f</LatitudeDegrees>
+                                <LongitudeDegrees>%.6f</LongitudeDegrees>
+                            </EndPosition>
+                            <Intensity>Active</Intensity>
+                        </Lap>
+                        <Track>
             """;
 
     private static final String TCX_FOOTER = """
                             </Track>
-                        </Lap>
-                    </Activity>
-                </Activities>
-            </TrainingCenterDatabase>
-            """;
+                        </Course>
+                    </Courses>
+                </TrainingCenterDatabase>
+                """;
 
     private static final String TRACK_POINT_TEMPLATE = """
-                                <Trackpoint>
+                                <Trackpoint sectionIndex="0" pointIndex="%d" originalElevation="" isOriginalElevationFromOSM="false">
                                     <Time>%s</Time>
                                     <Position>
                                         <LatitudeDegrees>%.6f</LatitudeDegrees>
                                         <LongitudeDegrees>%.6f</LongitudeDegrees>
                                     </Position>
-                                    <AltitudeMeters>%.2f</AltitudeMeters>
-                                    %s
+                                    <AltitudeMeters>%.1f</AltitudeMeters>
+                                    <DistanceMeters>%.2f</DistanceMeters>
                                 </Trackpoint>
             """;
 
-    private static final String WAYPOINT_EXTENSION_TEMPLATE = """
-                                    <Extensions>
-                                        <Waypoint xmlns="http://www.garmin.com/xmlschemas/ActivityExtension/v2">
-                                            <Type>%s</Type>
-                                            <Title>%s</Title>
-                                            <Description>%s</Description>
-                                        </Waypoint>
-                                    </Extensions>
+    private static final String COURSE_POINT_TEMPLATE = """
+                                <CoursePoint sectionIndex="0" pointIndex="%d">
+                                    <Name>%s</Name>
+                                    <Time>%s</Time>
+                                    <Position>
+                                        <LatitudeDegrees>%.6f</LatitudeDegrees>
+                                        <LongitudeDegrees>%.6f</LongitudeDegrees>
+                                    </Position>
+                                    <AltitudeMeters>%.1f</AltitudeMeters>
+                                    <PointType>%s</PointType>
+                                    <Notes>%s</Notes>
+                                </CoursePoint>
             """;
 
     /**
@@ -106,25 +118,56 @@ public class TcxGenerator {
             String currentTime = LocalDateTime.now().format(DateTimeFormatter.ISO_LOCAL_DATE_TIME) + "Z";
             double totalDistance = calculateTotalDistanceFromGpsLogs(gpsLogs);
             
-            writer.printf(TCX_HEADER, currentTime, routeTitle, currentTime, totalDistance);
+            // 시작점과 종료점 좌표
+            RouteGpsLog firstLog = gpsLogs.get(0);
+            RouteGpsLog lastLog = gpsLogs.get(gpsLogs.size() - 1);
+            
+            writer.printf(TCX_HEADER, routeTitle, totalDistance, 
+                firstLog.getLatitude(), firstLog.getLongitude(),
+                lastLog.getLatitude(), lastLog.getLongitude());
 
             // GPS 로그를 순서대로 처리
+            double cumulativeDistance = 0.0;
             for (int i = 0; i < gpsLogs.size(); i++) {
                 RouteGpsLog gpsLog = gpsLogs.get(i);
                 
                 // 시간 정보 (실제 GPS 로그 시간 사용)
                 String timeStr = gpsLog.getLogTime().format(DateTimeFormatter.ISO_LOCAL_DATE_TIME) + "Z";
                 
-                // Waypoint 정보 확인
-                String waypointExtension = "";
-                if (gpsLog.isWaypoint()) {
-                    waypointExtension = generateWaypointExtension(gpsLog);
+                // 누적 거리 계산
+                if (i > 0) {
+                    RouteGpsLog prevLog = gpsLogs.get(i - 1);
+                    cumulativeDistance += calculateDistance(
+                        prevLog.getLatitude(), prevLog.getLongitude(),
+                        gpsLog.getLatitude(), gpsLog.getLongitude()
+                    );
                 }
                 
                 writer.printf(TRACK_POINT_TEMPLATE, 
-                    timeStr, gpsLog.getLatitude(), gpsLog.getLongitude(), 
+                    i, timeStr, gpsLog.getLatitude(), gpsLog.getLongitude(), 
                     gpsLog.getElevation() != null ? gpsLog.getElevation() : 0.0, 
-                    waypointExtension);
+                    cumulativeDistance);
+            }
+
+            // CoursePoint 추가 (Waypoint가 있는 GPS 로그들)
+            int coursePointIndex = 0;
+            for (int i = 0; i < gpsLogs.size(); i++) {
+                RouteGpsLog gpsLog = gpsLogs.get(i);
+                if (gpsLog.isWaypoint()) {
+                    String timeStr = gpsLog.getLogTime().format(DateTimeFormatter.ISO_LOCAL_DATE_TIME) + "Z";
+                    String pointType = mapWaypointTypeToCoursePointType(gpsLog.getWaypointType());
+                    String notes = gpsLog.getWaypointDescription() != null ? gpsLog.getWaypointDescription() : "";
+                    
+                    writer.printf(COURSE_POINT_TEMPLATE,
+                        i, // Trackpoint의 실제 인덱스 사용
+                        gpsLog.getWaypointTitle() != null ? gpsLog.getWaypointTitle() : "Waypoint",
+                        timeStr,
+                        gpsLog.getLatitude(), gpsLog.getLongitude(),
+                        gpsLog.getElevation() != null ? gpsLog.getElevation() : 0.0,
+                        pointType,
+                        notes);
+                    coursePointIndex++;
+                }
             }
 
             // TCX 푸터 작성
@@ -170,6 +213,26 @@ public class TcxGenerator {
         }
 
         return safeFileName + ".tcx";
+    }
+
+    /**
+     * WaypointType을 CoursePoint의 PointType으로 매핑합니다.
+     *
+     * @param waypointType WaypointType Enum
+     * @return CoursePoint PointType
+     */
+    private static String mapWaypointTypeToCoursePointType(WaypointType waypointType) {
+        if (waypointType == null) {
+            return "Generic";
+        }
+        
+        return switch (waypointType) {
+            case LEFT -> "Left";
+            case RIGHT -> "Right";
+            case STRAIGHT -> "Straight";
+            case GENERIC, SUMMIT, VALLEY, WATER, FOOD, DANGER, FIRST_AID,
+                 CATEGORY_4, CATEGORY_3, CATEGORY_2, CATEGORY_1, HORS_CATEGORY, SPRINT -> "Generic";
+        };
     }
 
     /**
@@ -272,40 +335,4 @@ public class TcxGenerator {
         return EARTH_RADIUS * c;
     }
 
-    /**
-     * 좌표가 waypoint와 일치하는지 확인합니다.
-     *
-     * @param coord     확인할 좌표
-     * @param waypoint  waypoint GPS 로그
-     * @return 일치 여부
-     */
-    private static boolean isCoordinateMatch(Coordinate coord, RouteGpsLog waypoint) {
-        if (waypoint.getLatitude() == null || waypoint.getLongitude() == null) {
-            return false;
-        }
-        
-        // 좌표 정밀도 고려 (약 1미터 오차 허용)
-        double latDiff = Math.abs(coord.getY() - waypoint.getLatitude());
-        double lonDiff = Math.abs(coord.getX() - waypoint.getLongitude());
-        
-        return latDiff < 0.00001 && lonDiff < 0.00001; // 약 1미터 오차
-    }
-
-    /**
-     * Waypoint 정보를 TCX Extensions 형식으로 생성합니다.
-     *
-     * @param waypoint waypoint GPS 로그
-     * @return TCX Extensions XML 문자열
-     */
-    private static String generateWaypointExtension(RouteGpsLog waypoint) {
-        if (waypoint.getWaypointType() == null) {
-            return "";
-        }
-
-        String type = waypoint.getWaypointType().getCode();
-        String title = waypoint.getWaypointTitle() != null ? waypoint.getWaypointTitle() : "";
-        String description = waypoint.getWaypointDescription() != null ? waypoint.getWaypointDescription() : "";
-
-        return String.format(WAYPOINT_EXTENSION_TEMPLATE, type, title, description);
-    }
 }
