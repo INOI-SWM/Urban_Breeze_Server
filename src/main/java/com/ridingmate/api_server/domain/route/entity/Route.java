@@ -77,6 +77,9 @@ public class Route extends BaseTimeEntity {
     @Column(name = "gpx_file_path")
     private String gpxFilePath;
 
+    @Column(name = "tcx_file_path")
+    private String tcxFilePath;
+
     @Column(name = "max_lat")
     private Double maxLat;
 
@@ -146,6 +149,10 @@ public class Route extends BaseTimeEntity {
 
     public void updateGpxFilePath(String gpxFilePath) {
         this.gpxFilePath = gpxFilePath;
+    }
+
+    public void updateTcxFilePath(String tcxFilePath) {
+        this.tcxFilePath = tcxFilePath;
     }
 
     /**
